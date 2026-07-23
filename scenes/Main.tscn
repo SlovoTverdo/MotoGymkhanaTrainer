@@ -1,0 +1,39 @@
+[gd_scene format=3 uid="uid://dulhhuvwuu7sk"]
+
+[ext_resource type="Script" uid="uid://dv4p3tsh1fym2" path="res://scripts/TrackViewer.cs" id="1_viewer"]
+[ext_resource type="Script" uid="uid://cxwtjxdritooy" path="res://scripts/FirstPersonCamera.cs" id="2_camera"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_main"]
+sky_top_color = Color(0.2, 0.42, 0.68, 1)
+sky_horizon_color = Color(0.78, 0.86, 0.93, 1)
+ground_bottom_color = Color(0.12, 0.15, 0.18, 1)
+ground_horizon_color = Color(0.6, 0.65, 0.68, 1)
+
+[sub_resource type="Sky" id="Sky_main"]
+sky_material = SubResource("ProceduralSkyMaterial_main")
+
+[sub_resource type="Environment" id="Environment_main"]
+background_mode = 2
+sky = SubResource("Sky_main")
+ambient_light_source = 3
+ambient_light_color = Color(0.72, 0.78, 0.86, 1)
+ambient_light_energy = 0.65
+
+[node name="Main" type="Node3D" unique_id=1160308835]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=982618]
+environment = SubResource("Environment_main")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=145587629]
+transform = Transform3D(0.81915206, 0.46984634, -0.32898995, 0, 0.57357645, 0.81915206, 0.57357645, -0.6710101, 0.46984634, 0, 0, 0)
+shadow_enabled = true
+
+[node name="TrackViewer" type="Node3D" parent="." unique_id=1582981807]
+script = ExtResource("1_viewer")
+
+[node name="CameraRig" type="Node3D" parent="." unique_id=314403728]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 20, 1.7, 4)
+script = ExtResource("2_camera")
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig" unique_id=1791640042]
+current = true

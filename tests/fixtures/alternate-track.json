@@ -1,0 +1,60 @@
+{
+  "formatVersion": 2,
+  "track": {
+    "id": "alternate-test",
+    "name": "Alternate Test Track"
+  },
+  "area": {
+    "width": 20.0,
+    "length": 30.0
+  },
+  "elements": [],
+  "cones": [
+    {
+      "id": "alt-cone-001",
+      "position": { "x": 4.0, "y": 6.0 },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "alt-cone-002",
+      "position": { "x": 14.0, "y": 18.0 },
+      "color": "red",
+      "type": "standard"
+    }
+  ],
+  "markings": [
+    {
+      "id": "alt-marking-001",
+      "type": "line",
+      "points": [
+        { "x": 2.0, "y": 3.0 },
+        { "x": 18.0, "y": 3.0 }
+      ],
+      "color": "white",
+      "widthMeters": 0.1
+    }
+  ],
+  "trajectory": {
+    "segments": [
+      {
+        "id": "alt-trajectory-001",
+        "type": "polyline",
+        "points": [
+          { "x": 4.0, "y": 4.0 },
+          { "x": 4.0, "y": 12.0 },
+          { "x": 10.0, "y": 16.0 }
+        ]
+      },
+      {
+        "id": "alt-trajectory-002",
+        "type": "cubicBezier",
+        "start": { "x": 10.0, "y": 16.0 },
+        "control1": { "x": 12.0, "y": 18.0 },
+        "control2": { "x": 14.0, "y": 21.0 },
+        "end": { "x": 14.0, "y": 25.0 }
+      }
+    ]
+  },
+  "checkpoints": []
+}
