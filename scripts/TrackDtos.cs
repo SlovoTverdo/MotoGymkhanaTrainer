@@ -111,7 +111,7 @@ public sealed class MarkingDto
 public sealed class TrajectoryDto
 {
     [JsonPropertyName("segments")]
-    public TrajectorySegmentDto[] Segments { get; init; } = null!;
+    public TrajectorySegmentDto[] Segments { get; set; } = null!;
 }
 
 /// <summary>
@@ -120,25 +120,25 @@ public sealed class TrajectoryDto
 public sealed class TrajectorySegmentDto
 {
     [JsonPropertyName("id")]
-    public string Id { get; init; } = string.Empty;
+    public string Id { get; set; } = string.Empty;
 
     [JsonPropertyName("type")]
-    public string Type { get; init; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
 
     [JsonPropertyName("points")]
-    public Point2Dto[]? Points { get; init; }
+    public Point2Dto[]? Points { get; set; }
 
     [JsonPropertyName("start")]
-    public Point2Dto? Start { get; init; }
+    public Point2Dto? Start { get; set; }
 
     [JsonPropertyName("control1")]
-    public Point2Dto? Control1 { get; init; }
+    public Point2Dto? Control1 { get; set; }
 
     [JsonPropertyName("control2")]
-    public Point2Dto? Control2 { get; init; }
+    public Point2Dto? Control2 { get; set; }
 
     [JsonPropertyName("end")]
-    public Point2Dto? End { get; init; }
+    public Point2Dto? End { get; set; }
 }
 
 /// <summary>Reserved checkpoint data from the exported contract.</summary>

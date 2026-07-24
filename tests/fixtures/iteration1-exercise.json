@@ -1,0 +1,51 @@
+{
+  "formatVersion": 1,
+  "exercise": {
+    "id": "iteration-1-compatibility",
+    "name": "Iteration 1 Compatibility",
+    "version": 1
+  },
+  "bounds": {
+    "width": 10.0,
+    "length": 10.0
+  },
+  "cones": [
+    {
+      "id": "cone-001",
+      "position": {
+        "x": 1.0,
+        "y": 0.0
+      },
+      "color": "red",
+      "type": "standard"
+    }
+  ],
+  "markings": [],
+  "entryPoint": {
+    "x": 0.0,
+    "y": -3.5
+  },
+  "exitPoint": {
+    "x": 0.0,
+    "y": 3.5
+  },
+  "trajectory": {
+    "segments": [
+      {
+        "id": "entry-exit-preview",
+        "type": "polyline",
+        "points": [
+          {
+            "x": 0.0,
+            "y": -3.5
+          },
+          {
+            "x": 0.0,
+            "y": 3.5
+          }
+        ]
+      }
+    ]
+  },
+  "checkpoints": []
+}

@@ -1,0 +1,55 @@
+{
+  "formatVersion": 1,
+  "exercise": {
+    "id": "discontinuous-fixture",
+    "name": "Discontinuous Fixture",
+    "version": 1
+  },
+  "bounds": {
+    "width": 10.0,
+    "length": 10.0
+  },
+  "cones": [],
+  "markings": [],
+  "entryPoint": {
+    "x": 0.0,
+    "y": -4.0
+  },
+  "exitPoint": {
+    "x": 0.0,
+    "y": 4.0
+  },
+  "trajectory": {
+    "segments": [
+      {
+        "id": "line-before-gap",
+        "type": "polyline",
+        "points": [
+          {
+            "x": 0.0,
+            "y": -4.0
+          },
+          {
+            "x": 0.0,
+            "y": -1.0
+          }
+        ]
+      },
+      {
+        "id": "line-after-gap",
+        "type": "polyline",
+        "points": [
+          {
+            "x": 0.5,
+            "y": -1.0
+          },
+          {
+            "x": 0.0,
+            "y": 4.0
+          }
+        ]
+      }
+    ]
+  },
+  "checkpoints": []
+}

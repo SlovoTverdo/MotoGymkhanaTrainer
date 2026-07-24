@@ -630,37 +630,9 @@ public partial class TrackViewer : Node3D
 
     private static Point2Dto[] DiscretizeCubicBezier(TrajectorySegmentDto segment)
     {
-        Point2Dto start = segment.Start!;
-        Point2Dto control1 = segment.Control1!;
-        Point2Dto control2 = segment.Control2!;
-        Point2Dto end = segment.End!;
-        var points = new Point2Dto[CubicBezierSubdivisionCount + 1];
-
-        // Sampling changes only the temporary render geometry. The deserialized DTO
-        // retains the four canonical Bezier points from the exported JSON contract.
-        for (int index = 0; index <= CubicBezierSubdivisionCount; index++)
-        {
-            float t = index / (float)CubicBezierSubdivisionCount;
-            float inverseT = 1.0f - t;
-            float startWeight = inverseT * inverseT * inverseT;
-            float control1Weight = 3.0f * inverseT * inverseT * t;
-            float control2Weight = 3.0f * inverseT * t * t;
-            float endWeight = t * t * t;
-
-            points[index] = new Point2Dto
-            {
-                X = startWeight * start.X +
-                    control1Weight * control1.X +
-                    control2Weight * control2.X +
-                    endWeight * end.X,
-                Y = startWeight * start.Y +
-                    control1Weight * control1.Y +
-                    control2Weight * control2.Y +
-                    endWeight * end.Y,
-            };
-        }
-
-        return points;
+        // Sampling is shared with the Exercise Editor. The DTO retains only the
+        // canonical four Bezier points from the persisted JSON contract.
+        return TrajectoryGeometry.SampleCubicBezier(segment, CubicBezierSubdivisionCount);
     }
 
     private static void WarnIfTrajectoryDiscontinuous(

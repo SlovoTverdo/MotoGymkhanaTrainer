@@ -1,0 +1,235 @@
+{
+  "formatVersion": 1,
+  "exercise": {
+    "id": "new-exercise",
+    "name": "New Exercise",
+    "version": 1
+  },
+  "bounds": {
+    "width": 3,
+    "length": 5
+  },
+  "cones": [
+    {
+      "id": "cone-001",
+      "position": {
+        "x": -0.5,
+        "y": -1.25
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "cone-002",
+      "position": {
+        "x": -0.5,
+        "y": 1.25
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "cone-003",
+      "position": {
+        "x": 0.75,
+        "y": 0
+      },
+      "color": "blue",
+      "type": "standard"
+    },
+    {
+      "id": "cone-004",
+      "position": {
+        "x": 1.5,
+        "y": -2.5
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "cone-005",
+      "position": {
+        "x": -1.5,
+        "y": -2.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-006",
+      "position": {
+        "x": 1.5,
+        "y": -2.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-007",
+      "position": {
+        "x": 1.5,
+        "y": 2.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-008",
+      "position": {
+        "x": -1.5,
+        "y": 2.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-009",
+      "position": {
+        "x": 0.5,
+        "y": -2.5
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "cone-010",
+      "position": {
+        "x": 0.5,
+        "y": 2.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-011",
+      "position": {
+        "x": 0.5,
+        "y": -2.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    }
+  ],
+  "markings": [],
+  "entryPoint": {
+    "x": 1,
+    "y": -3.25
+  },
+  "exitPoint": {
+    "x": 1,
+    "y": 3
+  },
+  "trajectory": {
+    "segments": [
+      {
+        "id": "trajectory-segment-002",
+        "type": "polyline",
+        "points": [
+          {
+            "x": 1,
+            "y": -3.25
+          },
+          {
+            "x": 1,
+            "y": -2.5
+          }
+        ]
+      },
+      {
+        "id": "trajectory-segment-003",
+        "type": "cubicBezier",
+        "start": {
+          "x": 1,
+          "y": -2.5
+        },
+        "control1": {
+          "x": 1,
+          "y": -1.75
+        },
+        "control2": {
+          "x": -1,
+          "y": -2
+        },
+        "end": {
+          "x": -1,
+          "y": -1.25
+        }
+      },
+      {
+        "id": "trajectory-segment-001",
+        "type": "cubicBezier",
+        "start": {
+          "x": -1,
+          "y": -1.25
+        },
+        "control1": {
+          "x": -1,
+          "y": -0.5
+        },
+        "control2": {
+          "x": 1.25,
+          "y": -0.5
+        },
+        "end": {
+          "x": 1.25,
+          "y": 0
+        }
+      },
+      {
+        "id": "trajectory-segment-004",
+        "type": "cubicBezier",
+        "start": {
+          "x": 1.25,
+          "y": 0
+        },
+        "control1": {
+          "x": 1.25,
+          "y": 0.75
+        },
+        "control2": {
+          "x": -1,
+          "y": 0.5
+        },
+        "end": {
+          "x": -1,
+          "y": 1.25
+        }
+      },
+      {
+        "id": "trajectory-segment-005",
+        "type": "cubicBezier",
+        "start": {
+          "x": -1,
+          "y": 1.25
+        },
+        "control1": {
+          "x": -1,
+          "y": 1.75
+        },
+        "control2": {
+          "x": 1,
+          "y": 1.75
+        },
+        "end": {
+          "x": 1,
+          "y": 2.25
+        }
+      },
+      {
+        "id": "trajectory-segment-007",
+        "type": "polyline",
+        "points": [
+          {
+            "x": 1,
+            "y": 2.25
+          },
+          {
+            "x": 1,
+            "y": 3
+          }
+        ]
+      }
+    ]
+  },
+  "checkpoints": []
+}
