@@ -495,67 +495,291 @@ Viewer не должен знать, был spline:
 
 ---
 
-# 15. Global Trajectory
+# 15. # Track compilation and global trajectory
 
-Editor формирует глобальную траекторию:
+## 1. Track compilation
 
-```text
-Element 1 trajectory
-        ↓
-generated transition spline
-        ↓
-Element 2 trajectory
-        ↓
-generated transition spline
-        ↓
-Element 3 trajectory
-```
-
-После применения всех transform'ов получается:
+Track compilation — процесс преобразования редактируемого Track Project в самодостаточный Exported Track snapshot.
 
 ```text
-GlobalTrajectory
-└─ Segments[]
-   ├─ segment from exercise
-   ├─ generated cubicBezier
-   ├─ segment from exercise
-   ├─ generated cubicBezier
-   └─ ...
+Track Project
+    +
+Exercise Definition Library
+    ↓
+Track compilation
+    ↓
+Exported Track JSON
 ```
 
-Для Viewer все эти элементы равноправны.
+Compilation не изменяет:
+
+* Track Project;
+* Exercise Definition.
+
+Она создаёт новое производное представление.
 
 ---
 
-# 16. Непрерывность Global Trajectory
+## 2. Compiled ExerciseInstance
 
-Конец одного segment должен совпадать с началом следующего с небольшой допустимой погрешностью.
-
-Для `polyline`:
+Для каждого resolved ExerciseInstance Track Editor создаёт временное compiled-представление:
 
 ```text
-start = points[0]
-end   = points[last]
+CompiledExerciseInstance
+├─ InstanceId
+├─ SourceDefinition
+├─ Transform
+├─ WorldBounds
+├─ WorldCones[]
+├─ WorldMarkings[]
+├─ WorldTrajectory
+├─ WorldEntryPoint
+├─ WorldExitPoint
+├─ WorldEntryTangent
+└─ WorldExitTangent
 ```
 
-Для `cubicBezier`:
+CompiledExerciseInstance не сериализуется в Track Project.
 
-```text
-start = start
-end   = end
-```
+Он может существовать только:
 
-Editor должен валидировать непрерывность перед экспортом.
-
-Viewer:
-
-* не обязан исправлять разрывы;
-* должен вывести diagnostic warning;
-* должен продолжить загрузку валидных данных.
+* в runtime Track Editor;
+* во время preview;
+* во время validation;
+* во время export.
 
 ---
 
-# 17. Exported Track Snapshot
+## 3. Instance transform
+
+Transform содержит:
+
+```text
+position
+rotationDeg
+scaleX
+scaleY
+```
+
+Порядок применения:
+
+```text
+scale X/Y
+    ↓
+rotation
+    ↓
+translation
+```
+
+Одна общая transform-функция применяется ко всем локальным точкам.
+
+---
+
+## 4. Direction transform
+
+Направляющий вектор не получает translation.
+
+Для преобразования tangent:
+
+```text
+local tangent
+    ↓
+non-uniform scale
+    ↓
+rotation
+    ↓
+normalization
+    ↓
+world tangent
+```
+
+Нормализовать tangent до scale нельзя, если:
+
+```text
+scaleX != scaleY
+```
+
+так как это может дать неправильное мировое направление.
+
+---
+
+## 5. Global trajectory
+
+Глобальная trajectory представляет полный порядок движения по трассе.
+
+Она строится по `TrackProject.instances[]`.
+
+```text
+World trajectory instance 1
+        ↓
+Automatic transition 1 → 2
+        ↓
+World trajectory instance 2
+        ↓
+Automatic transition 2 → 3
+        ↓
+World trajectory instance 3
+```
+
+Все segments глобальной trajectory находятся в координатах площадки.
+
+---
+
+## 6. Automatic transition
+
+Automatic transition не является отдельной обязательной доменной сущностью Track Project.
+
+В Iteration 2 это производный `cubicBezier` segment.
+
+```text
+P0 = WorldExitPoint A
+P3 = WorldEntryPoint B
+
+P1 = P0 + WorldExitTangent A × L0
+P2 = P3 - WorldEntryTangent B × L1
+```
+
+Automatic transition существует:
+
+* в preview Track Editor;
+* в compiled global trajectory;
+* в Exported Track JSON.
+
+Он не существует в Track Project formatVersion 1.
+
+---
+
+## 7. Transition identity
+
+Переход получает детерминированный runtime/export ID:
+
+```text
+transition--{fromInstanceId}--{toInstanceId}
+```
+
+Это позволяет:
+
+* диагностировать ошибки;
+* сохранять уникальность;
+* в будущем связать transition override с конкретной парой instances.
+
+Существование ID не означает, что transition уже является сохраняемой сущностью Track Project.
+
+---
+
+## 8. Derived data
+
+К производным данным относятся:
+
+* transformed cones;
+* transformed markings;
+* transformed trajectory;
+* world entry/exit;
+* world tangents;
+* transition splines;
+* global trajectory;
+* exported IDs;
+* validation warnings.
+
+Они не должны становиться вторым редактируемым источником истины.
+
+Источник истины:
+
+```text
+Track Project
++
+Exercise Definitions
+```
+
+---
+
+## 9. Validation model
+
+Compilation возвращает не только snapshot, но и validation result:
+
+```text
+TrackCompilationResult
+├─ Snapshot
+├─ Errors[]
+└─ Warnings[]
+```
+
+При наличии blocking errors `Snapshot` не должен сохраняться как валидный export.
+
+Warnings не блокируют создание snapshot.
+
+---
+
+## 10. Blocking errors
+
+К blocking errors относятся:
+
+* unresolved Exercise Definition;
+* invalid instance transform;
+* invalid local trajectory;
+* broken trajectory continuity;
+* missing entry/exit geometry;
+* undefined tangent;
+* non-finite coordinate;
+* duplicate exported ID.
+
+---
+
+## 11. Warnings
+
+К warnings относятся:
+
+* geometry outside area;
+* intersecting instance bounds;
+* unusually long transition;
+* transition outside area;
+* sharp transition;
+* very short transition.
+
+Warnings описывают потенциальную проблему трассы, но не обязательно делают файл технически невалидным.
+
+---
+
+## 12. Export snapshot stability
+
+После создания Exported Track JSON дальнейшее изменение Exercise Definition не изменяет уже сохранённый snapshot.
+
+Это ключевое отличие:
+
+```text
+Track Project
+```
+
+зависит от библиотеки, а:
+
+```text
+Exported Track JSON
+```
+
+является самодостаточным.
+
+---
+
+## 13. Future transition overrides
+
+В будущей итерации может появиться:
+
+```text
+TransitionOverride
+```
+
+который сохранит пользовательские control points для пары соседних instances.
+
+До его реализации:
+
+* transitions вычисляются автоматически;
+* не редактируются вручную;
+* не сериализуются в Track Project;
+* пересчитываются после каждого релевантного изменения.
+
+---
+
+# 16. Exported Track Snapshot
 
 Viewer не зависит от библиотеки `ExerciseDefinition`.
 
@@ -583,7 +807,7 @@ Viewer не восстанавливает исходную структуру �
 
 ---
 
-# 18. Разделение ответственности
+# 17. Разделение ответственности
 
 ```text
 ExerciseDefinition Library
@@ -647,7 +871,7 @@ Viewer не должен:
 
 ---
 
-# 19. Расширяемость trajectory
+# 18. Расширяемость trajectory
 
 Общая структура:
 
