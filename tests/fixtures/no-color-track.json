@@ -1,0 +1,28 @@
+{
+  "formatVersion": 3,
+  "track": {
+    "id": "no-color-cone-test",
+    "name": "No Color Cone Test"
+  },
+  "area": {
+    "width": 20.0,
+    "length": 20.0
+  },
+  "elements": [],
+  "cones": [
+    {
+      "id": "cone-without-topper",
+      "position": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "color": "none",
+      "type": "standard"
+    }
+  ],
+  "markings": [],
+  "trajectory": {
+    "segments": []
+  },
+  "checkpoints": []
+}

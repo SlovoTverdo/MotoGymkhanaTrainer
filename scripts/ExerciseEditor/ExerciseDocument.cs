@@ -140,6 +140,15 @@ public sealed class ExerciseDocument
     /// <summary>Returns a cone by id, or <see langword="null"/> if it no longer exists.</summary>
     public ConeDto? FindCone(string id) => Definition.Cones.FirstOrDefault(cone => cone.Id == id);
 
+    /// <summary>
+    /// Returns the cone already occupying a snapped local position. The small
+    /// tolerance protects the editor from harmless float serialization noise.
+    /// </summary>
+    public ConeDto? FindConeAt(Point2Dto position, float toleranceMeters = 0.0001f) =>
+        Definition.Cones.LastOrDefault(cone =>
+            MathF.Abs(cone.Position.X - position.X) <= toleranceMeters &&
+            MathF.Abs(cone.Position.Y - position.Y) <= toleranceMeters);
+
     /// <summary>Adds a valid line/polyline and returns its deterministic id.</summary>
     public string AddMarking(string type, IEnumerable<Point2Dto> points)
     {
@@ -306,12 +315,74 @@ public sealed class ExerciseDocument
             : (segment.Start!, segment.End!);
     }
 
-    /// <summary>Starts replacement construction while always retaining a valid two-point polyline.</summary>
+    /// <summary>
+    /// Starts the legacy/programmatic replacement polyline. Existing polyline
+    /// editing callers retain this operation while the interactive builder uses
+    /// <see cref="StartSplineTrajectoryAt"/> for its new default.
+    /// </summary>
     public void StartTrajectoryAt(Point2Dto position)
     {
         string id = Definition.Trajectory.Segments.FirstOrDefault()?.Id ?? DefaultTrajectoryId;
         Definition.Trajectory = CreateSinglePolyline(id, [position, position]);
         SynchronizeEndpointsFromTrajectory();
+    }
+
+    /// <summary>
+    /// Starts interactive replacement construction with a temporarily degenerate
+    /// cubic. Saving remains blocked until the second click supplies its real end.
+    /// </summary>
+    public void StartSplineTrajectoryAt(Point2Dto position)
+    {
+        string id = Definition.Trajectory.Segments.FirstOrDefault()?.Id ?? DefaultTrajectoryId;
+        Definition.Trajectory = new TrajectoryDto
+        {
+            Segments = [CreateStraightCubic(id, position, position)],
+        };
+        SynchronizeEndpointsFromTrajectory();
+    }
+
+    /// <summary>Completes the first construction spline as a straight cubic.</summary>
+    public int SetInitialTrajectorySplineEnd(Point2Dto position)
+    {
+        TrajectorySegmentDto segment = Definition.Trajectory.Segments[0];
+        if (Definition.Trajectory.Segments.Length != 1 || segment.Type != "cubicBezier")
+        {
+            throw new InvalidOperationException("Initial construction requires one cubicBezier segment.");
+        }
+
+        Point2Dto start = CopyPoint(segment.Start!);
+        Definition.Trajectory.Segments[0] = CreateStraightCubic(segment.Id, start, position);
+        SynchronizeEndpointsFromTrajectory();
+        return 1;
+    }
+
+    /// <summary>
+    /// Appends a cubic whose first derivative matches the preceding segment.
+    /// Mirroring the previous outgoing handle through the shared anchor gives
+    /// C1 continuity for adjacent cubics without a separate smooth-mode state.
+    /// </summary>
+    public int AppendTrajectorySpline(Point2Dto position)
+    {
+        TrajectorySegmentDto previous = Definition.Trajectory.Segments[^1];
+        Point2Dto start = CopyPoint(GetSegmentEnd(previous));
+        Point2Dto outgoing = GetOutgoingTangentVector(previous);
+        if (VectorLengthSquared(outgoing) <= 0.000001f)
+        {
+            outgoing = ScaleVector(Subtract(position, start), 1.0f / 3.0f);
+        }
+
+        var segment = new TrajectorySegmentDto
+        {
+            Id = CreateUniqueSegmentId(),
+            Type = "cubicBezier",
+            Start = CopyPoint(start),
+            Control1 = Translate(start, outgoing.X, outgoing.Y),
+            Control2 = Lerp(start, position, 2.0f / 3.0f),
+            End = CopyPoint(position),
+        };
+        Definition.Trajectory.Segments = [.. Definition.Trajectory.Segments, segment];
+        SynchronizeEndpointsFromTrajectory();
+        return TrajectoryPointCount - 1;
     }
 
     /// <summary>
@@ -720,6 +791,22 @@ public sealed class ExerciseDocument
         };
     }
 
+    private static TrajectorySegmentDto CreateStraightCubic(
+        string segmentId,
+        Point2Dto start,
+        Point2Dto end)
+    {
+        return new TrajectorySegmentDto
+        {
+            Id = string.IsNullOrWhiteSpace(segmentId) ? DefaultTrajectoryId : segmentId,
+            Type = "cubicBezier",
+            Start = CopyPoint(start),
+            Control1 = Lerp(start, end, 1.0f / 3.0f),
+            Control2 = Lerp(start, end, 2.0f / 3.0f),
+            End = CopyPoint(end),
+        };
+    }
+
     private int FindConeIndex(string id) => Array.FindIndex(Definition.Cones, cone => cone.Id == id);
 
     private string CreateUniqueConeId()
@@ -758,6 +845,13 @@ public sealed class ExerciseDocument
         return segment.Type == "polyline" ? segment.Points![^1] : segment.End!;
     }
 
+    private static Point2Dto GetOutgoingTangentVector(TrajectorySegmentDto segment)
+    {
+        return segment.Type == "cubicBezier"
+            ? Subtract(segment.End!, segment.Control2!)
+            : Subtract(segment.Points![^1], segment.Points[^2]);
+    }
+
     private static Point2Dto Lerp(Point2Dto start, Point2Dto end, float weight)
     {
         return new Point2Dto
@@ -771,6 +865,15 @@ public sealed class ExerciseDocument
     {
         return new Point2Dto { X = point.X + deltaX, Y = point.Y + deltaY };
     }
+
+    private static Point2Dto Subtract(Point2Dto left, Point2Dto right) =>
+        new() { X = left.X - right.X, Y = left.Y - right.Y };
+
+    private static Point2Dto ScaleVector(Point2Dto vector, float scale) =>
+        new() { X = vector.X * scale, Y = vector.Y * scale };
+
+    private static float VectorLengthSquared(Point2Dto vector) =>
+        vector.X * vector.X + vector.Y * vector.Y;
 
     private static bool PointsEqual(Point2Dto left, Point2Dto right)
     {

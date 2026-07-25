@@ -753,6 +753,14 @@ public partial class TrackViewer : Node3D
         model.Name = "TrafficConeModel";
         root.AddChild(model);
 
+        // "none" deliberately means the authored traffic-cone model stands on
+        // its own. No invisible placeholder is created, so runtime scene state
+        // also clearly reflects the absence of a navigation-color topper.
+        if (string.Equals(cone.Color, "none", StringComparison.OrdinalIgnoreCase))
+        {
+            return root;
+        }
+
         var topperMaterial = new StandardMaterial3D
         {
             AlbedoColor = ResolveConeColor(cone.Color),

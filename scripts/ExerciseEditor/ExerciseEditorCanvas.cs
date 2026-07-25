@@ -511,6 +511,15 @@ public partial class ExerciseEditorCanvas : Control
     private void AddConeAt(Vector2 screenPosition)
     {
         Point2Dto position = Snap(ScreenToDomain(screenPosition));
+        ConeDto? existing = _document!.FindConeAt(position);
+        if (existing is not null)
+        {
+            SelectCone(existing.Id);
+            MessageRequested?.Invoke(
+                $"Cone '{existing.Id}' already occupies this position and was selected.", false);
+            return;
+        }
+
         string coneId = _document!.AddCone(position);
         SelectCone(coneId);
         DocumentChanged?.Invoke();
@@ -545,17 +554,16 @@ public partial class ExerciseEditorCanvas : Control
         int selectedIndex;
         if (_trajectoryBuildClickCount == 0)
         {
-            _document!.StartTrajectoryAt(position);
+            _document!.StartSplineTrajectoryAt(position);
             selectedIndex = 0;
         }
         else if (_trajectoryBuildClickCount == 1)
         {
-            _document!.MoveTrajectoryPoint(1, position);
-            selectedIndex = 1;
+            selectedIndex = _document!.SetInitialTrajectorySplineEnd(position);
         }
         else
         {
-            selectedIndex = _document!.AppendTrajectoryPoint(position);
+            selectedIndex = _document!.AppendTrajectorySpline(position);
         }
 
         _trajectoryBuildClickCount++;
@@ -651,10 +659,13 @@ public partial class ExerciseEditorCanvas : Control
 
     private void ZoomAt(Vector2 screenPosition, float factor)
     {
-        Point2Dto fixedDomainPoint = ScreenToDomain(screenPosition);
-        _pixelsPerMeter = Mathf.Clamp(_pixelsPerMeter * factor, MinimumPixelsPerMeter, MaximumPixelsPerMeter);
-        Vector2 scaledDomain = DomainVectorToScreen(fixedDomainPoint, _pixelsPerMeter);
-        _panPixels = screenPosition - Size / 2.0f - scaledDomain;
+        float updated = Mathf.Clamp(
+            _pixelsPerMeter * factor,
+            MinimumPixelsPerMeter,
+            MaximumPixelsPerMeter);
+        _panPixels = EditorCanvasMath.ZoomAt(
+            screenPosition, Size, _panPixels, _pixelsPerMeter, updated);
+        _pixelsPerMeter = updated;
         QueueRedraw();
     }
 
@@ -1051,12 +1062,7 @@ public partial class ExerciseEditorCanvas : Control
 
     private Vector2 DomainToScreen(Point2Dto point)
     {
-        return Size / 2.0f + _panPixels + DomainVectorToScreen(point, _pixelsPerMeter);
-    }
-
-    private static Vector2 DomainVectorToScreen(Point2Dto point, float pixelsPerMeter)
-    {
-        return new Vector2(point.X * pixelsPerMeter, -point.Y * pixelsPerMeter);
+        return EditorCanvasMath.DomainToScreen(point, Size, _panPixels, _pixelsPerMeter);
     }
 
     private Point2Dto ScreenToDomain(Vector2 screenPosition)
@@ -1066,34 +1072,18 @@ public partial class ExerciseEditorCanvas : Control
          * hit testing and construction: remove centre/pan, divide by zoom, then
          * restore the upward local Y axis. One resulting unit is one metre.
          */
-        Vector2 relative = screenPosition - Size / 2.0f - _panPixels;
-        return new Point2Dto
-        {
-            X = relative.X / _pixelsPerMeter,
-            Y = -relative.Y / _pixelsPerMeter,
-        };
+        return EditorCanvasMath.ScreenToDomain(
+            screenPosition, Size, _panPixels, _pixelsPerMeter);
     }
 
     private static Point2Dto Snap(Point2Dto point)
     {
-        return new Point2Dto
-        {
-            X = Mathf.Snapped(point.X, SnapStepMeters),
-            Y = Mathf.Snapped(point.Y, SnapStepMeters),
-        };
+        return EditorCanvasMath.Snap(point, SnapStepMeters);
     }
 
     private static float DistanceToScreenSegment(Vector2 point, Vector2 start, Vector2 end)
     {
-        Vector2 delta = end - start;
-        float lengthSquared = delta.LengthSquared();
-        if (lengthSquared <= Mathf.Epsilon)
-        {
-            return point.DistanceTo(start);
-        }
-
-        float t = Mathf.Clamp((point - start).Dot(delta) / lengthSquared, 0.0f, 1.0f);
-        return point.DistanceTo(start + delta * t);
+        return EditorCanvasMath.DistanceToSegment(point, start, end);
     }
 
     private static Color ResolveConeColor(string color)
@@ -1103,6 +1093,7 @@ public partial class ExerciseEditorCanvas : Control
             "blue" => new Color(0.18f, 0.45f, 1.0f),
             "yellow" => new Color(1.0f, 0.82f, 0.12f),
             "orange" => new Color(1.0f, 0.42f, 0.08f),
+            "none" => new Color(0.82f, 0.34f, 0.08f),
             _ => new Color(0.95f, 0.18f, 0.14f),
         };
     }

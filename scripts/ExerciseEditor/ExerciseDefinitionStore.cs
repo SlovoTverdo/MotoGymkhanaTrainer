@@ -29,7 +29,7 @@ public static class ExerciseDefinitionStore
     private const int LegacyFormatVersion = 1;
     private const float EndpointToleranceMeters = 0.001f;
     private static readonly HashSet<string> SupportedColors =
-        ["red", "blue", "yellow", "orange"];
+        ["red", "blue", "yellow", "orange", "none"];
 
     private static readonly JsonSerializerOptions ReadOptions = new()
     {
@@ -161,7 +161,7 @@ public static class ExerciseDefinitionStore
             {
                 throw ContractError(
                     sourceName,
-                    $"cones[{index}].color must be red, blue, yellow or orange");
+                    $"cones[{index}].color must be red, blue, yellow, orange or none");
             }
         }
 
@@ -360,9 +360,10 @@ public static class ExerciseDefinitionStore
         string sourceName,
         ICollection<string> warnings)
     {
-        for (int markingIndex = 0; markingIndex < (definition.Markings?.Length ?? 0); markingIndex++)
+        MarkingDto[] markings = definition.Markings ?? [];
+        for (int markingIndex = 0; markingIndex < markings.Length; markingIndex++)
         {
-            MarkingDto? marking = definition.Markings[markingIndex];
+            MarkingDto? marking = markings[markingIndex];
             if (marking is null)
             {
                 continue;

@@ -14,7 +14,7 @@ public partial class ExerciseEditor : Control
         OpenLibrary,
     }
 
-    private static readonly string[] ConeColors = ["red", "blue", "yellow", "orange"];
+    private static readonly string[] ConeColors = ["red", "blue", "yellow", "orange", "none"];
 
     private ExerciseDocument _document = ExerciseDocument.CreateNew();
     private ExerciseLibrary? _library;
@@ -197,7 +197,6 @@ public partial class ExerciseEditor : Control
             ButtonGroup = toolGroup,
         };
         _trajectoryToolButton.Pressed += () => SetTool(ExerciseEditorTool.EditTrajectory);
-        toolbar.AddChild(_trajectoryToolButton);
 
         _lineMarkingToolButton = new Button
         {
@@ -219,14 +218,16 @@ public partial class ExerciseEditor : Control
         _polylineMarkingToolButton.Pressed += () => SetTool(ExerciseEditorTool.AddPolylineMarking);
         toolbar.AddChild(_polylineMarkingToolButton);
 
+        _finishMarkingButton = CreateButton("FinishMarkingButton", "Finish Marking", FinishMarkingBuild);
+        _finishMarkingButton.Disabled = true;
+        toolbar.AddChild(_finishMarkingButton);
+
         _startTrajectoryButton = CreateButton("StartTrajectoryButton", "Start Trajectory", BeginTrajectoryBuild);
         _finishTrajectoryButton = CreateButton("FinishTrajectoryButton", "Finish Trajectory", FinishTrajectoryBuild);
         _finishTrajectoryButton.Disabled = true;
         toolbar.AddChild(_startTrajectoryButton);
+        toolbar.AddChild(_trajectoryToolButton);
         toolbar.AddChild(_finishTrajectoryButton);
-        _finishMarkingButton = CreateButton("FinishMarkingButton", "Finish Marking", FinishMarkingBuild);
-        _finishMarkingButton.Disabled = true;
-        toolbar.AddChild(_finishMarkingButton);
         toolbar.AddChild(CreateButton("DeleteButton", "Delete selected", () => DeleteSelectedObject()));
         return toolbar;
     }

@@ -1,0 +1,310 @@
+{
+  "formatVersion": 2,
+  "exercise": {
+    "id": "snake-001",
+    "name": "\u0417\u043C\u0435\u0439\u043A\u0430",
+    "version": 1
+  },
+  "bounds": {
+    "width": 5,
+    "length": 16
+  },
+  "cones": [
+    {
+      "id": "cone-001",
+      "position": {
+        "x": -2.5,
+        "y": -8
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-002",
+      "position": {
+        "x": 2.5,
+        "y": -8
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-003",
+      "position": {
+        "x": 2.5,
+        "y": 8
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-004",
+      "position": {
+        "x": -2.5,
+        "y": 8
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-005",
+      "position": {
+        "x": 0.5,
+        "y": 8
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-006",
+      "position": {
+        "x": 0.5,
+        "y": -8
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-007",
+      "position": {
+        "x": 0.5,
+        "y": 0
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-008",
+      "position": {
+        "x": -0.5,
+        "y": -4
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-009",
+      "position": {
+        "x": -0.5,
+        "y": 4
+      },
+      "color": "yellow",
+      "type": "standard"
+    }
+  ],
+  "markings": [
+    {
+      "id": "marking-001",
+      "type": "polyline",
+      "points": [
+        {
+          "x": 0.5,
+          "y": 8
+        },
+        {
+          "x": -2.5,
+          "y": 8
+        },
+        {
+          "x": -2.5,
+          "y": -8
+        },
+        {
+          "x": 0.5,
+          "y": -8
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "solid",
+      "visibleInViewer": true
+    },
+    {
+      "id": "marking-002",
+      "type": "line",
+      "points": [
+        {
+          "x": 2.5,
+          "y": 8
+        },
+        {
+          "x": 2.5,
+          "y": -8
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "solid",
+      "visibleInViewer": true
+    },
+    {
+      "id": "marking-003",
+      "type": "line",
+      "points": [
+        {
+          "x": 0.5,
+          "y": 8
+        },
+        {
+          "x": 2.5,
+          "y": 8
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.081,
+      "style": "dashed",
+      "visibleInViewer": true
+    },
+    {
+      "id": "marking-004",
+      "type": "line",
+      "points": [
+        {
+          "x": 2.5,
+          "y": -8
+        },
+        {
+          "x": 0.5,
+          "y": -8
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "dashed",
+      "visibleInViewer": true
+    }
+  ],
+  "entryPoint": {
+    "x": 1.5,
+    "y": -8
+  },
+  "exitPoint": {
+    "x": 1.5,
+    "y": 8
+  },
+  "trajectory": {
+    "segments": [
+      {
+        "id": "trajectory-segment-002",
+        "type": "cubicBezier",
+        "start": {
+          "x": 1.5,
+          "y": -8
+        },
+        "control1": {
+          "x": 1.5,
+          "y": -7.5
+        },
+        "control2": {
+          "x": 1.5,
+          "y": -7.25
+        },
+        "end": {
+          "x": 1,
+          "y": -6.75
+        }
+      },
+      {
+        "id": "trajectory-segment-001",
+        "type": "cubicBezier",
+        "start": {
+          "x": 1,
+          "y": -6.75
+        },
+        "control1": {
+          "x": 0.16666663,
+          "y": -5.9166665
+        },
+        "control2": {
+          "x": -1.5,
+          "y": -5.25
+        },
+        "end": {
+          "x": -1.5,
+          "y": -4
+        }
+      },
+      {
+        "id": "trajectory-segment-003",
+        "type": "cubicBezier",
+        "start": {
+          "x": -1.5,
+          "y": -4
+        },
+        "control1": {
+          "x": -1.5,
+          "y": -2.5
+        },
+        "control2": {
+          "x": 1.5,
+          "y": -1.5
+        },
+        "end": {
+          "x": 1.5,
+          "y": 0
+        }
+      },
+      {
+        "id": "trajectory-segment-004",
+        "type": "cubicBezier",
+        "start": {
+          "x": 1.5,
+          "y": 0
+        },
+        "control1": {
+          "x": 1.5,
+          "y": 1.5
+        },
+        "control2": {
+          "x": -1.5,
+          "y": 2.5
+        },
+        "end": {
+          "x": -1.5,
+          "y": 4
+        }
+      },
+      {
+        "id": "trajectory-segment-005",
+        "type": "cubicBezier",
+        "start": {
+          "x": -1.5,
+          "y": 4
+        },
+        "control1": {
+          "x": -1.5,
+          "y": 5.5
+        },
+        "control2": {
+          "x": 0.25,
+          "y": 6.25
+        },
+        "end": {
+          "x": 1,
+          "y": 6.75
+        }
+      },
+      {
+        "id": "trajectory-segment-006",
+        "type": "cubicBezier",
+        "start": {
+          "x": 1,
+          "y": 6.75
+        },
+        "control1": {
+          "x": 1.5,
+          "y": 7
+        },
+        "control2": {
+          "x": 1.5,
+          "y": 7.6666665
+        },
+        "end": {
+          "x": 1.5,
+          "y": 8
+        }
+      }
+    ]
+  },
+  "checkpoints": []
+}

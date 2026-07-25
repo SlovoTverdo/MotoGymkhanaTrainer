@@ -1,6 +1,7 @@
 using Godot;
 using MotoGymkhanaTrainer;
 using MotoGymkhanaTrainer.ExerciseEditor;
+using MotoGymkhanaTrainer.TrackEditor;
 using MotoGymkhanaTrainer.Tracks;
 
 const string ProjectDirectory = "E:\\Projects\\Games\\MotoGymkhanaTrainer";
@@ -8,6 +9,7 @@ string samplePath = Path.Combine(ProjectDirectory, "examples", "courses", "basic
 string json = File.ReadAllText(samplePath);
 string alternatePath = Path.Combine(ProjectDirectory, "tests", "fixtures", "alternate-track.json");
 string invalidFixturePath = Path.Combine(ProjectDirectory, "tests", "fixtures", "invalid-track.json");
+string noColorFixturePath = Path.Combine(ProjectDirectory, "tests", "fixtures", "no-color-track.json");
 
 TrackSnapshotDto snapshot = TrackLoader.LoadFromJson(json, samplePath);
 AssertEqual(3, snapshot.FormatVersion, "sample uses formatVersion 3");
@@ -26,6 +28,11 @@ AssertEqual(2, alternate.Cones.Length, "the second track supplies its own runtim
 AssertEqual(3, alternate.FormatVersion, "Track version 2 migrates to version 3 in memory");
 AssertEqual("solid", alternate.Markings[0].Style, "Track v2 marking receives the solid default");
 AssertTrue(alternate.Markings[0].VisibleInViewer, "Track v2 marking receives visibleInViewer=true");
+
+TrackSnapshotDto noColorTrack = TrackLoader.LoadFromJson(
+    File.ReadAllText(noColorFixturePath), noColorFixturePath);
+AssertEqual("none", noColorTrack.Cones[0].Color,
+    "exported Track preserves the no-topper cone color sentinel");
 
 TrajectorySegmentDto polyline = snapshot.Trajectory.Segments[0];
 AssertEqual("trajectory-segment-001", polyline.Id, "polyline segment id loads");
@@ -138,6 +145,7 @@ AssertEqual("cone-002", secondConeId, "Exercise Editor generates a second unique
 
 exercise.MoveCone(firstConeId, new Point2Dto { X = 2.0f, Y = -1.5f });
 exercise.SetConeColor(firstConeId, "blue");
+exercise.SetConeColor(secondConeId, "none");
 exercise.StartTrajectoryAt(new Point2Dto { X = 0.0f, Y = -5.0f });
 exercise.MoveTrajectoryPoint(1, new Point2Dto { X = -2.0f, Y = -2.5f });
 exercise.AppendTrajectoryPoint(new Point2Dto { X = 2.0f, Y = 0.0f });
@@ -148,11 +156,33 @@ exercise.Definition.Bounds.Length = 6.0f;
 
 AssertEqual(2.0f, exercise.FindCone(firstConeId)!.Position.X, "a cone can be moved in local X/Y metres");
 AssertEqual("blue", exercise.FindCone(firstConeId)!.Color, "a cone color can be edited");
+AssertEqual("none", exercise.FindCone(secondConeId)!.Color, "a cone can explicitly omit its color topper");
+AssertEqual(secondConeId, exercise.FindConeAt(new Point2Dto { X = -1.0f, Y = 3.0f })!.Id,
+    "snapped duplicate placement resolves the existing cone instead of requiring a new id");
 AssertEqual(-1.0f, exercise.FindCone(secondConeId)!.Position.X, "bounds changes do not scale existing cones");
 AssertEqual(1, exercise.Definition.Trajectory.Segments.Length, "a newly constructed trajectory starts as one segment");
 AssertEqual("polyline", exercise.Definition.Trajectory.Segments[0].Type, "editable trajectory is a polyline");
 AssertEqual("trajectory-segment-001", exercise.Definition.Trajectory.Segments[0].Id,
     "new trajectory has a stable segment id");
+
+ExerciseDocument splineBuild = ExerciseDocument.CreateNew("spline-build", "Spline Build");
+splineBuild.StartSplineTrajectoryAt(new Point2Dto { X = 0.0f, Y = 0.0f });
+splineBuild.SetInitialTrajectorySplineEnd(new Point2Dto { X = 3.0f, Y = 0.0f });
+int appendedSplineAnchor = splineBuild.AppendTrajectorySpline(new Point2Dto { X = 6.0f, Y = 3.0f });
+AssertEqual(2, splineBuild.Definition.Trajectory.Segments.Length,
+    "trajectory click construction creates one ordered segment per section");
+AssertTrue(splineBuild.Definition.Trajectory.Segments.All(segment => segment.Type == "cubicBezier"),
+    "new trajectory sections default directly to persisted cubicBezier geometry");
+TrajectorySegmentDto firstBuiltSpline = splineBuild.Definition.Trajectory.Segments[0];
+TrajectorySegmentDto secondBuiltSpline = splineBuild.Definition.Trajectory.Segments[1];
+AssertEqual(2, appendedSplineAnchor, "appended spline returns its final conceptual anchor");
+AssertTrue(MathF.Abs((firstBuiltSpline.End!.X - firstBuiltSpline.Control2!.X) -
+                     (secondBuiltSpline.Control1!.X - secondBuiltSpline.Start!.X)) < 0.0001f &&
+           MathF.Abs((firstBuiltSpline.End.Y - firstBuiltSpline.Control2.Y) -
+                     (secondBuiltSpline.Control1.Y - secondBuiltSpline.Start.Y)) < 0.0001f,
+    "adjacent construction splines have matching derivatives at their shared anchor");
+AssertTrue(splineBuild.ConvertCubicToLine(1) is not null,
+    "a newly constructed spline can still be converted back to a line");
 AssertEqual(5, exercise.TrajectoryPointCount, "a five-point polyline can be constructed");
 AssertEqual(-5.0f, exercise.Definition.EntryPoint.Y, "first trajectory point is the EntryPoint source");
 AssertEqual(5.0f, exercise.Definition.ExitPoint.Y, "last trajectory point is the ExitPoint source");
@@ -301,6 +331,7 @@ try
     AssertEqual("iteration-3-test", reopened.Exercise.Id, "saved Exercise Definition reopens successfully");
     AssertEqual(2, reopened.Cones.Length, "reopened Exercise Definition retains all cones");
     AssertEqual("blue", reopened.Cones[0].Color, "reopened Exercise Definition retains cone edits");
+    AssertEqual("none", reopened.Cones[1].Color, "Exercise JSON round-trip retains color none");
     AssertEqual(5, reopened.Trajectory.Segments[0].Points!.Length,
         "reopened Exercise Definition retains the full polyline");
 }
@@ -459,7 +490,156 @@ finally
     }
 }
 
-Console.WriteLine("All Viewer and Exercise Editor Iteration 4 checks passed.");
+string temporaryTrackTestRoot = Path.Combine(Path.GetTempPath(), $"motogymkhana-track-editor-{Guid.NewGuid():N}");
+try
+{
+    string exerciseRoot = Path.Combine(temporaryTrackTestRoot, "exercises");
+    string trackRoot = Path.Combine(temporaryTrackTestRoot, "tracks");
+    var exerciseLibrary = new SandboxedJsonLibrary(exerciseRoot, "Exercise library", "res://exercises/");
+    var trackLibrary = new SandboxedJsonLibrary(trackRoot, "Track Project library", "res://tracks/");
+    string firstExercisePath = Path.Combine(exerciseRoot, "polyline.json");
+    string secondExercisePath = Path.Combine(exerciseRoot, "multi.json");
+    File.Copy(Path.Combine(ProjectDirectory, "tests", "fixtures", "polyline-exercise.json"), firstExercisePath);
+    File.Copy(Path.Combine(ProjectDirectory, "tests", "fixtures", "multi-segment-exercise.json"), secondExercisePath);
+    ExerciseDefinitionDto firstDefinition = ExerciseDefinitionStore.LoadFromFile(firstExercisePath);
+    ExerciseDefinitionDto secondDefinition = ExerciseDefinitionStore.LoadFromFile(secondExercisePath);
+
+    TrackProjectDocument trackDocument = TrackProjectDocument.CreateNew();
+    AssertEqual(60.0f, trackDocument.Project.Area.Width, "new Track Project uses the documented 60 m width");
+    AssertEqual(100.0f, trackDocument.Project.Area.Length, "new Track Project uses the documented 100 m length");
+    AssertEqual(0, trackDocument.Project.Instances.Length, "new Track Project starts with no instances");
+    trackDocument.Project.Area.Width = 72.0f;
+    trackDocument.Project.Area.Length = 110.0f;
+    string emptyProjectJson = TrackProjectStore.Serialize(trackDocument.Project, exerciseLibrary);
+    TrackProjectLoadResult emptyProjectReload = TrackProjectStore.LoadFromJson(
+        emptyProjectJson, "empty.track.json", exerciseLibrary);
+    AssertEqual(0, emptyProjectReload.Project.Instances.Length,
+        "an empty Track Project saves and reopens without special handling");
+    AssertEqual(72.0f, emptyProjectReload.Project.Area.Width,
+        "edited area dimensions survive an empty-project round trip");
+
+    string firstInstance = trackDocument.AddInstance("polyline.json", firstDefinition);
+    string secondInstance = trackDocument.AddInstance("polyline.json", firstDefinition);
+    string thirdInstance = trackDocument.AddInstance("multi.json", secondDefinition);
+    AssertEqual("exercise-instance-001", firstInstance, "first Track instance id is deterministic");
+    AssertEqual("exercise-instance-002", secondInstance, "the same Exercise can be instantiated more than once");
+    AssertEqual(3, trackDocument.Project.Instances.Length, "a different Exercise can join Route Order");
+
+    AssertTrue(trackDocument.SetTransform(firstInstance,
+        new Point2Dto { X = 10.0f, Y = -5.0f }, 90.0f,
+        new Point2Dto { X = 2.0f, Y = 0.5f }), "instance position, rotation and independent scale are editable");
+    Point2Dto transformed = ExerciseInstanceGeometry.TransformPoint(
+        new Point2Dto { X = 2.0f, Y = 4.0f },
+        trackDocument.FindInstance(firstInstance)!.Position,
+        trackDocument.FindInstance(firstInstance)!.RotationDeg,
+        trackDocument.FindInstance(firstInstance)!.Scale);
+    AssertTrue(MathF.Abs(transformed.X - 8.0f) < 0.0001f && MathF.Abs(transformed.Y - -1.0f) < 0.0001f,
+        "point transform applies scale then CCW rotation then translation");
+    Point2Dto inverse = ExerciseInstanceGeometry.InverseTransformPoint(
+        transformed,
+        trackDocument.FindInstance(firstInstance)!.Position,
+        trackDocument.FindInstance(firstInstance)!.RotationDeg,
+        trackDocument.FindInstance(firstInstance)!.Scale);
+    AssertTrue(MathF.Abs(inverse.X - 2.0f) < 0.0001f && MathF.Abs(inverse.Y - 4.0f) < 0.0001f,
+        "inverse transform supports transformed-bounds selection");
+    Point2Dto rotationOnlyInverse = ExerciseInstanceGeometry.InverseRotationTranslation(
+        transformed,
+        trackDocument.FindInstance(firstInstance)!.Position,
+        trackDocument.FindInstance(firstInstance)!.RotationDeg);
+    AssertTrue(MathF.Abs(rotationOnlyInverse.X - 4.0f) < 0.0001f &&
+        MathF.Abs(rotationOnlyInverse.Y - 2.0f) < 0.0001f,
+        "mouse resize inverse keeps scaled local coordinates");
+
+    AssertTrue(trackDocument.ToggleHorizontalMirror(firstInstance),
+        "horizontal mirror toggles the persisted X scale sign");
+    AssertEqual(-2.0f, trackDocument.FindInstance(firstInstance)!.Scale.X,
+        "horizontal reflection preserves the X size magnitude");
+    Point2Dto mirrored = ExerciseInstanceGeometry.TransformPoint(
+        new Point2Dto { X = 2.0f, Y = 4.0f },
+        trackDocument.FindInstance(firstInstance)!.Position,
+        trackDocument.FindInstance(firstInstance)!.RotationDeg,
+        trackDocument.FindInstance(firstInstance)!.Scale);
+    AssertTrue(MathF.Abs(mirrored.X - 8.0f) < 0.0001f && MathF.Abs(mirrored.Y - -9.0f) < 0.0001f,
+        "the shared point transform reflects all exercise geometry before rotation");
+    AssertTrue(trackDocument.ToggleVerticalMirror(firstInstance),
+        "vertical mirror toggles the persisted Y scale sign");
+    AssertEqual(-0.5f, trackDocument.FindInstance(firstInstance)!.Scale.Y,
+        "vertical reflection preserves the Y size magnitude");
+    AssertEqual(0.25f,
+        EditorCanvasMath.Snap(new Point2Dto { X = 0.31f, Y = -0.37f }, 0.25f).X,
+        "Track drag reuses the common 0.25 m snap utility");
+
+    AssertTrue(trackDocument.MoveUp(thirdInstance), "Route Order Move Up changes instances[] order");
+    AssertEqual(thirdInstance, trackDocument.Project.Instances[1].InstanceId,
+        "Route Order array is the persisted traversal order");
+    AssertTrue(trackDocument.MoveDown(thirdInstance), "Route Order Move Down restores the item");
+    AssertTrue(trackDocument.DeleteInstance(secondInstance), "Delete removes only one Track instance");
+    AssertTrue(File.Exists(firstExercisePath), "deleting an instance does not delete its Exercise Definition");
+
+    string projectsFolder = trackLibrary.CreateFolder(string.Empty, "training");
+    string projectPath = trackLibrary.ResolveSaveJson(projectsFolder, "iteration-1.json");
+    TrackProjectStore.SaveToFile(trackDocument.Project, projectPath, exerciseLibrary);
+    TrackProjectLoadResult reopened = TrackProjectStore.LoadFromFile(projectPath, exerciseLibrary);
+    AssertEqual(2, reopened.Project.Instances.Length, "saved Track Project reopens with every remaining instance");
+    AssertEqual(firstInstance, reopened.Project.Instances[0].InstanceId, "instance order survives save and reload");
+    AssertEqual(90.0f, reopened.Project.Instances[0].RotationDeg, "rotation survives save and reload");
+    AssertEqual(-2.0f, reopened.Project.Instances[0].Scale.X, "mirrored X scale survives save and reload");
+    AssertEqual(-0.5f, reopened.Project.Instances[0].Scale.Y, "mirrored Y scale survives save and reload");
+    string serializedTrackProject = File.ReadAllText(projectPath);
+    AssertTrue(!serializedTrackProject.Contains("selectedInstance", StringComparison.OrdinalIgnoreCase) &&
+        !serializedTrackProject.Contains("zoom", StringComparison.OrdinalIgnoreCase) &&
+        !serializedTrackProject.Contains("trajectory", StringComparison.OrdinalIgnoreCase),
+        "Track Project excludes UI state, cached definitions and transformed geometry");
+
+    string damagedProject = "{ damaged";
+    AssertThrows<InvalidDataException>(
+        () => TrackProjectStore.LoadFromJson(damagedProject, "damaged.track.json", exerciseLibrary),
+        "damaged Track Project is rejected before replacing a live document");
+    AssertEqual(firstInstance, trackDocument.Project.Instances[0].InstanceId,
+        "failed candidate loading leaves the current Track document intact");
+
+    File.WriteAllText(Path.Combine(exerciseRoot, "broken.json"), "{ broken");
+    string unresolvedJson =
+        """{"formatVersion":1,"track":{"id":"unresolved","name":"Unresolved"},"area":{"width":60,"length":100},"instances":[{"instanceId":"exercise-instance-001","exercisePath":"missing.json","position":{"x":0,"y":0},"rotationDeg":0,"scale":{"x":1,"y":1}},{"instanceId":"exercise-instance-002","exercisePath":"broken.json","position":{"x":3,"y":4},"rotationDeg":15,"scale":{"x":1,"y":1}}]}""";
+    TrackProjectLoadResult unresolved = TrackProjectStore.LoadFromJson(
+        unresolvedJson, "unresolved.track.json", exerciseLibrary);
+    AssertEqual(2, unresolved.Project.Instances.Length, "missing and damaged Exercise files do not remove instances");
+    AssertEqual(0, unresolved.Definitions.Count, "bad Exercise dependencies remain unresolved caches");
+    AssertEqual(2, unresolved.Warnings.Count, "each unresolved instance produces a diagnostic warning");
+    string unresolvedSaved = TrackProjectStore.Serialize(unresolved.Project, exerciseLibrary);
+    AssertTrue(unresolvedSaved.Contains("missing.json"), "unresolved instances can be saved again");
+
+    AssertThrows<InvalidDataException>(
+        () => TrackProjectStore.LoadFromJson(
+            """{"formatVersion":1,"track":{"id":"escape","name":"Escape"},"area":{"width":60,"length":100},"instances":[{"instanceId":"exercise-instance-001","exercisePath":"../escape.json","position":{"x":0,"y":0},"rotationDeg":0,"scale":{"x":1,"y":1}}]}""",
+            "escape.track.json", exerciseLibrary),
+        "Track Project exercisePath cannot traverse outside res://exercises/");
+    TrackProjectLoadResult reflected = TrackProjectStore.LoadFromJson(
+        """{"formatVersion":1,"track":{"id":"scale","name":"Scale"},"area":{"width":60,"length":100},"instances":[{"instanceId":"exercise-instance-001","exercisePath":"polyline.json","position":{"x":0,"y":0},"rotationDeg":0,"scale":{"x":-1,"y":1}}]}""",
+        "negative-scale.track.json", exerciseLibrary);
+    AssertEqual(-1.0f, reflected.Project.Instances[0].Scale.X,
+        "negative non-zero scale is accepted as explicit mirror state");
+    AssertThrows<InvalidDataException>(
+        () => TrackProjectStore.LoadFromJson(
+            """{"formatVersion":1,"track":{"id":"scale","name":"Scale"},"area":{"width":60,"length":100},"instances":[{"instanceId":"exercise-instance-001","exercisePath":"polyline.json","position":{"x":0,"y":0},"rotationDeg":0,"scale":{"x":0,"y":1}}]}""",
+            "zero-scale.track.json", exerciseLibrary),
+        "zero instance scale is rejected");
+    AssertThrows<InvalidDataException>(
+        () => trackLibrary.CreateFolder(string.Empty, "../escape"),
+        "invalid Track library folder names are rejected");
+    AssertThrows<InvalidDataException>(
+        () => trackLibrary.ResolveUserPath(Path.Combine(trackRoot, "..", "escape.json")),
+        "Track library path traversal cannot leave res://tracks/");
+}
+finally
+{
+    if (Directory.Exists(temporaryTrackTestRoot))
+    {
+        Directory.Delete(temporaryTrackTestRoot, recursive: true);
+    }
+}
+
+Console.WriteLine("All Viewer, Exercise Editor Iteration 4 and Track Editor Iteration 1 checks passed.");
 
 static void AssertEqual<T>(T expected, T actual, string description)
     where T : IEquatable<T>

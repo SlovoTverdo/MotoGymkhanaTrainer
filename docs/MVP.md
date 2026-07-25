@@ -188,9 +188,9 @@ trajectory.segments[]
 
 ---
 
-# Будущий Editor — за пределами текущего MVP
+# Editor — разделение ответственности
 
-Когда будет реализован Editor:
+Track Editor:
 
 1. пользователь размещает ExerciseInstance;
 2. задаёт их порядок;
@@ -223,7 +223,6 @@ trajectory.segments[]
 # Не реализовывать до отдельного решения
 
 * Editor упражнений.
-* Editor трассы.
 * ExerciseDefinition library UI.
 * Автоматическое построение переходов.
 * Ручное редактирование Bezier control points.
