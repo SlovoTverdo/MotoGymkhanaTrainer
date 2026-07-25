@@ -394,6 +394,209 @@ Exported Track JSON решает проблему стабильности, со
 
 ---
 
+# Derived geometry and export
+
+## 1. Track Project не содержит готовую мировую geometry
+
+Track Project formatVersion 1 хранит только:
+
+* metadata;
+* area;
+* упорядоченные instances;
+* ссылки на Exercise Definition;
+* instance transforms.
+
+Следующие данные вычисляются Track Editor:
+
+* мировые позиции конусов;
+* мировые marking points;
+* мировые trajectory segments;
+* entry/exit;
+* tangents;
+* переходные cubicBezier;
+* global trajectory;
+* exported IDs.
+
+Они не сериализуются в Track Project.
+
+---
+
+## 2. Automatic transitions
+
+Между соседними элементами Route Order Track Editor автоматически создаёт переходный `cubicBezier`.
+
+Например:
+
+```text
+instances[0] → instances[1]
+instances[1] → instances[2]
+```
+
+Переходы вычисляются по:
+
+* world ExitPoint предыдущего instance;
+* world EntryPoint следующего instance;
+* world exit tangent предыдущего instance;
+* world entry tangent следующего instance.
+
+Track Project version 1 не содержит:
+
+```text
+transitions[]
+```
+
+или:
+
+```text
+connectors[]
+```
+
+Также он не содержит автоматически рассчитанные control points.
+
+---
+
+## 3. Причина отсутствия transitions в проекте
+
+Автоматический transition полностью определяется:
+
+* Route Order;
+* Exercise Definition;
+* position;
+* rotation;
+* scale;
+* алгоритмом Track Editor.
+
+Поэтому в Iteration 2 он является производным значением.
+
+Сохранение одновременно:
+
+* instance transforms;
+* calculated transitions;
+
+создало бы два потенциально рассинхронизированных источника данных.
+
+---
+
+## 4. Пересчёт transitions
+
+Track Editor пересчитывает переходы после:
+
+* открытия проекта;
+* добавления instance;
+* удаления instance;
+* изменения position;
+* изменения rotation;
+* изменения scale;
+* reorder;
+* обновления Exercise Definition;
+* успешного повторного разрешения unresolved instance.
+
+---
+
+## 5. Export
+
+Команда:
+
+```text
+Export for Viewer
+```
+
+не изменяет Track Project formatVersion 1.
+
+Она компилирует текущий проект в отдельный Exported Track JSON согласно:
+
+```text
+docs/TrackFormat.md
+```
+
+Track Project и exported snapshot сохраняются как разные файлы.
+
+---
+
+## 6. Export path не хранится
+
+Путь последнего exported Track JSON является UI/editor state.
+
+Он не сохраняется внутри Track Project JSON.
+
+Track Project также не хранит:
+
+* дату последнего export;
+* validation result;
+* export status;
+* Viewer path.
+
+Такие поля могут быть добавлены в editor metadata позднее, но не входят в version 1.
+
+---
+
+## 7. Unresolved instances и export
+
+Track Project может содержать unresolved instance и оставаться валидным редактируемым проектом.
+
+Такой проект:
+
+* можно открыть;
+* можно изменить;
+* можно повторно сохранить.
+
+Но export для Viewer блокируется, пока все участвующие в Route Order instances не будут успешно разрешены.
+
+---
+
+## 8. Empty project
+
+Пустой Track Project является валидным проектным файлом:
+
+```json
+{
+  "formatVersion": 1,
+  "track": {
+    "id": "new-track",
+    "name": "New Track"
+  },
+  "area": {
+    "width": 60.0,
+    "length": 100.0
+  },
+  "instances": []
+}
+```
+
+При этом Track Editor может блокировать экспорт пустого проекта.
+
+Проектная валидность и экспортная готовность являются разными понятиями.
+
+---
+
+# Что не входит в formatVersion 1
+
+Track Project version 1 не содержит:
+
+* копий geometry Exercise Definition;
+* transformed world geometry;
+* global trajectory;
+* automatic transition segments;
+* transition control points;
+* transition overrides;
+* exported object IDs;
+* export validation result;
+* export filename;
+* last export path;
+* checkpoints runtime state;
+* Viewer settings;
+* camera position;
+* zoom;
+* pan;
+* selected instance;
+* expanded library folders;
+* editor overlays;
+* environment objects;
+* thumbnails.
+
+UI state и derived geometry не сериализуются.
+
+
 # 15. Что не входит в formatVersion 1
 
 Track Project version 1 не содержит:
