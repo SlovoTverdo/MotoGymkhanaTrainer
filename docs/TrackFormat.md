@@ -12,7 +12,7 @@ Viewer не загружает библиотеку `ExerciseDefinition`, не �
 
 ```json
 {
-  "formatVersion": 2
+  "formatVersion": 3
 }
 ```
 
