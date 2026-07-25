@@ -189,6 +189,323 @@ Viewer не должен повторно применять:
 
 ---
 
+# Compiled export rules
+
+## 1. Источник экспортированных данных
+
+Exported Track JSON создаётся Track Editor из:
+
+```text
+Track Project
++
+Exercise Definition Library
+```
+
+К моменту сериализации Track Editor уже:
+
+* разрешил Exercise Definition;
+* применил ExerciseInstance transforms;
+* преобразовал geometry в мировые координаты;
+* вычислил entry/exit tangents;
+* создал переходные cubicBezier;
+* сформировал global trajectory;
+* проверил уникальность IDs.
+
+Viewer получает итоговый snapshot.
+
+---
+
+## 2. elements metadata
+
+`elements[]` описывает исходные ExerciseInstance только для:
+
+* диагностики;
+* анализа;
+* потенциальных будущих editor tools.
+
+Пример:
+
+```json
+{
+  "instanceId": "exercise-instance-001",
+  "definitionId": "slalom-5",
+  "exercisePath": "slaloms/slalom-5.json",
+
+  "position": {
+    "x": 12.0,
+    "y": -18.0
+  },
+
+  "rotationDeg": 30.0,
+
+  "scale": {
+    "x": 1.0,
+    "y": 1.25
+  }
+}
+```
+
+Обязательные поля:
+
+* `instanceId`;
+* `definitionId`;
+* `position`;
+* `rotationDeg`;
+* `scale`.
+
+`exercisePath` является необязательным диагностическим полем.
+
+Viewer не должен использовать `elements[]` для построения:
+
+* cones;
+* markings;
+* trajectory;
+* transitions.
+
+---
+
+## 3. Exported object IDs
+
+Все IDs должны быть уникальны в пределах соответствующей коллекции exported Track.
+
+Для объектов, пришедших из Exercise Definition, рекомендуется:
+
+```text
+{instanceId}--{localObjectId}
+```
+
+Примеры:
+
+```text
+exercise-instance-001--cone-001
+exercise-instance-001--marking-001
+exercise-instance-001--trajectory-segment-001
+```
+
+Для автоматически построенного перехода:
+
+```text
+transition--{fromInstanceId}--{toInstanceId}
+```
+
+Пример:
+
+```text
+transition--exercise-instance-001--exercise-instance-002
+```
+
+IDs не должны зависеть от:
+
+* `track.name`;
+* Exercise display name;
+* позиции instance в массиве;
+* имени экспортного файла.
+
+---
+
+## 4. Exported cones
+
+Экспортированный cone содержит:
+
+* уникальный world-level `id`;
+* world `position`;
+* `color`;
+* `type`.
+
+World position уже учитывает:
+
+* scale;
+* rotation;
+* translation.
+
+Viewer не должен повторно применять transform.
+
+---
+
+## 5. Exported markings
+
+Экспортированный marking содержит:
+
+* уникальный world-level `id`;
+* `type`;
+* world `points`;
+* `color`;
+* `widthMeters`;
+* `style`;
+* `visibleInViewer`.
+
+`points` уже учитывают instance transform.
+
+`widthMeters` не масштабируется вместе с ExerciseInstance.
+
+Marking с:
+
+```json
+"visibleInViewer": false
+```
+
+остаётся в JSON, но Viewer не создаёт его визуальное представление.
+
+---
+
+## 6. Global trajectory origin
+
+Exported `trajectory.segments[]` содержит единую глобальную последовательность:
+
+```text
+transformed Exercise trajectory
+        ↓
+automatic transition cubicBezier
+        ↓
+transformed Exercise trajectory
+        ↓
+...
+```
+
+Для Viewer все segments равноправны.
+
+Viewer не обязан определять, является segment:
+
+* внутренней trajectory упражнения;
+* автоматически созданным переходом;
+* в будущем вручную исправленным переходом.
+
+---
+
+## 7. Automatic transition representation
+
+Автоматический переход экспортируется как обычный:
+
+```json
+{
+  "id": "transition--exercise-instance-001--exercise-instance-002",
+  "type": "cubicBezier",
+
+  "start": {
+    "x": 10.0,
+    "y": 12.0
+  },
+
+  "control1": {
+    "x": 12.0,
+    "y": 14.0
+  },
+
+  "control2": {
+    "x": 17.0,
+    "y": 16.0
+  },
+
+  "end": {
+    "x": 19.0,
+    "y": 18.0
+  }
+}
+```
+
+Отдельные поля:
+
+```text
+connector
+fromElement
+toElement
+```
+
+не являются обязательными для rendering.
+
+Идентификатор transition уже позволяет диагностировать связанную пару instances.
+
+---
+
+## 8. Trajectory continuity
+
+Exported global trajectory должна быть непрерывной с небольшой численной погрешностью.
+
+Последовательность:
+
+```text
+previous segment end
+=
+next segment start
+```
+
+Track Editor обязан проверить это до сохранения export.
+
+Viewer при обнаружении разрыва:
+
+* выводит warning;
+* не падает;
+* отображает валидные segments;
+* не пытается автоматически перестроить transition.
+
+---
+
+## 9. Single-instance track
+
+Для трассы из одного ExerciseInstance:
+
+* global trajectory содержит только transformed trajectory упражнения;
+* transition segments отсутствуют.
+
+---
+
+## 10. Empty track
+
+Для production export рекомендуется требовать минимум один валидный ExerciseInstance.
+
+Если поддерживается пустой export, его каноническая trajectory:
+
+```json
+{
+  "trajectory": {
+    "segments": []
+  }
+}
+```
+
+Предпочтительное поведение Track Editor Iteration 2 — блокировать экспорт пустой трассы.
+
+---
+
+## 11. Export validation
+
+Перед сохранением Track Editor проверяет snapshot.
+
+Блокирующие условия:
+
+* unresolved ExerciseInstance;
+* невалидная Exercise trajectory;
+* невозможность вычислить tangent;
+* невалидный scale;
+* non-finite coordinates;
+* duplicate IDs;
+* разрыв global trajectory;
+* неподдерживаемый обязательный тип geometry.
+
+Предупреждения:
+
+* geometry за пределами area;
+* длинный transition;
+* transition за пределами area;
+* пересечение bounds;
+* резкий переход.
+
+Warnings не делают экспортный JSON структурно невалидным.
+
+---
+
+## 12. Snapshot independence
+
+После сохранения Exported Track JSON файл не зависит от:
+
+* Track Project;
+* Exercise Definition Library;
+* расположения исходных файлов;
+* последующих изменений упражнений.
+
+Это свойство обязательно для Viewer и для распространения готовых трасс.
+
+
 # 6. cones
 
 Все позиции конусов являются мировыми координатами.
