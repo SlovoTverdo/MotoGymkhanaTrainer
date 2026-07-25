@@ -753,3 +753,433 @@ snap settings
 * выполнить доступные проверки;
 * явно перечислить ручные проверки для пользователя;
 * не заявлять, что непроверенное действие успешно работает.
+
+# Editor Iteration 4 — Exercise Library and Markings
+
+## Цель
+
+Завершить базовую функциональность Exercise Editor:
+
+1. организовать Exercise Definition как библиотеку внутри проекта;
+2. поддержать пользовательские подпапки;
+3. добавить полноценное создание и редактирование markings;
+4. поддержать свойства:
+
+   * color;
+   * width;
+   * style;
+   * visibleInViewer.
+
+После завершения этой итерации Exercise Editor считается базово функционально завершённым.
+
+Отдельные arc/circle primitives пока не реализуются.
+
+---
+
+# 1. Exercise Library
+
+Корневой каталог:
+
+```text
+exercises/
+```
+
+Он является библиотекой Exercise Definition.
+
+Пример:
+
+```text
+exercises/
+├─ basic/
+├─ slalom/
+├─ circles/
+└─ custom/
+```
+
+Подпапки не имеют фиксированной семантики.
+
+Пользователь может создавать произвольную вложенную структуру.
+
+---
+
+## 1.1. Library root
+
+Exercise Editor должен считать:
+
+```text
+res://exercises/
+```
+
+корнем библиотеки.
+
+При первом запуске, если каталог отсутствует, его следует создать.
+
+Не создавать обязательный набор категорий автоматически.
+
+Пустой `exercises/` является валидным состоянием.
+
+---
+
+## 1.2. Library browser
+
+Exercise Editor должен отображать дерево:
+
+```text
+exercises/
+├─ folder
+│  ├─ subfolder
+│  └─ exercise.json
+└─ exercise.json
+```
+
+Минимальные операции:
+
+* выбрать папку;
+* открыть Exercise Definition;
+* создать подпапку;
+* сохранить текущий Exercise в выбранную папку;
+* обновить дерево.
+
+Удаление и переименование папок можно отложить, чтобы избежать рискованных файловых операций.
+
+---
+
+## 1.3. Create Folder
+
+Пользователь может создать подпапку внутри выбранной папки.
+
+Требования:
+
+* имя не пустое;
+* запрещены недопустимые для файловой системы символы;
+* нельзя выйти за пределы `exercises/`;
+* существующая папка не перезаписывается;
+* ошибка отображается пользователю.
+
+---
+
+## 1.4. Save Exercise
+
+Для нового документа:
+
+```text
+Save
+    ↓
+выбор папки в Exercise Library
+    ↓
+имя файла
+```
+
+Рекомендуемое имя по умолчанию строится из:
+
+```text
+exercise.id
+```
+
+например:
+
+```text
+slalom-5.json
+```
+
+Editor не должен автоматически перемещать существующий файл при изменении `exercise.id`.
+
+`Save As` может сохранять копию в другой папке.
+
+---
+
+## 1.5. Security boundary
+
+Все операции Exercise Library должны оставаться внутри:
+
+```text
+res://exercises/
+```
+
+Нельзя позволять относительным путям вида:
+
+```text
+../../
+```
+
+выходить из корня библиотеки.
+
+Пути должны нормализоваться и валидироваться.
+
+---
+
+# 2. Marking Editor
+
+Добавить инструмент:
+
+```text
+Add Marking
+```
+
+Первоначально поддерживаются:
+
+```text
+line
+polyline
+```
+
+---
+
+## 2.1. Создание line
+
+Пользователь:
+
+1. выбирает `Add Line`;
+2. задаёт первую точку;
+3. задаёт вторую точку;
+4. marking создаётся и становится выбранным.
+
+---
+
+## 2.2. Создание polyline
+
+Пользователь:
+
+1. выбирает `Add Polyline`;
+2. кликами добавляет points;
+3. завершает построение понятным действием.
+
+Минимум:
+
+```text
+2 points
+```
+
+---
+
+## 2.3. Редактирование points
+
+Для выбранного marking:
+
+* отображаются anchor points;
+* точки можно выбирать;
+* перемещать drag-and-drop;
+* редактировать X/Y численно.
+
+Для polyline желательно также поддержать:
+
+* вставку точки;
+* удаление внутренней точки.
+
+Не допускать менее двух points.
+
+---
+
+## 2.4. Marking properties
+
+Панель свойств выбранного marking:
+
+```text
+Id
+Type
+Color
+Width
+Style
+Visible in Viewer
+```
+
+### Color
+
+Использовать color picker.
+
+Сохранять канонически:
+
+```text
+#RRGGBB
+```
+
+### Width
+
+Редактируется в метрах.
+
+Пример:
+
+```text
+0.05
+0.10
+0.15
+```
+
+Значение должно быть положительным.
+
+### Style
+
+Dropdown:
+
+```text
+Solid
+Dashed
+Dotted
+```
+
+Сериализация:
+
+```text
+solid
+dashed
+dotted
+```
+
+### Visible in Viewer
+
+Checkbox:
+
+```text
+Visible in Viewer
+```
+
+По умолчанию:
+
+```text
+true
+```
+
+---
+
+## 2.5. Editor rendering
+
+Markings должны отображаться в Exercise Editor с учётом:
+
+* color;
+* width;
+* style.
+
+`visibleInViewer = false` не скрывает marking в Editor.
+
+Такой marking должен визуально отличаться, например уменьшенной opacity.
+
+---
+
+# 3. Viewer rendering
+
+Viewer должен поддерживать:
+
+```text
+solid
+dashed
+dotted
+```
+
+и:
+
+```text
+visibleInViewer
+```
+
+Неизвестный style:
+
+```text
+warning
++
+fallback solid
+```
+
+Невидимый marking:
+
+```text
+не render
+```
+
+---
+
+# 4. Format migration
+
+Exercise Definition:
+
+```text
+formatVersion 1 → 2
+```
+
+При загрузке версии 1:
+
+```text
+style = solid
+visibleInViewer = true
+```
+
+для всех существующих markings.
+
+Допускается автоматическая in-memory migration.
+
+Файл становится version 2 только после явного Save пользователем.
+
+Exported Track:
+
+```text
+formatVersion 2 → 3
+```
+
+Для version 2:
+
+```text
+style = solid
+visibleInViewer = true
+```
+
+при необходимости backward compatibility.
+
+---
+
+# 5. Не реализовывать сейчас
+
+* arc primitive;
+* circle primitive;
+* ellipse;
+* polygon fill;
+* arrow marking;
+* custom dash length;
+* custom gap length;
+* alpha/transparency editing;
+* folder rename;
+* recursive folder delete;
+* exercise tagging;
+* search/index database;
+* thumbnail previews;
+* cloud library;
+* Track Editor.
+
+---
+
+# 6. Definition of Done
+
+## Exercise Library
+
+* существует `res://exercises/`;
+* Editor отображает дерево;
+* можно создать подпапку;
+* можно сохранить Exercise в выбранную подпапку;
+* можно открыть Exercise из дерева;
+* вложенные подпапки работают;
+* невозможно выйти за пределы library root.
+
+## Markings
+
+* можно создать line;
+* можно создать polyline;
+* можно выбирать и перемещать points;
+* можно задать arbitrary RGB color;
+* можно задать widthMeters;
+* поддерживаются solid/dashed/dotted;
+* работает visibleInViewer;
+* сохранение и повторная загрузка сохраняют все свойства.
+
+## Viewer
+
+* visible markings отображаются;
+* hidden markings не отображаются;
+* solid/dashed/dotted корректно различаются;
+* старые Track JSON не ломаются согласно выбранной migration strategy.
+
+## Regression
+
+* cones работают;
+* polyline trajectory работает;
+* cubicBezier trajectory работает;
+* Exercise Save/Open работает;
+* Viewer работает;
+* нет compile/runtime errors.
