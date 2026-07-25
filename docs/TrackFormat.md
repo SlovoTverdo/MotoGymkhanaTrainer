@@ -213,44 +213,81 @@ Viewer не должен повторно применять:
 
 # 7. markings
 
-Пример:
-
-```json
-{
-  "id": "marking-001",
-
-  "type": "line",
-
-  "points": [
-    {
-      "x": 1.0,
-      "y": 2.0
-    },
-    {
-      "x": 2.0,
-      "y": 3.5
-    }
-  ],
-
-  "color": "yellow",
-
-  "widthMeters": 0.08
-}
-```
-
-Потенциальные типы:
-
-```text
-line
-polyline
-arc
-polygon
-arrow
-```
 
 `widthMeters` задаётся в физических метрах.
 
 Он уже является итоговым значением и не должен дополнительно масштабироваться Viewer.
+
+# Markings visibility and style
+
+Exported Track JSON сохраняет итоговые свойства markings после применения геометрических transform ExerciseInstance.
+
+Пример:
+
+```json
+{
+  "id": "marking-017",
+
+  "type": "polyline",
+
+  "points": [
+    {
+      "x": 14.0,
+      "y": 20.0
+    },
+    {
+      "x": 17.0,
+      "y": 23.0
+    }
+  ],
+
+  "color": "#FFD400",
+
+  "widthMeters": 0.10,
+
+  "style": "dashed",
+
+  "visibleInViewer": true
+}
+```
+
+К моменту экспорта:
+
+* `points` находятся в мировых координатах;
+* `widthMeters` остаётся физической шириной;
+* `style` сохраняется без изменения;
+* `visibleInViewer` сохраняется без изменения.
+
+Viewer должен:
+
+```text
+visibleInViewer = true
+        ↓
+отрисовать marking
+
+visibleInViewer = false
+        ↓
+не создавать его визуальное представление
+```
+
+Marking с `visibleInViewer = false` остаётся частью exported Track JSON.
+
+В текущей версии поддерживаются стили:
+
+```text
+solid
+dashed
+dotted
+```
+
+Неизвестный style должен использовать fallback:
+
+```text
+solid
+```
+
+с diagnostic warning.
+
 
 ---
 
