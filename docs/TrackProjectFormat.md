@@ -1,0 +1,448 @@
+# Track Project JSON Format
+
+Этот документ описывает редактируемый проект трассы.
+
+Track Project используется только Track Editor.
+
+Он отличается от:
+
+* Exercise Definition JSON;
+* Exported Track JSON для Viewer.
+
+Workflow:
+
+```text
+Exercise Definition Library
+            ↓
+       Track Editor
+            ↓
+     Track Project JSON
+            ↓
+          Export
+            ↓
+    Exported Track JSON
+            ↓
+          Viewer
+```
+
+---
+
+# 1. Основной принцип
+
+Track Project хранит:
+
+* параметры трассы;
+* параметры площадки;
+* упорядоченный список экземпляров упражнений;
+* ссылки на Exercise Definition;
+* трансформации экземпляров;
+* в будущем — ручные корректировки переходов.
+
+Track Project не является самодостаточным snapshot.
+
+Для его открытия требуется соответствующая библиотека:
+
+```text
+res://exercises/
+```
+
+Viewer не должен загружать Track Project.
+
+---
+
+# 2. Версия формата
+
+Текущая версия:
+
+```json
+{
+  "formatVersion": 1
+}
+```
+
+Версия Track Project независима от:
+
+* Exercise Definition formatVersion;
+* Exported Track formatVersion.
+
+---
+
+# 3. Каноническая структура
+
+```json
+{
+  "formatVersion": 1,
+
+  "track": {
+    "id": "training-2026-07-26",
+    "name": "Тренировка 26 июля 2026"
+  },
+
+  "area": {
+    "width": 60.0,
+    "length": 100.0
+  },
+
+  "instances": []
+}
+```
+
+---
+
+# 4. track
+
+```json
+{
+  "track": {
+    "id": "training-2026-07-26",
+    "name": "Тренировка 26 июля 2026"
+  }
+}
+```
+
+## id
+
+Стабильный идентификатор проекта трассы.
+
+Рекомендуемый формат:
+
+```text
+lowercase-latin-digits-hyphens
+```
+
+## name
+
+Отображаемое имя трассы.
+
+Изменение имени не изменяет автоматически ID или имя файла.
+
+---
+
+# 5. area
+
+```json
+{
+  "area": {
+    "width": 60.0,
+    "length": 100.0
+  }
+}
+```
+
+Размеры задаются в метрах.
+
+Локальная система Track Editor:
+
+```text
+X / Y
+1 unit = 1 meter
+```
+
+Рекомендуемый origin площадки:
+
+```text
+геометрический центр area
+```
+
+Предполагаемые границы:
+
+```text
+X: -width / 2 ... +width / 2
+Y: -length / 2 ... +length / 2
+```
+
+---
+
+# 6. instances
+
+`instances[]` является упорядоченным списком прохождения упражнений.
+
+Порядок элементов массива определяет порядок трассы.
+
+Пример:
+
+```json
+{
+  "instances": [
+    {
+      "instanceId": "exercise-instance-001",
+      "exercisePath": "slaloms/slalom-5.json",
+      "position": {
+        "x": 10.0,
+        "y": -20.0
+      },
+      "rotationDeg": 0.0,
+      "scale": {
+        "x": 1.0,
+        "y": 1.0
+      }
+    },
+    {
+      "instanceId": "exercise-instance-002",
+      "exercisePath": "turns/u-turn-left.json",
+      "position": {
+        "x": 10.0,
+        "y": 10.0
+      },
+      "rotationDeg": 90.0,
+      "scale": {
+        "x": 1.0,
+        "y": 1.0
+      }
+    }
+  ]
+}
+```
+
+---
+
+# 7. instanceId
+
+```json
+"instanceId": "exercise-instance-001"
+```
+
+Уникальный стабильный идентификатор экземпляра внутри Track Project.
+
+Несколько экземпляров могут ссылаться на один и тот же Exercise Definition.
+
+Например, один и тот же створ может быть размещён в трассе несколько раз.
+
+---
+
+# 8. exercisePath
+
+```json
+"exercisePath": "slaloms/slalom-5.json"
+```
+
+Путь:
+
+* относительный к `res://exercises/`;
+* не содержит абсолютный путь;
+* не содержит `res://exercises/` в самом значении;
+* не должен выходить за пределы Exercise Library.
+
+Допустимо:
+
+```text
+slaloms/slalom-5.json
+basic/gates/start-gate.json
+custom/my-element.json
+```
+
+Недопустимо:
+
+```text
+C:\Projects\MotoGymkhana\exercises\slalom.json
+../../other-file.json
+res://exercises/slaloms/slalom.json
+```
+
+При загрузке Track Editor разрешает путь как:
+
+```text
+res://exercises/ + exercisePath
+```
+
+---
+
+# 9. position
+
+```json
+{
+  "position": {
+    "x": 10.0,
+    "y": -20.0
+  }
+}
+```
+
+Позиция локального origin Exercise Definition в координатах площадки.
+
+Единица:
+
+```text
+meter
+```
+
+---
+
+# 10. rotationDeg
+
+```json
+"rotationDeg": 90.0
+```
+
+Поворот экземпляра в градусах.
+
+Положительное направление должно быть единообразно определено реализацией Track Editor и geometry mapper.
+
+Рекомендуется положительный поворот против часовой стрелки в доменной двумерной системе координат.
+
+Editor должен нормализовать отображаемое значение при необходимости, но сохранённое значение не обязано находиться строго в диапазоне `0..360`.
+
+---
+
+# 11. scale
+
+```json
+{
+  "scale": {
+    "x": 1.0,
+    "y": 1.0
+  }
+}
+```
+
+Независимый масштаб локальных координат Exercise Definition.
+
+Требования:
+
+```text
+scale.x > 0
+scale.y > 0
+```
+
+Масштабируются:
+
+* позиции конусов;
+* trajectory anchors;
+* Bezier control points;
+* marking points;
+* entryPoint;
+* exitPoint;
+* bounds.
+
+Не масштабируются:
+
+* физический размер конусов;
+* widthMeters markings.
+
+Отрицательный scale и отражение упражнения в первой версии не поддерживаются.
+
+---
+
+# 12. Порядок transform
+
+Для каждой локальной геометрической точки:
+
+```text
+local point
+    ↓
+scale X/Y
+    ↓
+rotation
+    ↓
+translation
+    ↓
+track world point
+```
+
+Преобразование должно быть реализовано общей geometry utility и не дублироваться отдельно для:
+
+* cones;
+* trajectory;
+* markings;
+* bounds;
+* entry/exit.
+
+---
+
+# 13. Зависимость от Exercise Definition
+
+Track Project хранит ссылку на Exercise Definition, а не его копию.
+
+При открытии проекта Track Editor должен загрузить каждый `exercisePath`.
+
+Если файл отсутствует или повреждён:
+
+* проект не должен аварийно завершать загрузку;
+* экземпляр помечается как unresolved;
+* пользователь получает diagnostic warning;
+* остальные валидные экземпляры продолжают отображаться.
+
+Unresolved instance должен сохранять:
+
+* instanceId;
+* exercisePath;
+* transform;
+* место в порядке прохождения.
+
+Track Editor не должен молча удалять unresolved instance.
+
+---
+
+# 14. Изменения Exercise Definition
+
+Поскольку Track Project содержит ссылку, изменение Exercise Definition может изменить внешний вид уже существующего проекта трассы.
+
+На первом этапе это допустимое и ожидаемое поведение.
+
+Exported Track JSON решает проблему стабильности, создавая самодостаточный snapshot.
+
+Перед экспортом Track Editor должен использовать актуальные Exercise Definition.
+
+Версионирование и закрепление конкретной версии Exercise Definition могут быть добавлены позднее при реальной необходимости.
+
+---
+
+# 15. Что не входит в formatVersion 1
+
+Track Project version 1 не содержит:
+
+* копий геометрии Exercise Definition;
+* сгенерированной глобальной trajectory;
+* transition splines;
+* transition overrides;
+* checkpoints runtime state;
+* Viewer settings;
+* camera position;
+* zoom и pan редактора;
+* selected instance;
+* expanded library folders;
+* environment objects;
+* thumbnails.
+
+UI state не сериализуется в Track Project.
+
+---
+
+# 16. Корневая папка проектов
+
+Рекомендуемый каталог:
+
+```text
+res://tracks/
+```
+
+Track Editor должен поддерживать пользовательские подпапки.
+
+Примеры:
+
+```text
+res://tracks/training/
+res://tracks/competitions/
+res://tracks/custom/
+```
+
+Значение пути текущего Track Project является состоянием Editor и не хранится внутри самого JSON.
+
+---
+
+# 17. Валидация
+
+Track Editor должен проверять:
+
+* поддерживаемый `formatVersion`;
+* непустой `track.id`;
+* непустой `track.name`;
+* `area.width > 0`;
+* `area.length > 0`;
+* уникальность `instanceId`;
+* безопасный относительный `exercisePath`;
+* `scale.x > 0`;
+* `scale.y > 0`;
+* возможность загрузить Exercise Definition.
+
+Ошибка одного Exercise Definition не должна уничтожать весь Track Project.
