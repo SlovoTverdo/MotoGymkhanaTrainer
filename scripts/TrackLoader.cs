@@ -5,7 +5,8 @@ namespace MotoGymkhanaTrainer.Tracks;
 /// <summary>Deserializes and validates the exported Track JSON contract used by the Viewer.</summary>
 public static class TrackLoader
 {
-    private const int SupportedFormatVersion = 2;
+    private const int SupportedFormatVersion = 3;
+    private const int LegacyFormatVersion = 2;
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -27,6 +28,7 @@ public static class TrackLoader
             TrackSnapshotDto track = JsonSerializer.Deserialize<TrackSnapshotDto>(json, SerializerOptions)
                 ?? throw new InvalidDataException($"Track file '{sourceName}' contains no JSON object.");
 
+            MigrateToCurrentVersion(track, sourceName);
             Validate(track, sourceName);
             return track;
         }
@@ -96,6 +98,17 @@ public static class TrackLoader
                 throw ContractError(sourceName, $"markings[{markingIndex}].points must contain at least two points");
             }
 
+            if (marking.Type is not ("line" or "polyline"))
+            {
+                // Future marking geometries remain local rendering concerns.
+                continue;
+            }
+
+            if (marking.Type == "line" && marking.Points.Length != 2)
+            {
+                throw ContractError(sourceName, $"markings[{markingIndex}].line must contain exactly two points");
+            }
+
             if (!float.IsFinite(marking.WidthMeters) || marking.WidthMeters <= 0)
             {
                 throw ContractError(sourceName, $"markings[{markingIndex}].widthMeters must be a finite positive number");
@@ -133,6 +146,31 @@ public static class TrackLoader
 
             ValidateTrajectorySegment(segment, index, sourceName);
         }
+    }
+
+    private static void MigrateToCurrentVersion(TrackSnapshotDto track, string sourceName)
+    {
+        if (track.FormatVersion == SupportedFormatVersion)
+        {
+            return;
+        }
+
+        if (track.FormatVersion != LegacyFormatVersion)
+        {
+            throw new InvalidDataException(
+                $"Track file '{sourceName}' uses unsupported formatVersion {track.FormatVersion}; " +
+                $"expected {LegacyFormatVersion} or {SupportedFormatVersion}.");
+        }
+
+        foreach (MarkingDto marking in track.Markings ?? [])
+        {
+            // Track v2 predated style/visibility. DTO initializers make missing
+            // properties deterministic without introducing a migration framework.
+            marking.Style = "solid";
+            marking.VisibleInViewer = true;
+        }
+
+        track.FormatVersion = SupportedFormatVersion;
     }
 
     private static void ValidateTrajectorySegment(

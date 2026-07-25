@@ -11,11 +11,16 @@ public partial class ExerciseEditor : Control
         None,
         New,
         Open,
+        OpenLibrary,
     }
 
     private static readonly string[] ConeColors = ["red", "blue", "yellow", "orange"];
 
     private ExerciseDocument _document = ExerciseDocument.CreateNew();
+    private ExerciseLibrary? _library;
+    private Tree? _libraryTree;
+    private string _selectedLibraryFolder = string.Empty;
+    private string? _pendingLibraryOpenPath;
     private ExerciseEditorCanvas? _canvas;
     private LineEdit? _exerciseIdEdit;
     private LineEdit? _exerciseNameEdit;
@@ -30,6 +35,8 @@ public partial class ExerciseEditor : Control
     private VBoxContainer? _trajectoryPointProperties;
     private VBoxContainer? _trajectorySegmentProperties;
     private VBoxContainer? _bezierProperties;
+    private VBoxContainer? _markingProperties;
+    private VBoxContainer? _markingPointProperties;
     private SpinBox? _coneXEdit;
     private SpinBox? _coneYEdit;
     private OptionButton? _coneColorEdit;
@@ -52,14 +59,28 @@ public partial class ExerciseEditor : Control
     private Button? _selectToolButton;
     private Button? _addConeToolButton;
     private Button? _trajectoryToolButton;
+    private Button? _lineMarkingToolButton;
+    private Button? _polylineMarkingToolButton;
     private Button? _startTrajectoryButton;
     private Button? _finishTrajectoryButton;
+    private Button? _finishMarkingButton;
+    private Label? _markingIdLabel;
+    private Label? _markingTypeLabel;
+    private ColorPickerButton? _markingColorEdit;
+    private SpinBox? _markingWidthEdit;
+    private OptionButton? _markingStyleEdit;
+    private CheckBox? _markingVisibleEdit;
+    private Label? _markingPointIndexLabel;
+    private SpinBox? _markingPointXEdit;
+    private SpinBox? _markingPointYEdit;
     private Label? _fileLabel;
     private Label? _dirtyLabel;
     private Label? _statusLabel;
     private FileDialog? _openDialog;
     private FileDialog? _saveDialog;
     private ConfirmationDialog? _unsavedDialog;
+    private ConfirmationDialog? _newFolderDialog;
+    private LineEdit? _newFolderNameEdit;
     private string? _currentFilePath;
     private bool _dirty;
     private bool _synchronizingUi;
@@ -68,6 +89,7 @@ public partial class ExerciseEditor : Control
     /// <inheritdoc />
     public override void _Ready()
     {
+        _library = new ExerciseLibrary(ProjectSettings.GlobalizePath("res://exercises"));
         BuildUi();
         ReplaceDocument(ExerciseDocument.CreateNew(), filePath: null, dirty: true);
         SetStatus("New Exercise Definition created. Edit its identity and geometry, then save.", false);
@@ -92,6 +114,7 @@ public partial class ExerciseEditor : Control
         AddChild(page);
 
         page.AddChild(BuildToolbar());
+        page.AddChild(BuildFileStatusBar());
 
         var body = new HSplitContainer
         {
@@ -120,6 +143,9 @@ public partial class ExerciseEditor : Control
             Name = "StatusMessage",
             Text = "Ready.",
             CustomMinimumSize = new Vector2(0.0f, 28.0f),
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+            ClipText = true,
             VerticalAlignment = VerticalAlignment.Center,
         };
         page.AddChild(_statusLabel);
@@ -173,14 +199,45 @@ public partial class ExerciseEditor : Control
         _trajectoryToolButton.Pressed += () => SetTool(ExerciseEditorTool.EditTrajectory);
         toolbar.AddChild(_trajectoryToolButton);
 
+        _lineMarkingToolButton = new Button
+        {
+            Name = "AddLineMarkingToolButton",
+            Text = "Add Line",
+            ToggleMode = true,
+            ButtonGroup = toolGroup,
+        };
+        _lineMarkingToolButton.Pressed += () => SetTool(ExerciseEditorTool.AddLineMarking);
+        toolbar.AddChild(_lineMarkingToolButton);
+
+        _polylineMarkingToolButton = new Button
+        {
+            Name = "AddPolylineMarkingToolButton",
+            Text = "Add Polyline",
+            ToggleMode = true,
+            ButtonGroup = toolGroup,
+        };
+        _polylineMarkingToolButton.Pressed += () => SetTool(ExerciseEditorTool.AddPolylineMarking);
+        toolbar.AddChild(_polylineMarkingToolButton);
+
         _startTrajectoryButton = CreateButton("StartTrajectoryButton", "Start Trajectory", BeginTrajectoryBuild);
         _finishTrajectoryButton = CreateButton("FinishTrajectoryButton", "Finish Trajectory", FinishTrajectoryBuild);
         _finishTrajectoryButton.Disabled = true;
         toolbar.AddChild(_startTrajectoryButton);
         toolbar.AddChild(_finishTrajectoryButton);
+        _finishMarkingButton = CreateButton("FinishMarkingButton", "Finish Marking", FinishMarkingBuild);
+        _finishMarkingButton.Disabled = true;
+        toolbar.AddChild(_finishMarkingButton);
         toolbar.AddChild(CreateButton("DeleteButton", "Delete selected", () => DeleteSelectedObject()));
-        toolbar.AddChild(new VSeparator());
+        return toolbar;
+    }
 
+    private Control BuildFileStatusBar()
+    {
+        var status = new HBoxContainer
+        {
+            Name = "FileStatusBar",
+            CustomMinimumSize = new Vector2(0.0f, 28.0f),
+        };
         _fileLabel = new Label
         {
             Name = "CurrentFile",
@@ -189,7 +246,7 @@ public partial class ExerciseEditor : Control
             TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        toolbar.AddChild(_fileLabel);
+        status.AddChild(_fileLabel);
 
         _dirtyLabel = new Label
         {
@@ -197,8 +254,8 @@ public partial class ExerciseEditor : Control
             Text = "Modified",
             VerticalAlignment = VerticalAlignment.Center,
         };
-        toolbar.AddChild(_dirtyLabel);
-        return toolbar;
+        status.AddChild(_dirtyLabel);
+        return status;
     }
 
     private Control BuildInspector()
@@ -216,6 +273,8 @@ public partial class ExerciseEditor : Control
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
         };
         inspector.AddThemeConstantOverride("separation", 6);
+
+        inspector.AddChild(BuildLibraryBrowser());
 
         inspector.AddChild(CreateSectionLabel("Exercise Definition"));
         _exerciseIdEdit = new LineEdit { Name = "ExerciseId", PlaceholderText = "exercise-id" };
@@ -341,11 +400,58 @@ public partial class ExerciseEditor : Control
         _trajectorySegmentProperties.AddChild(_bezierProperties);
         inspector.AddChild(_trajectorySegmentProperties);
 
+        _markingProperties = new VBoxContainer { Name = "MarkingProperties", Visible = false };
+        _markingIdLabel = new Label { Name = "MarkingId" };
+        _markingTypeLabel = new Label { Name = "MarkingType" };
+        _markingProperties.AddChild(CreateLabeledControl("Id", _markingIdLabel));
+        _markingProperties.AddChild(CreateLabeledControl("Type", _markingTypeLabel));
+
+        _markingColorEdit = new ColorPickerButton { Name = "MarkingColor", EditAlpha = false };
+        _markingColorEdit.ColorChanged += _ => OnMarkingPropertiesEdited();
+        _markingProperties.AddChild(CreateLabeledControl("Color", _markingColorEdit));
+
+        _markingWidthEdit = CreateCoordinateSpinBox("MarkingWidth", 0.001, 10.0);
+        _markingWidthEdit.Step = 0.01;
+        _markingWidthEdit.ValueChanged += _ => OnMarkingPropertiesEdited();
+        _markingProperties.AddChild(CreateLabeledControl("Width", _markingWidthEdit));
+
+        _markingStyleEdit = new OptionButton { Name = "MarkingStyle" };
+        _markingStyleEdit.AddItem("Solid");
+        _markingStyleEdit.AddItem("Dashed");
+        _markingStyleEdit.AddItem("Dotted");
+        _markingStyleEdit.ItemSelected += _ => OnMarkingPropertiesEdited();
+        _markingProperties.AddChild(CreateLabeledControl("Style", _markingStyleEdit));
+
+        _markingVisibleEdit = new CheckBox { Name = "MarkingVisible", Text = "Visible in Viewer" };
+        _markingVisibleEdit.Toggled += _ => OnMarkingPropertiesEdited();
+        _markingProperties.AddChild(_markingVisibleEdit);
+
+        _markingPointProperties = new VBoxContainer { Name = "MarkingPointProperties", Visible = false };
+        _markingPointIndexLabel = new Label { Name = "MarkingPointIndex" };
+        _markingPointXEdit = CreateCoordinateSpinBox("MarkingPointX");
+        _markingPointYEdit = CreateCoordinateSpinBox("MarkingPointY");
+        _markingPointXEdit.ValueChanged += _ => OnMarkingPointEdited();
+        _markingPointYEdit.ValueChanged += _ => OnMarkingPointEdited();
+        _markingPointProperties.AddChild(CreateLabeledControl("Point", _markingPointIndexLabel));
+        _markingPointProperties.AddChild(CreateLabeledControl("X", _markingPointXEdit));
+        _markingPointProperties.AddChild(CreateLabeledControl("Y", _markingPointYEdit));
+        _markingPointProperties.AddChild(CreateButton(
+            "InsertMarkingPointButton",
+            "Insert Point After",
+            InsertMarkingPointAfter));
+        _markingPointProperties.AddChild(CreateButton(
+            "DeleteMarkingPointButton",
+            "Delete internal point",
+            () => DeleteSelectedObject()));
+        _markingProperties.AddChild(_markingPointProperties);
+        _markingProperties.AddChild(CreateButton("DeleteMarkingButton", "Delete marking", DeleteSelectedMarking));
+        inspector.AddChild(_markingProperties);
+
         var help = new Label
         {
             Name = "CanvasHelp",
             Text = "Wheel: zoom\nMiddle mouse: pan\nDrag: 0.25 m snap for cones, anchors and handles\n" +
-                "Trajectory: click an anchor, handle or section\nDelete: remove selected cone or permitted anchor",
+                "Polyline marking: right-click or Finish Marking\nDelete: remove selected object or permitted anchor",
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         inspector.AddChild(help);
@@ -353,9 +459,119 @@ public partial class ExerciseEditor : Control
         return scroll;
     }
 
+    private Control BuildLibraryBrowser()
+    {
+        var panel = new VBoxContainer { Name = "ExerciseLibrary" };
+        panel.AddChild(CreateSectionLabel("Exercise Library — res://exercises/"));
+
+        var actions = new HBoxContainer();
+        actions.AddChild(CreateButton("RefreshLibraryButton", "Refresh", RefreshLibraryTree));
+        actions.AddChild(CreateButton("NewLibraryFolderButton", "New Folder", ShowNewFolderDialog));
+        actions.AddChild(CreateButton("SaveToLibraryFolderButton", "Save Here", SaveToSelectedLibraryFolder));
+        actions.AddChild(CreateButton("SaveAsLibraryButton", "Save As", ShowSaveAsDialog));
+        panel.AddChild(actions);
+
+        _libraryTree = new Tree
+        {
+            Name = "ExerciseLibraryTree",
+            Columns = 1,
+            HideRoot = false,
+            CustomMinimumSize = new Vector2(0.0f, 190.0f),
+        };
+        _libraryTree.ItemSelected += OnLibraryItemSelected;
+        _libraryTree.ItemActivated += OnLibraryItemActivated;
+        panel.AddChild(_libraryTree);
+        RefreshLibraryTree();
+        return panel;
+    }
+
+    private void RefreshLibraryTree()
+    {
+        if (_libraryTree is null || _library is null)
+        {
+            return;
+        }
+
+        _libraryTree.Clear();
+        TreeItem root = _libraryTree.CreateItem();
+        root.SetText(0, "exercises");
+        root.SetMetadata(0, "D|");
+        root.Collapsed = false;
+        var folders = new Dictionary<string, TreeItem>(StringComparer.OrdinalIgnoreCase)
+        {
+            [string.Empty] = root,
+        };
+
+        foreach (ExerciseLibraryEntry entry in _library.EnumerateEntries())
+        {
+            string parentPath = Path.GetDirectoryName(entry.RelativePath) ?? string.Empty;
+            if (!folders.TryGetValue(parentPath, out TreeItem? parent))
+            {
+                parent = root;
+            }
+
+            TreeItem item = _libraryTree.CreateItem(parent);
+            item.SetText(0, entry.IsDirectory ? $"📁 {entry.DisplayName}" : entry.DisplayName);
+            item.SetMetadata(0, $"{(entry.IsDirectory ? 'D' : 'F')}|{entry.RelativePath}");
+            if (entry.IsDirectory)
+            {
+                folders[entry.RelativePath] = item;
+            }
+        }
+    }
+
+    private void OnLibraryItemSelected()
+    {
+        if (!TryReadSelectedLibraryItem(out bool directory, out string relativePath))
+        {
+            return;
+        }
+
+        _selectedLibraryFolder = directory
+            ? relativePath
+            : Path.GetDirectoryName(relativePath) ?? string.Empty;
+        SetStatus(
+            directory
+                ? $"Selected library folder: res://exercises/{relativePath.Replace('\\', '/')}"
+                : $"Selected Exercise JSON: {relativePath}",
+            false);
+    }
+
+    private void OnLibraryItemActivated()
+    {
+        if (!TryReadSelectedLibraryItem(out bool directory, out string relativePath) || directory)
+        {
+            return;
+        }
+
+        _pendingLibraryOpenPath = relativePath;
+        RequestDestructiveAction(PendingDestructiveAction.OpenLibrary);
+    }
+
+    private bool TryReadSelectedLibraryItem(out bool directory, out string relativePath)
+    {
+        directory = false;
+        relativePath = string.Empty;
+        TreeItem? selected = _libraryTree?.GetSelected();
+        if (selected is null)
+        {
+            return false;
+        }
+
+        string metadata = selected.GetMetadata(0).AsString();
+        if (metadata.Length < 2 || metadata[1] != '|')
+        {
+            return false;
+        }
+
+        directory = metadata[0] == 'D';
+        relativePath = metadata[2..];
+        return true;
+    }
+
     private void BuildDialogs()
     {
-        string defaultDirectory = ProjectSettings.GlobalizePath("res://examples");
+        string defaultDirectory = _library!.RootPath;
         _openDialog = CreateJsonDialog("OpenExerciseDialog", "Open Exercise Definition", FileDialog.FileModeEnum.OpenFile);
         _openDialog.CurrentDir = defaultDirectory;
         _openDialog.FileSelected += OpenSelectedFile;
@@ -364,7 +580,7 @@ public partial class ExerciseEditor : Control
 
         _saveDialog = CreateJsonDialog("SaveExerciseDialog", "Save Exercise Definition", FileDialog.FileModeEnum.SaveFile);
         _saveDialog.CurrentDir = defaultDirectory;
-        _saveDialog.CurrentFile = "exercise.json";
+        _saveDialog.CurrentFile = ExerciseLibrary.SuggestFileName(_document.Definition.Exercise.Id);
         _saveDialog.FileSelected += SaveSelectedFile;
         _saveDialog.Canceled += () => SetStatus("Save canceled. Document remains modified.", false);
         AddChild(_saveDialog);
@@ -381,9 +597,50 @@ public partial class ExerciseEditor : Control
         _unsavedDialog.Canceled += () =>
         {
             _pendingAction = PendingDestructiveAction.None;
+            _pendingLibraryOpenPath = null;
             SetStatus("Operation canceled. Unsaved document was preserved.", false);
         };
         AddChild(_unsavedDialog);
+
+        _newFolderNameEdit = new LineEdit
+        {
+            Name = "NewFolderName",
+            PlaceholderText = "folder-name",
+            CustomMinimumSize = new Vector2(420.0f, 0.0f),
+        };
+        _newFolderDialog = new ConfirmationDialog
+        {
+            Name = "NewLibraryFolderDialog",
+            Title = "Create Exercise Library Folder",
+            DialogText = "Create a child folder in the selected library folder:",
+            Size = new Vector2I(520, 190),
+        };
+        _newFolderDialog.AddChild(_newFolderNameEdit);
+        _newFolderDialog.Confirmed += CreateLibraryFolder;
+        AddChild(_newFolderDialog);
+    }
+
+    private void ShowNewFolderDialog()
+    {
+        _newFolderNameEdit!.Text = string.Empty;
+        _newFolderDialog!.PopupCentered();
+        _newFolderNameEdit.GrabFocus();
+    }
+
+    private void CreateLibraryFolder()
+    {
+        try
+        {
+            string relative = _library!.CreateFolder(_selectedLibraryFolder, _newFolderNameEdit!.Text);
+            RefreshLibraryTree();
+            _selectedLibraryFolder = relative;
+            SetStatus($"Created library folder 'res://exercises/{relative.Replace('\\', '/')}'.", false);
+        }
+        catch (Exception exception)
+        {
+            SetStatus($"Folder creation failed: {exception.Message}", true);
+            GD.PushError($"Exercise library folder creation failed: {exception}");
+        }
     }
 
     private void RequestNew()
@@ -421,36 +678,68 @@ public partial class ExerciseEditor : Control
         {
             _openDialog!.PopupCenteredRatio(0.82f);
         }
+        else if (action == PendingDestructiveAction.OpenLibrary && _pendingLibraryOpenPath is not null)
+        {
+            string relativePath = _pendingLibraryOpenPath;
+            _pendingLibraryOpenPath = null;
+            OpenSelectedFile(_library!.ResolveExistingJson(relativePath));
+        }
     }
 
     private void Save()
     {
         if (string.IsNullOrWhiteSpace(_currentFilePath))
         {
-            _saveDialog!.PopupCenteredRatio(0.82f);
+            ShowSaveAsDialog();
             return;
         }
 
         SaveSelectedFile(_currentFilePath);
     }
 
+    private void SaveToSelectedLibraryFolder()
+    {
+        // A new/copy save must expose the suggested filename instead of silently
+        // committing it. This keeps exercise.id independent from the library path.
+        ShowSaveAsDialog();
+    }
+
+    private void ShowSaveAsDialog()
+    {
+        try
+        {
+            _saveDialog!.CurrentDir = _library!.ResolveFolder(_selectedLibraryFolder);
+            _saveDialog.CurrentFile = ExerciseLibrary.SuggestFileName(_document.Definition.Exercise.Id);
+            _saveDialog.PopupCenteredRatio(0.82f);
+        }
+        catch (Exception exception)
+        {
+            SetStatus($"Save As failed: {exception.Message}", true);
+        }
+    }
+
     private void SaveSelectedFile(string path)
     {
         try
         {
-            if (_canvas?.TryFinishTrajectoryBuild() == false)
+            if (_canvas?.TryFinishTrajectoryBuild() == false || _canvas?.TryFinishMarkingBuild() == false)
             {
-                SetStatus("Save blocked: finish the trajectory with at least two clicked points.", true);
+                SetStatus("Save blocked: finish the active trajectory or marking with at least two points.", true);
                 return;
             }
 
-            string filesystemPath = ToFilesystemPath(path);
+            string requestedPath = ToFilesystemPath(path);
+            string directory = Path.GetDirectoryName(requestedPath) ?? _library!.RootPath;
+            string filesystemPath = _library!.ResolveSaveJson(
+                _library.ToRelative(directory),
+                Path.GetFileName(requestedPath));
             _document.SynchronizeEndpointsFromTrajectory();
             ExerciseDefinitionStore.SaveToFile(_document.Definition, filesystemPath);
             _currentFilePath = filesystemPath;
             SetDirty(false);
             SetStatus($"Saved Exercise Definition to '{filesystemPath}'.", false);
             GD.Print($"Saved Exercise Definition '{_document.Definition.Exercise.Id}' to '{filesystemPath}'.");
+            RefreshLibraryTree();
         }
         catch (Exception exception)
         {
@@ -463,7 +752,7 @@ public partial class ExerciseEditor : Control
     {
         try
         {
-            string filesystemPath = ToFilesystemPath(path);
+            string filesystemPath = _library!.ResolveExistingJson(ToFilesystemPath(path));
             // Parse and validate a complete candidate first. The live document is
             // replaced only after this call succeeds, so a damaged file is harmless.
             ExerciseDefinitionLoadResult loadResult =
@@ -615,10 +904,58 @@ public partial class ExerciseEditor : Control
         MarkDocumentChanged();
     }
 
+    private void OnMarkingPropertiesEdited()
+    {
+        if (_synchronizingUi || _canvas is null ||
+            _canvas.SelectionKind is not (ExerciseSelectionKind.Marking or ExerciseSelectionKind.MarkingPoint))
+        {
+            return;
+        }
+
+        string style = _markingStyleEdit!.Selected switch
+        {
+            1 => "dashed",
+            2 => "dotted",
+            _ => "solid",
+        };
+        string color = $"#{_markingColorEdit!.Color.ToHtml(includeAlpha: false).ToUpperInvariant()}";
+        if (!_document.SetMarkingProperties(
+                _canvas.SelectedMarkingId,
+                color,
+                (float)_markingWidthEdit!.Value,
+                style,
+                _markingVisibleEdit!.ButtonPressed))
+        {
+            SetStatus("Invalid marking properties. Width must be greater than zero.", true);
+            return;
+        }
+
+        MarkDocumentChanged();
+    }
+
+    private void OnMarkingPointEdited()
+    {
+        if (_synchronizingUi || _canvas?.SelectionKind != ExerciseSelectionKind.MarkingPoint)
+        {
+            return;
+        }
+
+        _document.MoveMarkingPoint(
+            _canvas.SelectedMarkingId,
+            _canvas.SelectedMarkingPointIndex,
+            new Point2Dto
+            {
+                X = (float)_markingPointXEdit!.Value,
+                Y = (float)_markingPointYEdit!.Value,
+            });
+        MarkDocumentChanged();
+    }
+
     private void OnCanvasDocumentChanged()
     {
         SetDirty(true);
         SynchronizeDocumentUi();
+        SynchronizeTrajectoryBuildUi();
         _canvas?.QueueRedraw();
     }
 
@@ -644,14 +981,37 @@ public partial class ExerciseEditor : Control
             return true;
         }
 
+        if (result == SelectionDeleteResult.MarkingPointDeleteBlocked)
+        {
+            SetStatus(
+                "Only an internal point of a polyline with more than two points can be deleted.",
+                true);
+            return true;
+        }
+
         SetDirty(true);
         SynchronizeDocumentUi();
-        SetStatus(
-            result == SelectionDeleteResult.DeletedCone
-                ? "Selected cone deleted."
-                : "Selected trajectory point deleted.",
-            false);
+        string message = result switch
+        {
+            SelectionDeleteResult.DeletedCone => "Selected cone deleted.",
+            SelectionDeleteResult.DeletedMarking => "Selected marking deleted.",
+            SelectionDeleteResult.DeletedMarkingPoint => "Selected marking point deleted.",
+            _ => "Selected trajectory point deleted.",
+        };
+        SetStatus(message, false);
         return true;
+    }
+
+    private void DeleteSelectedMarking()
+    {
+        if (_canvas is null ||
+            _canvas.SelectionKind is not (ExerciseSelectionKind.Marking or ExerciseSelectionKind.MarkingPoint))
+        {
+            return;
+        }
+
+        _canvas.SelectMarking(_canvas.SelectedMarkingId);
+        DeleteSelectedObject();
     }
 
     private void InsertTrajectoryPointAfter()
@@ -664,6 +1024,18 @@ public partial class ExerciseEditor : Control
         SetDirty(true);
         SynchronizeDocumentUi();
         SetStatus("Trajectory point inserted between adjacent anchors.", false);
+    }
+
+    private void InsertMarkingPointAfter()
+    {
+        if (_canvas?.InsertMarkingPointAfterSelected() != true)
+        {
+            return;
+        }
+
+        SetDirty(true);
+        SynchronizeDocumentUi();
+        SetStatus("Marking point inserted at the adjacent midpoint.", false);
     }
 
     private void ConvertSelectedToCubic()
@@ -705,6 +1077,12 @@ public partial class ExerciseEditor : Control
         SynchronizeTrajectoryBuildUi();
     }
 
+    private void FinishMarkingBuild()
+    {
+        _canvas?.TryFinishMarkingBuild();
+        SynchronizeTrajectoryBuildUi();
+    }
+
     private void MarkDocumentChanged()
     {
         SetDirty(true);
@@ -730,7 +1108,8 @@ public partial class ExerciseEditor : Control
     private void SynchronizeSelectionUi()
     {
         if (_canvas is null || _selectionTitle is null || _coneProperties is null ||
-            _trajectoryPointProperties is null || _trajectorySegmentProperties is null)
+            _trajectoryPointProperties is null || _trajectorySegmentProperties is null ||
+            _markingProperties is null)
         {
             return;
         }
@@ -744,6 +1123,7 @@ public partial class ExerciseEditor : Control
                 _coneProperties.Visible = cone is not null;
                 _trajectoryPointProperties.Visible = false;
                 _trajectorySegmentProperties.Visible = false;
+                _markingProperties.Visible = false;
                 if (cone is not null)
                 {
                     _coneXEdit!.Value = cone.Position.X;
@@ -765,6 +1145,7 @@ public partial class ExerciseEditor : Control
                 _coneProperties.Visible = false;
                 _trajectoryPointProperties.Visible = true;
                 _trajectorySegmentProperties.Visible = false;
+                _markingProperties.Visible = false;
                 _trajectoryPointIndexLabel!.Text = pointIndex.ToString();
                 _trajectoryPointRoleLabel!.Text = role;
                 _trajectoryPointXEdit!.Value = point.X;
@@ -774,11 +1155,16 @@ public partial class ExerciseEditor : Control
             case ExerciseSelectionKind.BezierControl:
                 SynchronizeTrajectorySegmentUi();
                 break;
+            case ExerciseSelectionKind.Marking:
+            case ExerciseSelectionKind.MarkingPoint:
+                SynchronizeMarkingUi();
+                break;
             default:
                 _selectionTitle.Text = "Selection: none";
                 _coneProperties.Visible = false;
                 _trajectoryPointProperties.Visible = false;
                 _trajectorySegmentProperties.Visible = false;
+                _markingProperties.Visible = false;
                 break;
         }
 
@@ -796,6 +1182,7 @@ public partial class ExerciseEditor : Control
         _coneProperties!.Visible = false;
         _trajectoryPointProperties!.Visible = false;
         _trajectorySegmentProperties!.Visible = true;
+        _markingProperties!.Visible = false;
         _trajectorySegmentIdLabel!.Text = segment.Id;
         _trajectorySegmentTypeLabel!.Text = segment.Type;
         bool cubic = segment.Type == "cubicBezier";
@@ -817,6 +1204,45 @@ public partial class ExerciseEditor : Control
         _bezierEndYEdit!.Value = segment.End.Y;
     }
 
+    private void SynchronizeMarkingUi()
+    {
+        MarkingDto? marking = _document.FindMarking(_canvas!.SelectedMarkingId);
+        if (marking is null)
+        {
+            return;
+        }
+
+        _selectionTitle!.Text = _canvas.SelectionKind == ExerciseSelectionKind.MarkingPoint
+            ? $"Selection: {marking.Id} / point {_canvas.SelectedMarkingPointIndex}"
+            : $"Selection: {marking.Id}";
+        _coneProperties!.Visible = false;
+        _trajectoryPointProperties!.Visible = false;
+        _trajectorySegmentProperties!.Visible = false;
+        _markingProperties!.Visible = true;
+        _markingIdLabel!.Text = marking.Id;
+        _markingTypeLabel!.Text = marking.Type;
+        _markingColorEdit!.Color = ParseCanonicalColor(marking.Color);
+        _markingWidthEdit!.Value = marking.WidthMeters;
+        _markingStyleEdit!.Selected = marking.Style switch
+        {
+            "dashed" => 1,
+            "dotted" => 2,
+            _ => 0,
+        };
+        _markingVisibleEdit!.ButtonPressed = marking.VisibleInViewer;
+
+        bool pointSelected = _canvas.SelectionKind == ExerciseSelectionKind.MarkingPoint;
+        _markingPointProperties!.Visible = pointSelected;
+        if (pointSelected)
+        {
+            int pointIndex = _canvas.SelectedMarkingPointIndex;
+            Point2Dto point = marking.Points[pointIndex];
+            _markingPointIndexLabel!.Text = pointIndex.ToString();
+            _markingPointXEdit!.Value = point.X;
+            _markingPointYEdit!.Value = point.Y;
+        }
+    }
+
     private void SetTool(ExerciseEditorTool tool)
     {
         if (_canvas?.IsBuildingTrajectory == true && tool != ExerciseEditorTool.EditTrajectory &&
@@ -828,13 +1254,31 @@ public partial class ExerciseEditor : Control
             return;
         }
 
+        if (_canvas?.IsBuildingMarking == true && tool != _canvas.Tool &&
+            !_canvas.TryFinishMarkingBuild())
+        {
+            if (_canvas.Tool == ExerciseEditorTool.AddLineMarking)
+            {
+                _lineMarkingToolButton?.SetPressedNoSignal(true);
+            }
+            else
+            {
+                _polylineMarkingToolButton?.SetPressedNoSignal(true);
+            }
+
+            return;
+        }
+
         _canvas?.SetTool(tool);
 
         string message = tool switch
         {
             ExerciseEditorTool.Select => "Select tool active.",
             ExerciseEditorTool.AddCone => "Add Cone tool active.",
-            _ => "Edit Trajectory tool active. Select/drag anchors or press Start Trajectory.",
+            ExerciseEditorTool.EditTrajectory =>
+                "Edit Trajectory tool active. Select/drag anchors or press Start Trajectory.",
+            ExerciseEditorTool.AddLineMarking => "Add Line tool active. Click its first and second point.",
+            _ => "Add Polyline tool active. Click points, then right-click or press Finish Marking.",
         };
         SetStatus(message, false);
         SynchronizeTrajectoryBuildUi();
@@ -851,6 +1295,11 @@ public partial class ExerciseEditor : Control
         if (_finishTrajectoryButton is not null)
         {
             _finishTrajectoryButton.Disabled = !building;
+        }
+
+        if (_finishMarkingButton is not null)
+        {
+            _finishMarkingButton.Disabled = _canvas?.IsBuildingMarking != true;
         }
     }
 
@@ -939,5 +1388,18 @@ public partial class ExerciseEditor : Control
         return path.StartsWith("res://", StringComparison.Ordinal)
             ? ProjectSettings.GlobalizePath(path)
             : path;
+    }
+
+    private static Color ParseCanonicalColor(string value)
+    {
+        if (!MarkingGeometry.TryNormalizeColor(value, allowLegacyNames: true, out string canonical))
+        {
+            return Colors.White;
+        }
+
+        return new Color(
+            Convert.ToByte(canonical.Substring(1, 2), 16) / 255.0f,
+            Convert.ToByte(canonical.Substring(3, 2), 16) / 255.0f,
+            Convert.ToByte(canonical.Substring(5, 2), 16) / 255.0f);
     }
 }

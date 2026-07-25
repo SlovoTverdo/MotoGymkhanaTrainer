@@ -140,6 +140,128 @@ public sealed class ExerciseDocument
     /// <summary>Returns a cone by id, or <see langword="null"/> if it no longer exists.</summary>
     public ConeDto? FindCone(string id) => Definition.Cones.FirstOrDefault(cone => cone.Id == id);
 
+    /// <summary>Adds a valid line/polyline and returns its deterministic id.</summary>
+    public string AddMarking(string type, IEnumerable<Point2Dto> points)
+    {
+        Point2Dto[] copiedPoints = points.Select(CopyPoint).ToArray();
+        if (type is not ("line" or "polyline") || copiedPoints.Length < 2 ||
+            (type == "line" && copiedPoints.Length != 2))
+        {
+            throw new ArgumentException("A marking must be line/polyline with valid point count.", nameof(points));
+        }
+
+        string id = CreateUniqueMarkingId();
+        var markings = Definition.Markings.ToList();
+        markings.Add(new MarkingDto
+        {
+            Id = id,
+            Type = type,
+            Points = copiedPoints,
+            Color = "#FFD10D",
+            WidthMeters = 0.08f,
+            Style = "solid",
+            VisibleInViewer = true,
+        });
+        Definition.Markings = [.. markings];
+        return id;
+    }
+
+    /// <summary>Returns one marking by id without creating canvas geometry.</summary>
+    public MarkingDto? FindMarking(string id) =>
+        Definition.Markings.FirstOrDefault(marking => marking.Id == id);
+
+    /// <summary>Moves one persisted marking anchor in local exercise metres.</summary>
+    public bool MoveMarkingPoint(string id, int pointIndex, Point2Dto position)
+    {
+        MarkingDto? marking = FindMarking(id);
+        if (marking is null || pointIndex < 0 || pointIndex >= marking.Points.Length)
+        {
+            return false;
+        }
+
+        marking.Points[pointIndex] = CopyPoint(position);
+        return true;
+    }
+
+    /// <summary>Adds a point to a polyline under construction.</summary>
+    public int AppendMarkingPoint(string id, Point2Dto position)
+    {
+        MarkingDto? marking = FindMarking(id);
+        if (marking?.Type != "polyline")
+        {
+            return -1;
+        }
+
+        marking.Points = [.. marking.Points, CopyPoint(position)];
+        return marking.Points.Length - 1;
+    }
+
+    /// <summary>Inserts a midpoint after an existing polyline point.</summary>
+    public int InsertMarkingPointAfter(string id, int pointIndex)
+    {
+        MarkingDto? marking = FindMarking(id);
+        if (marking?.Type != "polyline" || pointIndex < 0 || pointIndex >= marking.Points.Length - 1)
+        {
+            return -1;
+        }
+
+        var points = marking.Points.Select(CopyPoint).ToList();
+        Point2Dto start = points[pointIndex];
+        Point2Dto end = points[pointIndex + 1];
+        points.Insert(pointIndex + 1, Lerp(start, end, 0.5f));
+        marking.Points = [.. points];
+        return pointIndex + 1;
+    }
+
+    /// <summary>Deletes only an internal polyline point and preserves the two-point minimum.</summary>
+    public bool DeleteMarkingPoint(string id, int pointIndex)
+    {
+        MarkingDto? marking = FindMarking(id);
+        if (marking?.Type != "polyline" || marking.Points.Length <= 2 ||
+            pointIndex <= 0 || pointIndex >= marking.Points.Length - 1)
+        {
+            return false;
+        }
+
+        var points = marking.Points.ToList();
+        points.RemoveAt(pointIndex);
+        marking.Points = [.. points];
+        return true;
+    }
+
+    /// <summary>Removes one complete marking.</summary>
+    public bool DeleteMarking(string id)
+    {
+        int index = Array.FindIndex(Definition.Markings, marking => marking.Id == id);
+        if (index < 0)
+        {
+            return false;
+        }
+
+        var markings = Definition.Markings.ToList();
+        markings.RemoveAt(index);
+        Definition.Markings = [.. markings];
+        return true;
+    }
+
+    /// <summary>Applies validated marking presentation properties without touching geometry.</summary>
+    public bool SetMarkingProperties(string id, string color, float widthMeters, string style, bool visibleInViewer)
+    {
+        MarkingDto? marking = FindMarking(id);
+        if (marking is null || widthMeters <= 0.0f || !float.IsFinite(widthMeters) ||
+            !MarkingGeometry.TryNormalizeColor(color, allowLegacyNames: false, out string canonical) ||
+            !MarkingGeometry.IsSupportedStyle(style))
+        {
+            return false;
+        }
+
+        marking.Color = canonical;
+        marking.WidthMeters = widthMeters;
+        marking.Style = style;
+        marking.VisibleInViewer = visibleInViewer;
+        return true;
+    }
+
     /// <summary>Returns one conceptual trajectory anchor in local X/Y metres.</summary>
     public Point2Dto GetTrajectoryPoint(int index)
     {
@@ -606,6 +728,19 @@ public sealed class ExerciseDocument
         for (int number = 1; ; number++)
         {
             string candidate = $"cone-{number:000}";
+            if (!existing.Contains(candidate))
+            {
+                return candidate;
+            }
+        }
+    }
+
+    private string CreateUniqueMarkingId()
+    {
+        var existing = Definition.Markings.Select(marking => marking.Id).ToHashSet(StringComparer.Ordinal);
+        for (int number = 1; ; number++)
+        {
+            string candidate = $"marking-{number:000}";
             if (!existing.Contains(candidate))
             {
                 return candidate;

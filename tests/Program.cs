@@ -1,4 +1,5 @@
 using Godot;
+using MotoGymkhanaTrainer;
 using MotoGymkhanaTrainer.ExerciseEditor;
 using MotoGymkhanaTrainer.Tracks;
 
@@ -9,10 +10,10 @@ string alternatePath = Path.Combine(ProjectDirectory, "tests", "fixtures", "alte
 string invalidFixturePath = Path.Combine(ProjectDirectory, "tests", "fixtures", "invalid-track.json");
 
 TrackSnapshotDto snapshot = TrackLoader.LoadFromJson(json, samplePath);
-AssertEqual(2, snapshot.FormatVersion, "sample uses formatVersion 2");
+AssertEqual(3, snapshot.FormatVersion, "sample uses formatVersion 3");
 AssertEqual("basic-demo", snapshot.Track.Id, "valid JSON loads track metadata");
 AssertEqual(4, snapshot.Cones.Length, "valid JSON loads every sample cone");
-AssertEqual(1, snapshot.Markings.Length, "valid JSON loads sample markings");
+AssertEqual(4, snapshot.Markings.Length, "valid JSON loads solid, dashed, dotted and hidden markings");
 AssertEqual(2, snapshot.Trajectory.Segments.Length, "valid JSON loads both trajectory segments");
 
 TrackSnapshotDto alternate = TrackLoader.LoadFromJson(
@@ -22,6 +23,9 @@ AssertEqual("alternate-test", alternate.Track.Id, "a second exported track loads
 AssertEqual(20.0f, alternate.Area.Width, "the second track supplies a different area width");
 AssertEqual(30.0f, alternate.Area.Length, "the second track supplies a different area length");
 AssertEqual(2, alternate.Cones.Length, "the second track supplies its own runtime cone set");
+AssertEqual(3, alternate.FormatVersion, "Track version 2 migrates to version 3 in memory");
+AssertEqual("solid", alternate.Markings[0].Style, "Track v2 marking receives the solid default");
+AssertTrue(alternate.Markings[0].VisibleInViewer, "Track v2 marking receives visibleInViewer=true");
 
 TrajectorySegmentDto polyline = snapshot.Trajectory.Segments[0];
 AssertEqual("trajectory-segment-001", polyline.Id, "polyline segment id loads");
@@ -241,8 +245,44 @@ AssertTrue(
     "deletion is blocked when only two trajectory points remain");
 AssertEqual(2, minimumPolyline.TrajectoryPointCount, "blocked deletion preserves the valid two-point trajectory");
 
+string lineMarkingId = exercise.AddMarking(
+    "line",
+    [new Point2Dto { X = -2.0f, Y = -2.0f }, new Point2Dto { X = 2.0f, Y = -2.0f }]);
+string polylineMarkingId = exercise.AddMarking(
+    "polyline",
+    [new Point2Dto { X = -2.0f, Y = 0.0f }, new Point2Dto { X = 0.0f, Y = 1.0f }]);
+exercise.AppendMarkingPoint(polylineMarkingId, new Point2Dto { X = 2.0f, Y = 0.0f });
+exercise.MoveMarkingPoint(polylineMarkingId, 1, new Point2Dto { X = 0.5f, Y = 1.5f });
+AssertTrue(
+    exercise.SetMarkingProperties(lineMarkingId, "#12ABEF", 0.15f, "solid", visibleInViewer: false),
+    "a line marking accepts arbitrary canonical RGB, width and visibility");
+AssertTrue(
+    exercise.SetMarkingProperties(polylineMarkingId, "#EE44AA", 0.1f, "dashed", visibleInViewer: true),
+    "a polyline marking accepts dashed style");
+AssertEqual(0.5f, exercise.FindMarking(polylineMarkingId)!.Points[1].X,
+    "a marking point moves in local exercise metres");
+int insertedMarkingPoint = exercise.InsertMarkingPointAfter(polylineMarkingId, 1);
+AssertEqual(2, insertedMarkingPoint, "an internal polyline marking point can be inserted");
+AssertTrue(exercise.DeleteMarkingPoint(polylineMarkingId, insertedMarkingPoint),
+    "an internal polyline marking point can be deleted without dropping below two points");
+AssertTrue(!exercise.FindMarking(lineMarkingId)!.VisibleInViewer,
+    "visibleInViewer=false remains persisted editor data");
+
+IReadOnlyList<MarkingStroke> solidStrokes = MarkingGeometry.CreateStrokes(
+    exercise.FindMarking(lineMarkingId)!.Points,
+    "solid");
+IReadOnlyList<MarkingStroke> dashedStrokes = MarkingGeometry.CreateStrokes(
+    exercise.FindMarking(polylineMarkingId)!.Points,
+    "dashed");
+IReadOnlyList<MarkingStroke> dottedStrokes = MarkingGeometry.CreateStrokes(
+    exercise.FindMarking(polylineMarkingId)!.Points,
+    "dotted");
+AssertEqual(1, solidStrokes.Count, "solid rendering keeps one stroke per line section");
+AssertTrue(dashedStrokes.Count > 1, "dashed rendering produces temporary separated strokes");
+AssertTrue(dottedStrokes.Count > dashedStrokes.Count, "dotted rendering produces a denser temporary pattern");
+
 string exerciseJson = ExerciseDefinitionStore.Serialize(exercise.Definition);
-AssertTrue(exerciseJson.Contains("\"formatVersion\": 1"), "Exercise Definition saves formatVersion 1 as indented JSON");
+AssertTrue(exerciseJson.Contains("\"formatVersion\": 2"), "Exercise Definition saves formatVersion 2 as indented JSON");
 AssertTrue(!exerciseJson.Contains("zoom", StringComparison.OrdinalIgnoreCase), "serialized document excludes zoom UI state");
 AssertTrue(!exerciseJson.Contains("selected", StringComparison.OrdinalIgnoreCase), "serialized document excludes selection UI state");
 AssertTrue(!exerciseJson.Contains("pan", StringComparison.OrdinalIgnoreCase), "serialized document excludes pan UI state");
@@ -294,7 +334,8 @@ string mismatchPath = Path.Combine(ProjectDirectory, "tests", "fixtures", "misma
 string mismatchSource = File.ReadAllText(mismatchPath);
 ExerciseDefinitionLoadResult mismatchResult =
     ExerciseDefinitionStore.LoadFromJsonWithDiagnostics(mismatchSource, mismatchPath);
-AssertEqual(2, mismatchResult.Warnings.Count, "entry and exit mismatches produce diagnostic warnings");
+AssertEqual(3, mismatchResult.Warnings.Count,
+    "version migration plus entry and exit mismatches produce diagnostic warnings");
 AssertEqual(-2.0f, mismatchResult.Definition.EntryPoint.X,
     "trajectory start replaces mismatched EntryPoint in memory");
 AssertEqual(6.0f, mismatchResult.Definition.ExitPoint.Y,
@@ -355,7 +396,70 @@ AssertThrows<InvalidDataException>(
         "missing-control-exercise.json"),
     "Exercise cubicBezier with a missing control point is rejected");
 
-Console.WriteLine("All Viewer Iteration 3 and Exercise Editor Iteration 3 checks passed.");
+ExerciseDefinitionLoadResult migratedV1 = ExerciseDefinitionStore.LoadFromJsonWithDiagnostics(
+    """{"formatVersion":1,"exercise":{"id":"legacy-marking","name":"Legacy Marking","version":1},"bounds":{"width":10,"length":10},"cones":[],"markings":[{"id":"marking-001","type":"line","points":[{"x":0,"y":0},{"x":1,"y":0}],"color":"yellow","widthMeters":0.08}],"entryPoint":{"x":0,"y":-1},"exitPoint":{"x":0,"y":1},"trajectory":{"segments":[{"id":"trajectory-segment-001","type":"polyline","points":[{"x":0,"y":-1},{"x":0,"y":1}]}]},"checkpoints":[]}""",
+    "legacy-marking.json");
+AssertEqual(2, migratedV1.Definition.FormatVersion, "Exercise version 1 migrates to version 2 in memory");
+AssertEqual("solid", migratedV1.Definition.Markings[0].Style, "Exercise v1 marking receives solid style");
+AssertTrue(migratedV1.Definition.Markings[0].VisibleInViewer,
+    "Exercise v1 marking receives visibleInViewer=true");
+AssertEqual("#FFD10D", migratedV1.Definition.Markings[0].Color,
+    "legacy named marking color becomes canonical RGB in memory");
+AssertTrue(migratedV1.Warnings.Count > 0, "Exercise migration is reported without rewriting its source");
+
+ExerciseDefinitionLoadResult normalizedMarking = ExerciseDefinitionStore.LoadFromJsonWithDiagnostics(
+    """{"formatVersion":2,"exercise":{"id":"fallback-marking","name":"Fallback Marking","version":1},"bounds":{"width":10,"length":10},"cones":[],"markings":[{"id":"marking-001","type":"line","points":[{"x":0,"y":0},{"x":1,"y":0}],"color":"#aabbcc","widthMeters":0.08,"style":"futureStyle","visibleInViewer":true}],"entryPoint":{"x":0,"y":-1},"exitPoint":{"x":0,"y":1},"trajectory":{"segments":[{"id":"trajectory-segment-001","type":"polyline","points":[{"x":0,"y":-1},{"x":0,"y":1}]}]},"checkpoints":[]}""",
+    "fallback-marking.json");
+AssertEqual("solid", normalizedMarking.Definition.Markings[0].Style,
+    "unknown Exercise marking style uses the documented solid fallback");
+AssertEqual("#AABBCC", normalizedMarking.Definition.Markings[0].Color,
+    "valid lowercase RGB is normalized to canonical #RRGGBB in memory");
+AssertEqual(2, normalizedMarking.Warnings.Count,
+    "style fallback and color normalization both produce diagnostics");
+
+TrackSnapshotDto unknownStyleTrack = TrackLoader.LoadFromJson(
+    """{"formatVersion":3,"track":{"id":"unknown-style","name":"Unknown Style"},"area":{"width":10,"length":10},"elements":[],"cones":[],"markings":[{"id":"marking-001","type":"line","points":[{"x":0,"y":0},{"x":1,"y":0}],"color":"#FFFFFF","widthMeters":0.1,"style":"futureStyle","visibleInViewer":true}],"trajectory":{"segments":[]},"checkpoints":[]}""",
+    "unknown-style-track.json");
+AssertEqual("futureStyle", unknownStyleTrack.Markings[0].Style,
+    "unknown Track marking style remains available for Viewer warning and solid fallback");
+
+string temporaryLibraryRoot = Path.Combine(Path.GetTempPath(), $"motogymkhana-library-{Guid.NewGuid():N}");
+try
+{
+    var library = new ExerciseLibrary(temporaryLibraryRoot);
+    AssertEqual(0, library.EnumerateEntries().Count, "an empty Exercise library initializes cleanly");
+    string drills = library.CreateFolder(string.Empty, "drills");
+    string slaloms = library.CreateFolder(drills, "slaloms");
+    AssertTrue(Directory.Exists(library.ResolveFolder(slaloms)), "nested Exercise library folders are created");
+
+    string firstLibraryFile = library.ResolveSaveJson(drills, ExerciseLibrary.SuggestFileName(exercise.Definition.Exercise.Id));
+    ExerciseDefinitionStore.SaveToFile(exercise.Definition, firstLibraryFile);
+    ExerciseDefinitionDto libraryReload = ExerciseDefinitionStore.LoadFromFile(library.ResolveExistingJson(firstLibraryFile));
+    AssertEqual(exercise.Definition.Exercise.Id, libraryReload.Exercise.Id,
+        "an Exercise saved in a selected library folder reopens");
+
+    string saveAsFile = library.ResolveSaveJson(slaloms, "saved-as.json");
+    ExerciseDefinitionStore.SaveToFile(exercise.Definition, saveAsFile);
+    AssertTrue(File.Exists(saveAsFile), "Save As can target a different nested library folder");
+    AssertThrows<InvalidDataException>(
+        () => library.CreateFolder(string.Empty, "../escape"),
+        "an invalid folder name is rejected");
+    AssertThrows<IOException>(
+        () => library.CreateFolder(string.Empty, "drills"),
+        "an existing Exercise library folder is not silently accepted or overwritten");
+    AssertThrows<InvalidDataException>(
+        () => library.ResolveUserPath(Path.Combine(temporaryLibraryRoot, "..", "escape.json")),
+        "path traversal cannot leave the Exercise library root");
+}
+finally
+{
+    if (Directory.Exists(temporaryLibraryRoot))
+    {
+        Directory.Delete(temporaryLibraryRoot, recursive: true);
+    }
+}
+
+Console.WriteLine("All Viewer and Exercise Editor Iteration 4 checks passed.");
 
 static void AssertEqual<T>(T expected, T actual, string description)
     where T : IEquatable<T>

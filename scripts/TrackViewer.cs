@@ -434,12 +434,27 @@ public partial class TrackViewer : Node3D
 
         foreach (MarkingDto marking in markings)
         {
+            if (!marking.VisibleInViewer)
+            {
+                // Hidden markings remain in JSON and editor data, but have no
+                // runtime visual node by explicit exported-track instruction.
+                continue;
+            }
+
             string type = marking.Type.ToLowerInvariant();
             if (type is not ("line" or "polyline"))
             {
                 // Geometry for future contract types is intentionally left undefined.
                 GD.PushWarning($"Marking '{marking.Id}' has unsupported type '{marking.Type}' and was skipped.");
                 continue;
+            }
+
+            string style = marking.Style;
+            if (!MarkingGeometry.IsSupportedStyle(style))
+            {
+                GD.PushWarning(
+                    $"Marking '{marking.Id}' has unsupported style '{marking.Style}'; solid fallback was used.");
+                style = "solid";
             }
 
             var material = new StandardMaterial3D
@@ -454,12 +469,22 @@ public partial class TrackViewer : Node3D
                 Name = string.IsNullOrWhiteSpace(marking.Id) ? "Marking" : marking.Id,
             };
 
-            AddPathSegments(
-                markingRoot,
-                marking.Points,
-                marking.WidthMeters,
-                MarkingElevation,
-                material);
+            int strokeIndex = 0;
+            foreach (MarkingStroke stroke in MarkingGeometry.CreateStrokes(marking.Points, style))
+            {
+                MeshInstance3D? visual = CreatePathSegment(
+                    $"Stroke_{strokeIndex++}",
+                    stroke.Start,
+                    stroke.End,
+                    marking.WidthMeters,
+                    MarkingElevation,
+                    material);
+                if (visual is not null)
+                {
+                    markingRoot.AddChild(visual);
+                }
+            }
+
             root.AddChild(markingRoot);
         }
 
@@ -766,14 +791,15 @@ public partial class TrackViewer : Node3D
 
     private static Color ResolveMarkingColor(string color)
     {
-        return color.ToLowerInvariant() switch
+        if (MarkingGeometry.TryNormalizeColor(color, allowLegacyNames: true, out string canonical))
         {
-            "red" => new Color(0.95f, 0.12f, 0.08f),
-            "blue" => new Color(0.08f, 0.32f, 1.0f),
-            "yellow" => new Color(1.0f, 0.82f, 0.05f),
-            "green" => new Color(0.1f, 0.85f, 0.22f),
-            "white" => Colors.White,
-            _ => Colors.White,
-        };
+            return new Color(
+                Convert.ToByte(canonical.Substring(1, 2), 16) / 255.0f,
+                Convert.ToByte(canonical.Substring(3, 2), 16) / 255.0f,
+                Convert.ToByte(canonical.Substring(5, 2), 16) / 255.0f);
+        }
+
+        GD.PushWarning($"Unknown marking color '{color}'; white fallback was used.");
+        return Colors.White;
     }
 }

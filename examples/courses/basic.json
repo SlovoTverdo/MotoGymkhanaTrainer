@@ -1,5 +1,5 @@
 {
-  "formatVersion": 2,
+  "formatVersion": 3,
 
   "track": {
     "id": "basic-demo",
@@ -97,8 +97,47 @@
         }
       ],
 
-      "color": "yellow",
-      "widthMeters": 0.08
+      "color": "#FFD10D",
+      "widthMeters": 0.08,
+      "style": "solid",
+      "visibleInViewer": true
+    },
+    {
+      "id": "marking-002",
+      "type": "polyline",
+      "points": [
+        { "x": 8.0, "y": 8.0 },
+        { "x": 8.0, "y": 20.0 },
+        { "x": 10.0, "y": 24.0 }
+      ],
+      "color": "#3A8DFF",
+      "widthMeters": 0.12,
+      "style": "dashed",
+      "visibleInViewer": true
+    },
+    {
+      "id": "marking-003",
+      "type": "line",
+      "points": [
+        { "x": 20.0, "y": 8.0 },
+        { "x": 20.0, "y": 28.0 }
+      ],
+      "color": "#FF4FB8",
+      "widthMeters": 0.16,
+      "style": "dotted",
+      "visibleInViewer": true
+    },
+    {
+      "id": "marking-hidden",
+      "type": "line",
+      "points": [
+        { "x": 5.0, "y": 40.0 },
+        { "x": 25.0, "y": 40.0 }
+      ],
+      "color": "#FFFFFF",
+      "widthMeters": 0.1,
+      "style": "solid",
+      "visibleInViewer": false
     }
   ],
 

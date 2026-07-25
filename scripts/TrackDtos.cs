@@ -6,7 +6,7 @@ namespace MotoGymkhanaTrainer.Tracks;
 public sealed class TrackSnapshotDto
 {
     [JsonPropertyName("formatVersion")]
-    public int FormatVersion { get; init; }
+    public int FormatVersion { get; set; }
 
     [JsonPropertyName("track")]
     public TrackMetadataDto Track { get; init; } = new();
@@ -92,19 +92,30 @@ public sealed class ConeDto
 public sealed class MarkingDto
 {
     [JsonPropertyName("id")]
-    public string Id { get; init; } = string.Empty;
+    public string Id { get; set; } = string.Empty;
 
     [JsonPropertyName("type")]
-    public string Type { get; init; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
 
     [JsonPropertyName("points")]
-    public Point2Dto[] Points { get; init; } = [];
+    public Point2Dto[] Points { get; set; } = [];
 
     [JsonPropertyName("color")]
-    public string Color { get; init; } = string.Empty;
+    public string Color { get; set; } = "#FFFFFF";
 
     [JsonPropertyName("widthMeters")]
-    public float WidthMeters { get; init; }
+    public float WidthMeters { get; set; } = 0.08f;
+
+    /// <summary>Line pattern: solid, dashed or dotted.</summary>
+    [JsonPropertyName("style")]
+    public string Style { get; set; } = "solid";
+
+    /// <summary>
+    /// Export visibility flag. Exercise Editor still draws hidden markings with
+    /// reduced opacity so they remain selectable and editable.
+    /// </summary>
+    [JsonPropertyName("visibleInViewer")]
+    public bool VisibleInViewer { get; set; } = true;
 }
 
 /// <summary>Resolved world-space reference trajectory rendered by the Viewer.</summary>
