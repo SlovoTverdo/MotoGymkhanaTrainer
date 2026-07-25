@@ -83,7 +83,7 @@ world point
 
 ```json
 {
-  "formatVersion": 1
+  "formatVersion": 2
 }
 ```
 
