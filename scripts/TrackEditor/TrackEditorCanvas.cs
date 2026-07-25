@@ -40,6 +40,8 @@ public partial class TrackEditorCanvas : Control
     private Point2Dto _dragScaleStart = new() { X = 1.0f, Y = 1.0f };
     private float _dragPointerAngle;
     private float _rotationAccumulator;
+    private IReadOnlyList<TrajectorySegmentDto> _transitionPreview = [];
+    private bool _showTransitions = true;
 
     [Signal]
     public delegate void SelectionChangedEventHandler();
@@ -86,6 +88,19 @@ public partial class TrackEditorCanvas : Control
         QueueRedraw();
     }
 
+    /// <summary>
+    /// Supplies derived transition geometry. It is a render cache only: Track
+    /// Project remains free of generated spline data.
+    /// </summary>
+    public void SetTransitionPreview(
+        IReadOnlyList<TrajectorySegmentDto> transitions,
+        bool visible)
+    {
+        _transitionPreview = transitions;
+        _showTransitions = visible;
+        QueueRedraw();
+    }
+
     /// <summary>Selects an instance from Route Order or properties.</summary>
     public void SelectInstance(string? instanceId)
     {
@@ -116,6 +131,27 @@ public partial class TrackEditorCanvas : Control
         for (int index = 0; index < _document.Project.Instances.Length; index++)
         {
             DrawInstance(_document.Project.Instances[index], index);
+        }
+
+        if (_showTransitions)
+        {
+            DrawTransitionPreview();
+        }
+    }
+
+    private void DrawTransitionPreview()
+    {
+        Color color = new(1.0f, 0.38f, 0.92f, 0.95f);
+        foreach (TrajectorySegmentDto transition in _transitionPreview)
+        {
+            Point2Dto[] samples = TrajectoryGeometry.SampleCubicBezier(
+                transition, BezierSubdivisions);
+            // The dashed magenta overlay visually separates generated transitions
+            // from green persisted Exercise trajectory without changing the spline.
+            foreach (MarkingStroke stroke in MarkingGeometry.CreateStrokes(samples, "dashed"))
+            {
+                DrawLine(ToScreen(stroke.Start), ToScreen(stroke.End), color, 4.0f, true);
+            }
         }
     }
 

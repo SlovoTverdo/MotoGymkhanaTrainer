@@ -61,6 +61,19 @@ public sealed class TrackProjectDocument
     public ExerciseDefinitionDto? FindDefinition(string instanceId) =>
         _definitions.GetValueOrDefault(instanceId);
 
+    /// <summary>
+    /// Replaces only the runtime dependency cache after a library refresh. The
+    /// persisted Track Project remains the source of instance order/transforms.
+    /// </summary>
+    public void ReplaceDefinitions(IReadOnlyDictionary<string, ExerciseDefinitionDto> definitions)
+    {
+        _definitions.Clear();
+        foreach ((string instanceId, ExerciseDefinitionDto definition) in definitions)
+        {
+            _definitions[instanceId] = definition;
+        }
+    }
+
     public string GetDisplayName(TrackProjectInstanceDto instance) =>
         FindDefinition(instance.InstanceId)?.Exercise.Name ?? $"Unresolved: {instance.ExercisePath}";
 

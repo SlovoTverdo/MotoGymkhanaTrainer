@@ -316,8 +316,10 @@ public partial class TrackViewer : Node3D
                 SubdivideDepth = Math.Max(0, (int)area.Length - 1),
                 Material = groundMaterial,
             },
-            // Exported positions use an origin at one corner of the rectangular area.
-            Position = new Vector3(area.Width / 2.0f, 0.0f, area.Length / 2.0f),
+            // Track Project and exported world geometry use the geometric centre
+            // of the area as origin. PlaneMesh is centred already, so no offset is
+            // applied here; domain X/Y still maps directly to Godot X/Z.
+            Position = Vector3.Zero,
         };
 
         return ground;
@@ -333,45 +335,49 @@ public partial class TrackViewer : Node3D
             ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
         };
 
-        int widthMeters = Mathf.FloorToInt(area.Width);
-        int lengthMeters = Mathf.FloorToInt(area.Length);
+        int minimumX = Mathf.CeilToInt(-area.Width / 2.0f);
+        int maximumX = Mathf.FloorToInt(area.Width / 2.0f);
+        int minimumY = Mathf.CeilToInt(-area.Length / 2.0f);
+        int maximumY = Mathf.FloorToInt(area.Length / 2.0f);
 
         // Each line is a very shallow box rather than a renderer line. Its physical
         // width therefore remains stable and can represent the 1x/2x/3x hierarchy.
-        for (int x = 0; x <= widthMeters; x++)
+        for (int x = minimumX; x <= maximumX; x++)
         {
             grid.AddChild(CreateGridLine(
                 $"GridX_{x}",
                 new Vector3(GetGridLineThickness(x), GridLineHeight, area.Length),
-                new Vector3(x, GridLineHeight / 2.0f, area.Length / 2.0f),
+                new Vector3(x, GridLineHeight / 2.0f, 0.0f),
                 gridMaterial));
         }
 
-        for (int y = 0; y <= lengthMeters; y++)
+        for (int y = minimumY; y <= maximumY; y++)
         {
             grid.AddChild(CreateGridLine(
                 $"GridY_{y}",
                 new Vector3(area.Width, GridLineHeight, GetGridLineThickness(y)),
-                new Vector3(area.Width / 2.0f, GridLineHeight / 2.0f, y),
+                new Vector3(0.0f, GridLineHeight / 2.0f, y),
                 gridMaterial));
         }
 
         // Labels sit just outside two adjacent edges. X/Y names preserve the domain
         // coordinate meaning even though domain Y is rendered on Godot's Z axis.
-        for (int x = 0; x <= widthMeters; x += 10)
+        for (int x = minimumX; x <= maximumX; x++)
         {
+            if (x % 10 != 0) continue;
             grid.AddChild(CreateGridLabel(
                 $"GridLabelX_{x}",
                 $"X: {x}",
-                new Vector3(x, 0.32f, -0.55f)));
+                new Vector3(x, 0.32f, -area.Length / 2.0f - 0.55f)));
         }
 
-        for (int y = 10; y <= lengthMeters; y += 10)
+        for (int y = minimumY; y <= maximumY; y++)
         {
+            if (y % 10 != 0) continue;
             grid.AddChild(CreateGridLabel(
                 $"GridLabelY_{y}",
                 $"Y: {y}",
-                new Vector3(-0.55f, 0.32f, y)));
+                new Vector3(-area.Width / 2.0f - 0.55f, 0.32f, y)));
         }
 
         return grid;

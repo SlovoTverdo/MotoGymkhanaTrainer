@@ -12,6 +12,7 @@ public partial class TrackEditor : Control
     private TrackProjectDocument _document = TrackProjectDocument.CreateNew();
     private SandboxedJsonLibrary? _exerciseLibrary;
     private SandboxedJsonLibrary? _trackLibrary;
+    private SandboxedJsonLibrary? _exportLibrary;
     private TrackEditorCanvas? _canvas;
     private Tree? _exerciseTree;
     private Tree? _trackTree;
@@ -32,8 +33,11 @@ public partial class TrackEditor : Control
     private Label? _fileLabel;
     private Label? _dirtyLabel;
     private Label? _statusLabel;
+    private RichTextLabel? _validationLabel;
+    private CheckButton? _showTransitions;
     private FileDialog? _openDialog;
     private FileDialog? _saveDialog;
+    private FileDialog? _exportDialog;
     private ConfirmationDialog? _unsavedDialog;
     private ConfirmationDialog? _newFolderDialog;
     private LineEdit? _newFolderName;
@@ -44,6 +48,7 @@ public partial class TrackEditor : Control
     private PendingAction _pendingAction;
     private bool _dirty;
     private bool _updatingUi;
+    private TrackCompilationResult _compilation = new();
 
     public override void _Ready()
     {
@@ -51,6 +56,8 @@ public partial class TrackEditor : Control
             ProjectSettings.GlobalizePath("res://exercises"), "Exercise library", "res://exercises/");
         _trackLibrary = new SandboxedJsonLibrary(
             ProjectSettings.GlobalizePath("res://tracks"), "Track Project library", "res://tracks/");
+        _exportLibrary = new SandboxedJsonLibrary(
+            ProjectSettings.GlobalizePath("res://exports/tracks"), "Track export library", "res://exports/tracks/");
         BuildUi();
         ReplaceDocument(TrackProjectDocument.CreateNew(), null, dirty: true);
         SetStatus("New Track Project created.", false);
@@ -107,6 +114,16 @@ public partial class TrackEditor : Control
             ClipText = true,
         };
         page.AddChild(_statusLabel);
+        _validationLabel = new RichTextLabel
+        {
+            Name = "CompilationDiagnostics",
+            BbcodeEnabled = true,
+            FitContent = false,
+            ScrollActive = true,
+            CustomMinimumSize = new Vector2(0, 72),
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
+        page.AddChild(_validationLabel);
         BuildDialogs();
     }
 
@@ -118,6 +135,17 @@ public partial class TrackEditor : Control
         toolbar.AddChild(CreateButton("OpenButton", "Open", () => RequestAction(PendingAction.OpenDialog)));
         toolbar.AddChild(CreateButton("SaveButton", "Save", Save));
         toolbar.AddChild(CreateButton("SaveAsButton", "Save As", ShowSaveAs));
+        toolbar.AddChild(new VSeparator());
+        toolbar.AddChild(CreateButton("ExportViewerButton", "Export for Viewer", ShowExportDialog));
+        _showTransitions = new CheckButton
+        {
+            Name = "ShowTransitions",
+            Text = "Show automatic transitions",
+            ButtonPressed = true,
+        };
+        _showTransitions.Toggled += visible =>
+            _canvas?.SetTransitionPreview(_compilation.Transitions, visible);
+        toolbar.AddChild(_showTransitions);
         toolbar.AddChild(new VSeparator());
         toolbar.AddChild(CreateButton("DeleteButton", "Delete Instance", () => DeleteSelected()));
         return toolbar;
@@ -240,6 +268,11 @@ public partial class TrackEditor : Control
         _saveDialog.FileSelected += SaveProject;
         _saveDialog.Canceled += () => SetStatus("Save canceled.", false);
         AddChild(_saveDialog);
+        _exportDialog = JsonDialog("ExportViewerTrack", "Export Track for Viewer", FileDialog.FileModeEnum.SaveFile);
+        _exportDialog.CurrentDir = _exportLibrary!.RootPath;
+        _exportDialog.FileSelected += ExportForViewer;
+        _exportDialog.Canceled += () => SetStatus("Export canceled; Track Project was not changed.", false);
+        AddChild(_exportDialog);
 
         _unsavedDialog = new ConfirmationDialog
         {
@@ -266,7 +299,34 @@ public partial class TrackEditor : Control
         AddChild(_newFolderDialog);
     }
 
-    private void RefreshExerciseTree() => FillTree(_exerciseTree!, "exercises", _exerciseLibrary!);
+    private void RefreshExerciseTree()
+    {
+        FillTree(_exerciseTree!, "exercises", _exerciseLibrary!);
+        if (_document.Project.Instances.Length == 0)
+        {
+            RefreshCompilation();
+            return;
+        }
+
+        try
+        {
+            // Refresh is also the explicit dependency reload operation. Only the
+            // runtime cache changes; project transforms/order and dirty state do not.
+            string json = TrackProjectStore.Serialize(_document.Project, _exerciseLibrary!);
+            TrackProjectLoadResult reloaded = TrackProjectStore.LoadFromJson(
+                json, "current Track Project", _exerciseLibrary!);
+            _document.ReplaceDefinitions(reloaded.Definitions);
+            foreach (string warning in reloaded.Warnings) GD.PushWarning(warning);
+            RefreshCompilation();
+            SynchronizeRouteList();
+            _canvas?.QueueRedraw();
+        }
+        catch (Exception exception)
+        {
+            SetStatus($"Exercise refresh failed: {exception.Message}", true);
+            GD.PushError($"Unable to refresh Exercise dependencies: {exception}");
+        }
+    }
 
     private void RefreshTrackTree() => FillTree(_trackTree!, "tracks", _trackLibrary!);
 
@@ -456,6 +516,7 @@ public partial class TrackEditor : Control
         _document = document;
         _currentFilePath = filePath;
         _canvas!.SetDocument(document);
+        RefreshCompilation();
         SynchronizeAllUi();
         SetDirty(dirty);
     }
@@ -524,6 +585,7 @@ public partial class TrackEditor : Control
     private void OnCanvasChanged()
     {
         SetDirty(true);
+        RefreshCompilation();
         SynchronizeSelectionUi();
     }
 
@@ -602,9 +664,75 @@ public partial class TrackEditor : Control
     private void MarkChanged()
     {
         SetDirty(true);
+        RefreshCompilation();
         SynchronizeRouteList();
         SynchronizeSelectionUi();
         _canvas!.QueueRedraw();
+    }
+
+    private void RefreshCompilation()
+    {
+        _compilation = TrackCompiler.Compile(_document);
+        _canvas?.SetTransitionPreview(
+            _compilation.Transitions,
+            _showTransitions?.ButtonPressed ?? true);
+        if (_validationLabel is null) return;
+
+        var lines = new List<string>
+        {
+            $"[b]Export validation:[/b] {_compilation.Errors.Count} error(s), {_compilation.Warnings.Count} warning(s)",
+        };
+        lines.AddRange(_compilation.Errors.Select(item => $"[color=#ff786e]ERROR: {EscapeBbcode(item.Message)}[/color]"));
+        lines.AddRange(_compilation.Warnings.Select(item => $"[color=#ffd166]WARNING: {EscapeBbcode(item.Message)}[/color]"));
+        _validationLabel.Text = string.Join("\n", lines);
+    }
+
+    private void ShowExportDialog()
+    {
+        RefreshCompilation();
+        if (!_compilation.CanExport)
+        {
+            SetStatus($"Export blocked: {_compilation.Errors.Count} validation error(s).", true);
+            return;
+        }
+
+        try
+        {
+            _exportDialog!.CurrentDir = _exportLibrary!.RootPath;
+            _exportDialog.CurrentFile = SandboxedJsonLibrary.SuggestFileName(
+                _document.Project.Track.Id, "track-export");
+            _exportDialog.PopupCenteredRatio(0.82f);
+        }
+        catch (Exception exception)
+        {
+            SetStatus($"Export dialog failed: {exception.Message}", true);
+        }
+    }
+
+    private void ExportForViewer(string path)
+    {
+        try
+        {
+            RefreshCompilation();
+            if (!_compilation.CanExport || _compilation.Snapshot is null)
+                throw new InvalidDataException($"Export blocked by {_compilation.Errors.Count} validation error(s).");
+
+            string requested = ToFilesystemPath(path);
+            string directory = Path.GetDirectoryName(requested) ?? _exportLibrary!.RootPath;
+            string target = _exportLibrary!.ResolveSaveJson(
+                _exportLibrary.ToRelative(directory), Path.GetFileName(requested));
+            TrackExportStore.SaveToFile(_compilation.Snapshot, target);
+            // Export is a derived snapshot operation, not a Track Project save;
+            // therefore _dirty is intentionally left unchanged.
+            SetStatus(
+                $"Exported Viewer Track to '{target}' with {_compilation.Warnings.Count} warning(s).",
+                false);
+        }
+        catch (Exception exception)
+        {
+            SetStatus($"Export failed: {exception.Message}", true);
+            GD.PushError($"Unable to export Viewer Track '{path}': {exception}");
+        }
     }
 
     private void SetDirty(bool dirty)
@@ -668,4 +796,6 @@ public partial class TrackEditor : Control
 
     private static string ToFilesystemPath(string path) =>
         path.StartsWith("res://", StringComparison.Ordinal) ? ProjectSettings.GlobalizePath(path) : path;
+
+    private static string EscapeBbcode(string value) => value.Replace("[", "(").Replace("]", ")");
 }

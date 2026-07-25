@@ -28,6 +28,28 @@ public static class ExerciseInstanceGeometry
         };
     }
 
+    /// <summary>
+    /// Applies non-uniform scale and rotation to a direction, but deliberately
+    /// omits translation. Normalization belongs to the caller: a zero result is
+    /// meaningful validation evidence and must not be replaced by a fallback.
+    /// </summary>
+    public static Point2Dto TransformDirection(
+        Point2Dto localDirection,
+        float rotationDeg,
+        Point2Dto scale)
+    {
+        float scaledX = localDirection.X * scale.X;
+        float scaledY = localDirection.Y * scale.Y;
+        float radians = rotationDeg * MathF.PI / 180.0f;
+        float cosine = MathF.Cos(radians);
+        float sine = MathF.Sin(radians);
+        return new Point2Dto
+        {
+            X = scaledX * cosine - scaledY * sine,
+            Y = scaledX * sine + scaledY * cosine,
+        };
+    }
+
     /// <summary>Maps a track point back into Exercise-local coordinates for bounds hit testing.</summary>
     public static Point2Dto InverseTransformPoint(
         Point2Dto trackPoint,

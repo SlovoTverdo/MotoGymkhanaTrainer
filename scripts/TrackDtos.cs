@@ -44,7 +44,8 @@ public sealed class TrackMetadataDto
 public sealed class AreaDto
 {
     [JsonPropertyName("name")]
-    public string Name { get; init; } = string.Empty;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public string? Name { get; init; }
 
     [JsonPropertyName("width")]
     public float Width { get; init; }

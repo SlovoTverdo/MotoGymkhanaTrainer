@@ -505,6 +505,9 @@ try
     ExerciseDefinitionDto secondDefinition = ExerciseDefinitionStore.LoadFromFile(secondExercisePath);
 
     TrackProjectDocument trackDocument = TrackProjectDocument.CreateNew();
+    TrackCompilationResult emptyCompilation = TrackCompiler.Compile(trackDocument);
+    AssertTrue(!emptyCompilation.CanExport && emptyCompilation.Errors.Count > 0,
+        "empty Track Project is editable but blocked from Viewer export");
     AssertEqual(60.0f, trackDocument.Project.Area.Width, "new Track Project uses the documented 60 m width");
     AssertEqual(100.0f, trackDocument.Project.Area.Length, "new Track Project uses the documented 100 m length");
     AssertEqual(0, trackDocument.Project.Instances.Length, "new Track Project starts with no instances");
@@ -630,6 +633,153 @@ try
     AssertThrows<InvalidDataException>(
         () => trackLibrary.ResolveUserPath(Path.Combine(trackRoot, "..", "escape.json")),
         "Track library path traversal cannot leave res://tracks/");
+
+    ExerciseDefinitionDto compileFirst = ExerciseDefinitionStore.LoadFromFile(firstExercisePath);
+    compileFirst.Markings =
+    [
+        new MarkingDto
+        {
+            Id = "hidden-dash",
+            Type = "line",
+            Points = [new Point2Dto { X = -1, Y = 0 }, new Point2Dto { X = 1, Y = 0 }],
+            Color = "#12ABEF",
+            WidthMeters = 0.22f,
+            Style = "dashed",
+            VisibleInViewer = false,
+        },
+        new MarkingDto
+        {
+            Id = "visible-dot",
+            Type = "polyline",
+            Points = [new Point2Dto { X = -1, Y = 1 }, new Point2Dto { X = 0, Y = 2 }, new Point2Dto { X = 1, Y = 1 }],
+            Color = "#FF00AA",
+            WidthMeters = 0.11f,
+            Style = "dotted",
+            VisibleInViewer = true,
+        },
+    ];
+    ExerciseDefinitionDto compileSecond = ExerciseDefinitionStore.LoadFromFile(secondExercisePath);
+    var compileDocument = TrackProjectDocument.CreateNew("iteration-2", "Iteration 2", 80, 120);
+    string compileA = compileDocument.AddInstance("polyline.json", compileFirst);
+    compileDocument.SetTransform(compileA, new Point2Dto { X = 3, Y = -8 }, 90,
+        new Point2Dto { X = 2, Y = 0.5f });
+    TrackCompilationResult oneInstanceCompilation = TrackCompiler.Compile(compileDocument);
+    AssertTrue(oneInstanceCompilation.CanExport, "one resolved instance compiles without a transition");
+    AssertEqual(0, oneInstanceCompilation.Transitions.Count, "single-instance export has no transition segments");
+    AssertEqual(1, oneInstanceCompilation.Snapshot!.Trajectory.Segments.Length,
+        "single-instance global trajectory contains only its transformed trajectory");
+    AssertTrue(MathF.Abs(oneInstanceCompilation.Snapshot.Cones[0].Position.X - 3.0f) < 0.0001f &&
+        MathF.Abs(oneInstanceCompilation.Snapshot.Cones[0].Position.Y - -4.0f) < 0.0001f,
+        "compiler transforms cone coordinates with scale, rotation and translation");
+    AssertEqual(0.22f, oneInstanceCompilation.Snapshot.Markings[0].WidthMeters,
+        "instance scale does not change marking widthMeters");
+    AssertTrue(!oneInstanceCompilation.Snapshot.Markings[0].VisibleInViewer &&
+        oneInstanceCompilation.Snapshot.Markings[0].Style == "dashed" &&
+        oneInstanceCompilation.Snapshot.Markings[1].Style == "dotted",
+        "hidden state and dashed/dotted marking styles survive compilation");
+
+    string compileB = compileDocument.AddInstance("multi.json", compileSecond);
+    compileDocument.SetTransform(compileB, new Point2Dto { X = 18, Y = 20 }, -20,
+        new Point2Dto { X = 0.75f, Y = 1.5f });
+    TrackCompilationResult twoInstanceCompilation = TrackCompiler.Compile(compileDocument);
+    AssertTrue(twoInstanceCompilation.CanExport, "two resolved instances compile with an automatic transition");
+    AssertEqual(1, twoInstanceCompilation.Transitions.Count, "one transition is generated for two instances");
+    AssertEqual(5, twoInstanceCompilation.Snapshot!.Trajectory.Segments.Length,
+        "global trajectory keeps polyline, transition, then all cubicBezier/polyline segments");
+    AssertEqual("exercise-instance-001--fixture-polyline",
+        twoInstanceCompilation.Snapshot.Trajectory.Segments[0].Id,
+        "internal segment id is scoped by instanceId");
+    AssertEqual("transition--exercise-instance-001--exercise-instance-002",
+        twoInstanceCompilation.Snapshot.Trajectory.Segments[1].Id,
+        "transition id is deterministic from the adjacent instance pair");
+    AssertEqual("cubicBezier", twoInstanceCompilation.Snapshot.Trajectory.Segments[1].Type,
+        "automatic transition remains cubicBezier in exported JSON");
+    AssertTrue(twoInstanceCompilation.Snapshot.Trajectory.Segments[1].Points is null,
+        "Bezier rendering samples are not persisted in exported geometry");
+
+    Point2Dto transformedDirection = ExerciseInstanceGeometry.TransformDirection(
+        new Point2Dto { X = 2, Y = 3 }, 90, new Point2Dto { X = 2, Y = 0.5f });
+    AssertTrue(MathF.Abs(transformedDirection.X - -1.5f) < 0.0001f &&
+        MathF.Abs(transformedDirection.Y - 4.0f) < 0.0001f,
+        "tangent transform applies non-uniform scale before rotation and omits translation");
+
+    string compileC = compileDocument.AddInstance("polyline.json", compileFirst);
+    compileDocument.SetTransform(compileC, new Point2Dto { X = -18, Y = 30 }, 180,
+        new Point2Dto { X = 1, Y = 1 });
+    TrackCompilationResult multiCompilation = TrackCompiler.Compile(compileDocument);
+    AssertEqual(2, multiCompilation.Transitions.Count, "three instances generate two ordered transitions");
+    AssertEqual(multiCompilation.Snapshot!.Cones.Length,
+        multiCompilation.Snapshot.Cones.Select(cone => cone.Id).Distinct().Count(),
+        "multiple instances of one definition produce unique exported cone ids");
+
+    compileDocument.MoveUp(compileC);
+    TrackCompilationResult reordered = TrackCompiler.Compile(compileDocument);
+    AssertEqual("exercise-instance-003--fixture-polyline", reordered.Snapshot!.Trajectory.Segments[2].Id,
+        "Route Order changes the global segment sequence without changing stable ids");
+    Point2Dto transitionStartBeforeMove = reordered.Transitions[0].Start!;
+    compileDocument.MoveInstance(compileA, new Point2Dto { X = 6, Y = -6 });
+    TrackCompilationResult movedCompilation = TrackCompiler.Compile(compileDocument);
+    AssertTrue(MathF.Abs(movedCompilation.Transitions[0].Start!.X - transitionStartBeforeMove.X) > 0.001f ||
+        MathF.Abs(movedCompilation.Transitions[0].Start!.Y - transitionStartBeforeMove.Y) > 0.001f,
+        "moving an instance recomputes derived transition endpoints");
+    Point2Dto controlBeforeTransform = movedCompilation.Transitions[0].Control1!;
+    TrackProjectInstanceDto transformedA = compileDocument.FindInstance(compileA)!;
+    compileDocument.SetTransform(compileA, transformedA.Position, transformedA.RotationDeg + 25.0f,
+        new Point2Dto { X = 1.4f, Y = 0.65f });
+    TrackCompilationResult transformedCompilation = TrackCompiler.Compile(compileDocument);
+    AssertTrue(MathF.Abs(transformedCompilation.Transitions[0].Control1!.X - controlBeforeTransform.X) > 0.001f ||
+        MathF.Abs(transformedCompilation.Transitions[0].Control1!.Y - controlBeforeTransform.Y) > 0.001f,
+        "rotation and non-uniform scale recompute transition tangent handles");
+
+    string exportRoot = Path.Combine(temporaryTrackTestRoot, "exports", "tracks");
+    var exportLibrary = new SandboxedJsonLibrary(exportRoot, "Track export library", "res://exports/tracks/");
+    string exportedPath = exportLibrary.ResolveSaveJson(string.Empty, "iteration-2.json");
+    TrackExportStore.SaveToFile(movedCompilation.Snapshot!, exportedPath);
+    TrackSnapshotDto viewerRoundTrip = TrackLoader.LoadFromJson(File.ReadAllText(exportedPath), exportedPath);
+    AssertEqual(3, viewerRoundTrip.FormatVersion, "Viewer loader accepts compiled formatVersion 3 export");
+    AssertEqual(movedCompilation.Snapshot!.Trajectory.Segments.Length,
+        viewerRoundTrip.Trajectory.Segments.Length,
+        "Viewer receives complete global trajectory including transitions");
+    AssertTrue(File.ReadAllText(exportedPath).Contains("\"checkpoints\": []"),
+        "canonical Viewer export contains an explicit empty checkpoints array");
+    string exportedJson = File.ReadAllText(exportedPath);
+    AssertTrue(!exportedJson.Contains("\"area\": {\n    \"name\"") &&
+        !exportedJson.Contains("\"area\": {\r\n    \"name\""),
+        "canonical Viewer export does not add undocumented area UI metadata");
+    AssertThrows<InvalidDataException>(
+        () => exportLibrary.ResolveUserPath(Path.Combine(exportRoot, "..", "escape.json")),
+        "Viewer export path cannot traverse outside res://exports/tracks/");
+
+    var unresolvedDocument = new TrackProjectDocument(unresolved.Project, unresolved.Definitions);
+    TrackCompilationResult unresolvedCompilation = TrackCompiler.Compile(unresolvedDocument);
+    AssertTrue(!unresolvedCompilation.CanExport && unresolvedCompilation.Errors.Count >= 2,
+        "unresolved Exercise Definitions block export without throwing");
+
+    ExerciseDefinitionDto zeroTangent = ExerciseDefinitionStore.LoadFromFile(firstExercisePath);
+    zeroTangent.Trajectory.Segments[0].Points =
+    [new Point2Dto { X = 0, Y = 0 }, new Point2Dto { X = 0, Y = 0 }];
+    zeroTangent.EntryPoint = new Point2Dto { X = 0, Y = 0 };
+    zeroTangent.ExitPoint = new Point2Dto { X = 0, Y = 0 };
+    var zeroDocument = TrackProjectDocument.CreateNew("zero", "Zero tangent");
+    zeroDocument.AddInstance("polyline.json", zeroTangent);
+    TrackCompilationResult zeroCompilation = TrackCompiler.Compile(zeroDocument);
+    AssertTrue(!zeroCompilation.CanExport &&
+        zeroCompilation.Errors.Any(error => error.Message.Contains("invalid trajectory segment")),
+        "zero tangent is reported as a blocking validation error");
+
+    ExerciseDefinitionDto damagedTrajectory = ExerciseDefinitionStore.LoadFromFile(firstExercisePath);
+    damagedTrajectory.Trajectory.Segments[0].Points = [new Point2Dto { X = 0, Y = 0 }];
+    var damagedDocument = TrackProjectDocument.CreateNew("damaged", "Damaged trajectory");
+    damagedDocument.AddInstance("polyline.json", damagedTrajectory);
+    AssertTrue(!TrackCompiler.Compile(damagedDocument).CanExport,
+        "damaged trajectory blocks export without crashing the compiler");
+
+    var outsideDocument = TrackProjectDocument.CreateNew("outside", "Outside", 10, 10);
+    string outsideId = outsideDocument.AddInstance("polyline.json", firstDefinition);
+    outsideDocument.MoveInstance(outsideId, new Point2Dto { X = 50, Y = 50 });
+    TrackCompilationResult outsideCompilation = TrackCompiler.Compile(outsideDocument);
+    AssertTrue(outsideCompilation.CanExport && outsideCompilation.Warnings.Count > 0,
+        "geometry outside area is a non-blocking warning");
 }
 finally
 {
@@ -639,7 +789,7 @@ finally
     }
 }
 
-Console.WriteLine("All Viewer, Exercise Editor Iteration 4 and Track Editor Iteration 1 checks passed.");
+Console.WriteLine("All Viewer, Exercise Editor Iteration 4 and Track Editor Iteration 2 checks passed.");
 
 static void AssertEqual<T>(T expected, T actual, string description)
     where T : IEquatable<T>
