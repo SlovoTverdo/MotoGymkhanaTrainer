@@ -48,15 +48,35 @@ AssertEqual(28.0f, cubicBezier.Control1!.Y, "cubicBezier control1 loads");
 AssertEqual(15.0f, cubicBezier.Control2!.X, "cubicBezier control2 loads");
 AssertEqual(35.0f, cubicBezier.End!.Y, "cubicBezier end loads");
 
+AssertTrue(TrajectoryGeometry.TryGetEntryPose(
+        snapshot.Trajectory,
+        out Point2Dto viewerEntry,
+        out Point2Dto viewerDirection),
+    "Viewer resolves a camera pose from the first trajectory segment");
+AssertTrue(viewerEntry.X == polyline.Points![0].X && viewerEntry.Y == polyline.Points[0].Y,
+    "Viewer camera entry is the first trajectory point");
+Point2Dto expectedViewerDirection = new()
+{
+    X = polyline.Points[1].X - polyline.Points[0].X,
+    Y = polyline.Points[1].Y - polyline.Points[0].Y,
+};
+float expectedViewerDirectionLength = MathF.Sqrt(
+    expectedViewerDirection.X * expectedViewerDirection.X +
+    expectedViewerDirection.Y * expectedViewerDirection.Y);
+AssertEqual(expectedViewerDirection.X / expectedViewerDirectionLength, viewerDirection.X,
+    "Viewer camera follows the first segment X tangent");
+AssertEqual(expectedViewerDirection.Y / expectedViewerDirectionLength, viewerDirection.Y,
+    "Viewer camera follows the first segment Y tangent");
+
 Vector3 mapped = DomainCoordinateMapper.ToGodot(new Point2Dto { X = 12.0f, Y = 10.0f });
-AssertEqual(new Vector3(12.0f, 0.0f, 10.0f), mapped, "domain X/Y maps to Godot X/Z");
+AssertEqual(new Vector3(12.0f, 0.0f, -10.0f), mapped, "domain X/Y maps to Godot X/-Z");
 
 Vector3[] expectedPositions =
 [
-    new(12.0f, 0.0f, 10.0f),
-    new(18.0f, 0.0f, 15.0f),
-    new(12.0f, 0.0f, 20.0f),
-    new(18.0f, 0.0f, 25.0f),
+    new(12.0f, 0.0f, -10.0f),
+    new(18.0f, 0.0f, -15.0f),
+    new(12.0f, 0.0f, -20.0f),
+    new(18.0f, 0.0f, -25.0f),
 ];
 
 for (int index = 0; index < snapshot.Cones.Length; index++)
@@ -508,8 +528,11 @@ try
     TrackCompilationResult emptyCompilation = TrackCompiler.Compile(trackDocument);
     AssertTrue(!emptyCompilation.CanExport && emptyCompilation.Errors.Count > 0,
         "empty Track Project is editable but blocked from Viewer export");
-    AssertEqual(60.0f, trackDocument.Project.Area.Width, "new Track Project uses the documented 60 m width");
-    AssertEqual(100.0f, trackDocument.Project.Area.Length, "new Track Project uses the documented 100 m length");
+    AssertEqual(100.0f, trackDocument.Project.Area.Width, "new Track Project uses the documented 100 m width");
+    AssertEqual(40.0f, trackDocument.Project.Area.Length, "new Track Project uses the documented 40 m length");
+    AssertEqual(5.8f,
+        EditorCanvasMath.FitPixelsPerMeter(100, 40, new Vector2(636, 420), 28, 3, 120),
+        "Track canvas fit uses the central panel size after side-panel layout");
     AssertEqual(0, trackDocument.Project.Instances.Length, "new Track Project starts with no instances");
     trackDocument.Project.Area.Width = 72.0f;
     trackDocument.Project.Area.Length = 110.0f;

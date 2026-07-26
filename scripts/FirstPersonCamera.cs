@@ -1,4 +1,5 @@
 using Godot;
+using MotoGymkhanaTrainer.Tracks;
 
 namespace MotoGymkhanaTrainer.Viewer;
 
@@ -24,7 +25,33 @@ public partial class FirstPersonCamera : Node3D
         _fixedHeight = Position.Y;
         _pitchDegrees = RotationDegrees.X;
         _yawDegrees = RotationDegrees.Y;
-        Input.MouseMode = Input.MouseModeEnum.Captured;
+        // Keep the pointer available for the initial Open Track action. A click
+        // on unhandled 3D viewport space still enters mouse-look below.
+        Input.MouseMode = Input.MouseModeEnum.Visible;
+    }
+
+    /// <summary>Places the camera behind a trajectory entry and looks along it.</summary>
+    public void PlaceAtTrajectoryStart(
+        Point2Dto trajectoryStart,
+        Point2Dto normalizedDirection,
+        float distanceBehindMeters = 1.0f)
+    {
+        var cameraDomainPosition = new Point2Dto
+        {
+            X = trajectoryStart.X - normalizedDirection.X * distanceBehindMeters,
+            Y = trajectoryStart.Y - normalizedDirection.Y * distanceBehindMeters,
+        };
+        Position = DomainCoordinateMapper.ToGodot(cameraDomainPosition, _fixedHeight);
+
+        Vector3 worldForward = new(
+            normalizedDirection.X,
+            0.0f,
+            -normalizedDirection.Y);
+        _pitchDegrees = 0.0f;
+        // Camera3D looks along local -Z. This yaw rotates that forward axis onto
+        // the mapped domain tangent without introducing pitch or roll.
+        _yawDegrees = Mathf.RadToDeg(Mathf.Atan2(-worldForward.X, -worldForward.Z));
+        RotationDegrees = new Vector3(_pitchDegrees, _yawDegrees, 0.0f);
     }
 
     /// <inheritdoc />
@@ -76,4 +103,3 @@ public partial class FirstPersonCamera : Node3D
         Position = position;
     }
 }
-

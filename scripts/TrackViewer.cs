@@ -6,7 +6,7 @@ namespace MotoGymkhanaTrainer.Viewer;
 /// <summary>Loads an exported track snapshot and builds its Viewer geometry.</summary>
 public partial class TrackViewer : Node3D
 {
-    private const string DefaultTrackPath = "res://examples/courses/basic.json";
+    private const string TrackExportRoot = "res://exports/tracks";
     private const string ConeModelPath = "res://Assets/Models/Traffic Cone_Textured.glb";
     private const string ToggleGridAction = "toggle_grid";
     private const string ToggleTrajectoryAction = "toggle_trajectory";
@@ -33,11 +33,16 @@ public partial class TrackViewer : Node3D
     private Label? _statusLabel;
     private CheckBox? _trajectoryToggle;
     private FileDialog? _trackFileDialog;
+    private SandboxedJsonLibrary? _trackExportLibrary;
     private bool _trajectoryVisible = true;
 
     /// <inheritdoc />
     public override void _Ready()
     {
+        _trackExportLibrary = new SandboxedJsonLibrary(
+            ProjectSettings.GlobalizePath(TrackExportRoot),
+            "Viewer track export library",
+            $"{TrackExportRoot}/");
         CreateViewerUi();
 
         try
@@ -50,7 +55,7 @@ public partial class TrackViewer : Node3D
             return;
         }
 
-        TryReplaceTrack(DefaultTrackPath);
+        SetStatus("Select an exported Track JSON file.", new Color(0.85f, 0.85f, 0.85f));
     }
 
     /// <inheritdoc />
@@ -136,12 +141,16 @@ public partial class TrackViewer : Node3D
         {
             Name = "TrackFileDialog",
             Title = "Open exported Track JSON",
-            Access = FileDialog.AccessEnum.Filesystem,
+            Access = FileDialog.AccessEnum.Resources,
             FileMode = FileDialog.FileModeEnum.OpenFile,
             UseNativeDialog = false,
             Size = new Vector2I(900, 600),
             Filters = ["*.json ; Track JSON files"],
-            CurrentDir = ProjectSettings.GlobalizePath("res://examples/courses"),
+            CurrentDir = TrackExportRoot,
+            // Godot prevents navigation above this virtual root. The selected
+            // path is validated again by SandboxedJsonLibrary before loading.
+            RootSubfolder = TrackExportRoot,
+            FolderCreationEnabled = false,
         };
         _trackFileDialog.FileSelected += OnTrackFileSelected;
         _trackFileDialog.Canceled += OnTrackDialogCanceled;
@@ -159,7 +168,18 @@ public partial class TrackViewer : Node3D
 
     private void OnTrackFileSelected(string path)
     {
-        TryReplaceTrack(path);
+        try
+        {
+            string filesystemPath = path.StartsWith("res://", StringComparison.OrdinalIgnoreCase)
+                ? ProjectSettings.GlobalizePath(path)
+                : path;
+            string safePath = _trackExportLibrary!.ResolveExistingJson(filesystemPath);
+            TryReplaceTrack(safePath);
+        }
+        catch (Exception exception)
+        {
+            ReportLoadFailure(path, exception);
+        }
     }
 
     private void OnTrackDialogCanceled()
@@ -194,11 +214,23 @@ public partial class TrackViewer : Node3D
              * cannot partially dismantle the currently visible valid track.
              */
             TrackSnapshotDto track = LoadTrack(path);
+            if (!TrajectoryGeometry.TryGetEntryPose(
+                    track.Trajectory,
+                    out Point2Dto trajectoryStart,
+                    out Point2Dto trajectoryDirection))
+            {
+                throw new InvalidDataException(
+                    "The first renderable trajectory segment has no valid entry direction for camera placement.");
+            }
+
             PackedScene coneModel = _coneModel ?? throw new InvalidOperationException(
                 "The traffic cone model is not available.");
             Node3D candidate = CreateRuntimeTrack(track, coneModel);
 
             ReplaceRuntimeTrack(candidate);
+            GetNode<FirstPersonCamera>("../CameraRig").PlaceAtTrajectoryStart(
+                trajectoryStart,
+                trajectoryDirection);
             string displayName = string.IsNullOrWhiteSpace(track.Track.Name)
                 ? track.Track.Id
                 : track.Track.Name;
@@ -356,19 +388,24 @@ public partial class TrackViewer : Node3D
             grid.AddChild(CreateGridLine(
                 $"GridY_{y}",
                 new Vector3(area.Width, GridLineHeight, GetGridLineThickness(y)),
-                new Vector3(0.0f, GridLineHeight / 2.0f, y),
+                DomainCoordinateMapper.ToGodot(
+                    new Point2Dto { X = 0.0f, Y = y },
+                    GridLineHeight / 2.0f),
                 gridMaterial));
         }
 
         // Labels sit just outside two adjacent edges. X/Y names preserve the domain
-        // coordinate meaning even though domain Y is rendered on Godot's Z axis.
+        // coordinate meaning; every position uses the same Y -> -Z mapping as
+        // cones, markings and trajectory so the ruler cannot invert independently.
         for (int x = minimumX; x <= maximumX; x++)
         {
             if (x % 10 != 0) continue;
             grid.AddChild(CreateGridLabel(
                 $"GridLabelX_{x}",
                 $"X: {x}",
-                new Vector3(x, 0.32f, -area.Length / 2.0f - 0.55f)));
+                DomainCoordinateMapper.ToGodot(
+                    new Point2Dto { X = x, Y = area.Length / 2.0f + 0.55f },
+                    0.32f)));
         }
 
         for (int y = minimumY; y <= maximumY; y++)
@@ -377,7 +414,9 @@ public partial class TrackViewer : Node3D
             grid.AddChild(CreateGridLabel(
                 $"GridLabelY_{y}",
                 $"Y: {y}",
-                new Vector3(-area.Width / 2.0f - 0.55f, 0.32f, y)));
+                DomainCoordinateMapper.ToGodot(
+                    new Point2Dto { X = -area.Width / 2.0f - 0.55f, Y = y },
+                    0.32f)));
         }
 
         return grid;

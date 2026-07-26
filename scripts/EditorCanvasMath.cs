@@ -6,6 +6,29 @@ namespace MotoGymkhanaTrainer;
 /// <summary>Shared 2D editor mapping between domain metres and Control pixels.</summary>
 public static class EditorCanvasMath
 {
+    /// <summary>Computes a centred scale that fits domain bounds inside the actual canvas.</summary>
+    public static float FitPixelsPerMeter(
+        float areaWidth,
+        float areaLength,
+        Vector2 viewportSize,
+        float paddingPixels,
+        float minimumPixelsPerMeter,
+        float maximumPixelsPerMeter)
+    {
+        if (!float.IsFinite(areaWidth) || !float.IsFinite(areaLength) ||
+            areaWidth <= 0.0f || areaLength <= 0.0f)
+        {
+            throw new ArgumentOutOfRangeException(nameof(areaWidth), "Area dimensions must be finite and positive.");
+        }
+
+        float usableWidth = MathF.Max(viewportSize.X - paddingPixels * 2.0f, 1.0f);
+        float usableHeight = MathF.Max(viewportSize.Y - paddingPixels * 2.0f, 1.0f);
+        return Mathf.Clamp(
+            MathF.Min(usableWidth / areaWidth, usableHeight / areaLength),
+            minimumPixelsPerMeter,
+            maximumPixelsPerMeter);
+    }
+
     /// <summary>Maps local X/right and Y/up metres into Godot canvas coordinates.</summary>
     public static Vector2 DomainToScreen(
         Point2Dto point,

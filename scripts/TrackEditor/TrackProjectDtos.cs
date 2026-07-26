@@ -36,10 +36,10 @@ public sealed class TrackProjectMetadataDto
 public sealed class TrackProjectAreaDto
 {
     [JsonPropertyName("width")]
-    public float Width { get; set; } = 60.0f;
+    public float Width { get; set; } = 100.0f;
 
     [JsonPropertyName("length")]
-    public float Length { get; set; } = 100.0f;
+    public float Length { get; set; } = 40.0f;
 }
 
 /// <summary>One ordered Exercise reference and its only persisted transform.</summary>

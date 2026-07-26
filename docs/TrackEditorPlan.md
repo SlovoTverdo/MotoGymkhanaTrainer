@@ -143,8 +143,8 @@ New Track
 Предлагаемые defaults:
 
 ```text
-width  = 60 m
-length = 100 m
+width  = 100 m
+length = 40 m
 ```
 
 После создания:

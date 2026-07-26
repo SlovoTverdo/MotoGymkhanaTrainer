@@ -100,7 +100,7 @@ X / Y
 
 ```text
 domain X → Godot X
-domain Y → Godot Z
+domain Y → Godot -Z
 ```
 
 Вертикальная ось:

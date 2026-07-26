@@ -49,6 +49,9 @@ public partial class TrackEditorCanvas : Control
     [Signal]
     public delegate void DocumentChangedEventHandler();
 
+    /// <summary>Raised when an Exercise JSON is dropped at a snapped track position.</summary>
+    public event Action<string, Point2Dto>? ExerciseDropped;
+
     /// <summary>Selected instance id is UI state and is never serialized.</summary>
     public string? SelectedInstanceId => _selectedInstanceId;
 
@@ -76,16 +79,43 @@ public partial class TrackEditorCanvas : Control
         if (resetView)
         {
             _panPixels = Vector2.Zero;
-            float usableWidth = MathF.Max(Size.X - 40.0f, 100.0f);
-            float usableHeight = MathF.Max(Size.Y - 40.0f, 100.0f);
-            _pixelsPerMeter = Mathf.Clamp(
-                MathF.Min(usableWidth / document.Project.Area.Width,
-                    usableHeight / document.Project.Area.Length) * 0.9f,
-                MinimumPixelsPerMeter,
-                MaximumPixelsPerMeter);
+            // Layout containers have not necessarily assigned the central panel
+            // its monitor-dependent size when the document is replaced in _Ready.
+            // Deferred fitting uses the real canvas after both side panels settle.
+            Callable.From(FitAreaInView).CallDeferred();
         }
 
         QueueRedraw();
+    }
+
+    /// <summary>Centres the whole Track area inside the current central canvas.</summary>
+    public void FitAreaInView()
+    {
+        _panPixels = Vector2.Zero;
+        _pixelsPerMeter = EditorCanvasMath.FitPixelsPerMeter(
+            _document.Project.Area.Width,
+            _document.Project.Area.Length,
+            Size,
+            paddingPixels: 28.0f,
+            MinimumPixelsPerMeter,
+            MaximumPixelsPerMeter);
+        QueueRedraw();
+    }
+
+    /// <inheritdoc />
+    public override bool _CanDropData(Vector2 atPosition, Variant data) =>
+        ExerciseLibraryTree.TryReadExercisePath(data, out _);
+
+    /// <inheritdoc />
+    public override void _DropData(Vector2 atPosition, Variant data)
+    {
+        if (!ExerciseLibraryTree.TryReadExercisePath(data, out string relativePath))
+        {
+            return;
+        }
+
+        Point2Dto position = EditorCanvasMath.Snap(ToDomain(atPosition), SnapMeters);
+        ExerciseDropped?.Invoke(relativePath, position);
     }
 
     /// <summary>
@@ -410,27 +440,30 @@ public partial class TrackEditorCanvas : Control
 
     private void DrawGrid()
     {
-        Point2Dto topLeft = ToDomain(Vector2.Zero);
-        Point2Dto bottomRight = ToDomain(Size);
-        int minimumX = Mathf.FloorToInt(MathF.Min(topLeft.X, bottomRight.X));
-        int maximumX = Mathf.CeilToInt(MathF.Max(topLeft.X, bottomRight.X));
-        int minimumY = Mathf.FloorToInt(MathF.Min(topLeft.Y, bottomRight.Y));
-        int maximumY = Mathf.CeilToInt(MathF.Max(topLeft.Y, bottomRight.Y));
+        float halfWidth = _document.Project.Area.Width * 0.5f;
+        float halfLength = _document.Project.Area.Length * 0.5f;
+        int minimumX = Mathf.CeilToInt(-halfWidth);
+        int maximumX = Mathf.FloorToInt(halfWidth);
+        int minimumY = Mathf.CeilToInt(-halfLength);
+        int maximumY = Mathf.FloorToInt(halfLength);
         Color minor = new(0.20f, 0.23f, 0.27f);
         Color major = new(0.34f, 0.38f, 0.44f);
 
+        // Grid indices are integral metres, but every line is clipped to the
+        // exact area boundary. Pan and zoom may reveal empty canvas around the
+        // project; that space intentionally receives no measurement grid.
         for (int x = minimumX; x <= maximumX; x++)
         {
             Color color = x % 5 == 0 ? major : minor;
-            DrawLine(ToScreen(new Point2Dto { X = x, Y = minimumY }),
-                ToScreen(new Point2Dto { X = x, Y = maximumY }), color, x % 5 == 0 ? 2.0f : 1.0f);
+            DrawLine(ToScreen(new Point2Dto { X = x, Y = -halfLength }),
+                ToScreen(new Point2Dto { X = x, Y = halfLength }), color, x % 5 == 0 ? 2.0f : 1.0f);
         }
 
         for (int y = minimumY; y <= maximumY; y++)
         {
             Color color = y % 5 == 0 ? major : minor;
-            DrawLine(ToScreen(new Point2Dto { X = minimumX, Y = y }),
-                ToScreen(new Point2Dto { X = maximumX, Y = y }), color, y % 5 == 0 ? 2.0f : 1.0f);
+            DrawLine(ToScreen(new Point2Dto { X = -halfWidth, Y = y }),
+                ToScreen(new Point2Dto { X = halfWidth, Y = y }), color, y % 5 == 0 ? 2.0f : 1.0f);
         }
 
         Vector2 origin = ToScreen(new Point2Dto());

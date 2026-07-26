@@ -26,8 +26,8 @@ public sealed class TrackProjectDocument
     public static TrackProjectDocument CreateNew(
         string id = "new-track",
         string name = "New Track",
-        float width = 60.0f,
-        float length = 100.0f)
+        float width = 100.0f,
+        float length = 40.0f)
     {
         return new TrackProjectDocument(new TrackProjectDto
         {

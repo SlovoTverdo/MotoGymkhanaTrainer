@@ -7,6 +7,54 @@ namespace MotoGymkhanaTrainer.Tracks;
 /// </summary>
 public static class TrajectoryGeometry
 {
+    /// <summary>
+    /// Resolves the start and normalized forward direction of the first
+    /// renderable segment. This is domain geometry, independent of Godot axes.
+    /// </summary>
+    public static bool TryGetEntryPose(
+        TrajectoryDto trajectory,
+        out Point2Dto start,
+        out Point2Dto direction)
+    {
+        start = new Point2Dto();
+        direction = new Point2Dto();
+
+        foreach (TrajectorySegmentDto segment in trajectory.Segments)
+        {
+            float deltaX;
+            float deltaY;
+            if (string.Equals(segment.Type, "polyline", StringComparison.Ordinal) &&
+                segment.Points is { Length: >= 2 })
+            {
+                start = segment.Points[0];
+                deltaX = segment.Points[1].X - start.X;
+                deltaY = segment.Points[1].Y - start.Y;
+            }
+            else if (string.Equals(segment.Type, "cubicBezier", StringComparison.Ordinal) &&
+                     segment.Start is not null && segment.Control1 is not null)
+            {
+                start = segment.Start;
+                deltaX = segment.Control1.X - start.X;
+                deltaY = segment.Control1.Y - start.Y;
+            }
+            else
+            {
+                continue;
+            }
+
+            float length = MathF.Sqrt(deltaX * deltaX + deltaY * deltaY);
+            if (!float.IsFinite(length) || length <= 0.00001f)
+            {
+                return false;
+            }
+
+            direction = new Point2Dto { X = deltaX / length, Y = deltaY / length };
+            return true;
+        }
+
+        return false;
+    }
+
     /// <summary>Evaluates a cubic Bezier at a normalized parameter in [0, 1].</summary>
     public static Point2Dto EvaluateCubicBezier(
         Point2Dto start,

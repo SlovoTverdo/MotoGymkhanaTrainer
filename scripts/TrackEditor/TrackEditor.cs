@@ -14,7 +14,7 @@ public partial class TrackEditor : Control
     private SandboxedJsonLibrary? _trackLibrary;
     private SandboxedJsonLibrary? _exportLibrary;
     private TrackEditorCanvas? _canvas;
-    private Tree? _exerciseTree;
+    private ExerciseLibraryTree? _exerciseTree;
     private Tree? _trackTree;
     private ItemList? _routeList;
     private LineEdit? _trackId;
@@ -99,6 +99,7 @@ public partial class TrackEditor : Control
         };
         _canvas.SelectionChanged += SynchronizeSelectionUi;
         _canvas.DocumentChanged += OnCanvasChanged;
+        _canvas.ExerciseDropped += AddExerciseAt;
         center.AddChild(_canvas);
         center.AddChild(BuildRouteOrder());
         body.AddChild(center);
@@ -165,19 +166,17 @@ public partial class TrackEditor : Control
     {
         var scroll = new ScrollContainer { Name = "LibrariesScroll", CustomMinimumSize = new Vector2(300, 0) };
         var panel = new VBoxContainer { Name = "Libraries", CustomMinimumSize = new Vector2(292, 0) };
-        panel.AddChild(Section("Selected instance tools"));
-        _mirrorVerticalButton = CreateButton(
-            "MirrorVertical", "Отразить зеркально вертикально", () => MirrorSelected(vertical: true));
-        _mirrorHorizontalButton = CreateButton(
-            "MirrorHorizontal", "Отразить зеркально горизонтально", () => MirrorSelected(vertical: false));
-        panel.AddChild(_mirrorVerticalButton);
-        panel.AddChild(_mirrorHorizontalButton);
         panel.AddChild(Section("Exercise Library — res://exercises/"));
         var exerciseActions = new HBoxContainer();
         exerciseActions.AddChild(CreateButton("RefreshExercises", "Refresh", RefreshExerciseTree));
         exerciseActions.AddChild(CreateButton("AddToTrack", "Add to Track", AddSelectedExercise));
         panel.AddChild(exerciseActions);
-        _exerciseTree = new Tree { Name = "ExerciseTree", HideRoot = false, CustomMinimumSize = new Vector2(0, 260) };
+        _exerciseTree = new ExerciseLibraryTree
+        {
+            Name = "ExerciseTree",
+            HideRoot = false,
+            CustomMinimumSize = new Vector2(0, 260),
+        };
         _exerciseTree.ItemSelected += OnExerciseSelected;
         panel.AddChild(_exerciseTree);
 
@@ -222,8 +221,8 @@ public partial class TrackEditor : Control
         _positionX = Spin("PositionX", -10000, 10000, 0.25, " m");
         _positionY = Spin("PositionY", -10000, 10000, 0.25, " m");
         _rotation = Spin("RotationDeg", -100000, 100000, 1, "°");
-        _scaleX = Spin("ScaleX", 0.1, 10, 0.05, string.Empty);
-        _scaleY = Spin("ScaleY", 0.1, 10, 0.05, string.Empty);
+        _scaleX = Spin("ScaleX", -10, 10, 0.05, string.Empty);
+        _scaleY = Spin("ScaleY", -10, 10, 0.05, string.Empty);
         foreach (SpinBox spin in new[] { _positionX, _positionY, _rotation, _scaleX, _scaleY })
         {
             spin.ValueChanged += _ => OnTransformEdited();
@@ -237,6 +236,14 @@ public partial class TrackEditor : Control
         panel.AddChild(rotateButtons);
         panel.AddChild(Row("Scale X", _scaleX));
         panel.AddChild(Row("Scale Y", _scaleY));
+        var mirrorButtons = new VBoxContainer { Name = "MirrorButtons" };
+        _mirrorHorizontalButton = CreateButton(
+            "MirrorHorizontal", "Отразить зеркально горизонтально (X)", () => MirrorSelected(vertical: false));
+        _mirrorVerticalButton = CreateButton(
+            "MirrorVertical", "Отразить зеркально вертикально (Y)", () => MirrorSelected(vertical: true));
+        mirrorButtons.AddChild(_mirrorHorizontalButton);
+        mirrorButtons.AddChild(_mirrorVerticalButton);
+        panel.AddChild(mirrorButtons);
         scroll.AddChild(panel);
         return scroll;
     }
@@ -359,17 +366,25 @@ public partial class TrackEditor : Control
 
     private void AddSelectedExercise()
     {
+        AddExerciseAt(_selectedExercisePath, new Point2Dto());
+    }
+
+    private void AddExerciseAt(string relativePath, Point2Dto position)
+    {
         try
         {
-            if (string.IsNullOrWhiteSpace(_selectedExercisePath))
+            if (string.IsNullOrWhiteSpace(relativePath))
                 throw new InvalidOperationException("Select an Exercise JSON first.");
-            string file = _exerciseLibrary!.ResolveExistingJson(_selectedExercisePath);
+            string file = _exerciseLibrary!.ResolveExistingJson(relativePath);
             ExerciseDefinitionLoadResult load = ExerciseDefinitionStore.LoadFromFileWithDiagnostics(file);
-            string id = _document.AddInstance(_selectedExercisePath, load.Definition);
+            string id = _document.AddInstance(relativePath, load.Definition);
+            _document.MoveInstance(id, position);
             _canvas!.SelectInstance(id);
             MarkChanged();
             foreach (string warning in load.Warnings) GD.PushWarning(warning);
-            SetStatus($"Added '{load.Definition.Exercise.Name}' as {id} at the area origin.", false);
+            SetStatus(
+                $"Added '{load.Definition.Exercise.Name}' as {id} at ({position.X:0.##}, {position.Y:0.##}) m.",
+                false);
         }
         catch (Exception exception)
         {
@@ -543,11 +558,21 @@ public partial class TrackEditor : Control
         TrackProjectInstanceDto? instance = _document.FindInstance(id);
         if (instance is null) return;
 
-        // Numeric fields edit size magnitudes. Mirror state lives in the signs
-        // and is changed only by the explicit buttons, so ordinary size edits
-        // cannot accidentally remove a reflection.
-        float scaleX = MathF.CopySign((float)_scaleX!.Value, instance.Scale.X);
-        float scaleY = MathF.CopySign((float)_scaleY!.Value, instance.Scale.Y);
+        float scaleX = (float)_scaleX!.Value;
+        float scaleY = (float)_scaleY!.Value;
+        if (MathF.Abs(scaleX) < 0.1f || MathF.Abs(scaleY) < 0.1f)
+        {
+            // A scale sign is persisted as mirror state, therefore only zero is
+            // invalid. Restore the last valid transform instead of silently
+            // converting a requested negative value to +0.1.
+            _updatingUi = true;
+            _scaleX.Value = instance.Scale.X;
+            _scaleY.Value = instance.Scale.Y;
+            _updatingUi = false;
+            SetStatus("Scale X/Y must be <= -0.1 or >= 0.1; zero is not allowed.", true);
+            return;
+        }
+
         if (_document.SetTransform(id,
             new Point2Dto { X = (float)_positionX!.Value, Y = (float)_positionY!.Value },
             (float)_rotation!.Value,
@@ -654,8 +679,8 @@ public partial class TrackEditor : Control
             _positionX!.Value = instance!.Position.X;
             _positionY!.Value = instance.Position.Y;
             _rotation!.Value = instance.RotationDeg;
-            _scaleX!.Value = MathF.Abs(instance.Scale.X);
-            _scaleY!.Value = MathF.Abs(instance.Scale.Y);
+            _scaleX!.Value = instance.Scale.X;
+            _scaleY!.Value = instance.Scale.Y;
         }
         _updatingUi = false;
         SynchronizeRouteList();
