@@ -81,3 +81,13 @@ When documentation is ambiguous, choose the smallest implementation compatible w
 - Панорамное окружение должно храниться как ссылка на equirectangular texture и отображаться через Godot Sky/PanoramaSkyMaterial, а не через сериализованную геометрию цилиндра или сферы.
 - VenueObjectInstance ссылается на готовую `.tscn`-сцену; Venue Editor не редактирует внутреннюю структуру asset.
 - Editor-only selection, locks, history, pan, zoom и caches не сериализуются в Venue Definition.
+
+`docs/TrackVenueIntegrationPlan.md` — интеграция Venue с Track Project, Track Editor, export pipeline и Viewer.
+- Track Project formatVersion 3 обязан ссылаться на Venue Definition через безопасный относительный `venuePath`.
+- Track Project не хранит area или редактируемую копию Venue.
+- Track Editor не редактирует Venue geometry; она отображается read-only.
+- Exported Track formatVersion 4 содержит runtime snapshot Venue и Track.
+- Viewer не читает Track Project, Venue Definition или Exercise Definition.
+- Панорама отображается через `PanoramaSkyMaterial`, а не через cylinder/sphere mesh.
+- Venue object assets загружаются как PackedScene по `res://` path.
+- Не реализовывать compatibility или migration для старых Track Project и exports.
