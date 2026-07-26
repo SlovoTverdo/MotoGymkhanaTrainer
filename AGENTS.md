@@ -65,3 +65,19 @@ At minimum validate:
 ## Scope rule
 
 When documentation is ambiguous, choose the smallest implementation compatible with the current MVP and leave a concise TODO rather than inventing a large subsystem.
+
+
+---
+
+## Venue definition
+
+```markdown
+- `docs/VenueFormat.md` — контракт переиспользуемой площадки, её окружения, постоянных объектов, конусов и разметки.
+- `docs/VenueEditorPlan.md` — план и ограничения реализации Venue Editor.
+```
+
+- Venue Definition является отдельным корневым документом и не должна моделироваться как Exercise Definition.
+- Venue Editor, Track Editor и Exercise Editor должны оставаться отдельными сценами и режимами.
+- Панорамное окружение должно храниться как ссылка на equirectangular texture и отображаться через Godot Sky/PanoramaSkyMaterial, а не через сериализованную геометрию цилиндра или сферы.
+- VenueObjectInstance ссылается на готовую `.tscn`-сцену; Venue Editor не редактирует внутреннюю структуру asset.
+- Editor-only selection, locks, history, pan, zoom и caches не сериализуются в Venue Definition.
