@@ -1492,3 +1492,426 @@ Iteration 2 завершена, если:
 * проект собирается без compile errors;
 * runtime logs не содержат необработанных ошибок.
 
+* # Track Editor Iteration 3 — Manual Transition Editing
+
+## 1. Цель
+
+Дать пользователю возможность вручную корректировать форму переходных cubicBezier между соседними ExerciseInstance.
+
+Iteration 3 должна сохранять автоматическое построение как default и создавать persisted override только после ручного изменения.
+
+---
+
+# 2. Основной workflow
+
+```text
+automatic transition
+        ↓
+select transition
+        ↓
+move Bezier handle
+        ↓
+create/update TransitionOverride
+        ↓
+save Track Project
+        ↓
+reload
+        ↓
+restore manual transition
+```
+
+Сброс:
+
+```text
+manual transition
+        ↓
+Reset to Automatic
+        ↓
+remove TransitionOverride
+        ↓
+recalculate automatic transition
+```
+
+---
+
+# 3. Selection
+
+Пользователь должен иметь возможность выбрать transition на Track Editor canvas.
+
+Выбранный transition:
+
+* визуально выделяется;
+* показывает control handles;
+* отображается в properties panel;
+* указывает связанные instances;
+* показывает режим `Automatic` или `Manual`.
+
+Hit testing должен выполняться по дискретизированному preview cubicBezier с экранным tolerance.
+
+---
+
+# 4. Hit testing priority
+
+Рекомендуемый порядок:
+
+1. transition control handle;
+2. выбранный transition curve;
+3. ExerciseInstance;
+4. другие trajectory overlays.
+
+Если текущая архитектура требует другого порядка, он должен оставаться предсказуемым и быть задокументирован.
+
+Control handle нельзя путать:
+
+* с instance bounds;
+* с trajectory anchor Exercise Definition;
+* с номером Route Order.
+
+---
+
+# 5. Bezier handles
+
+Для выбранного transition показываются:
+
+* `control1`;
+* `control2`;
+* линия `start → control1`;
+* линия `end → control2`.
+
+Endpoints:
+
+* отображаются;
+* не редактируются напрямую;
+* зависят от ExerciseInstance.
+
+Чтобы изменить endpoints, пользователь перемещает соответствующее упражнение.
+
+---
+
+# 6. First edit
+
+Автоматический transition изначально не имеет TransitionOverride.
+
+При первом перемещении handle:
+
+1. получить текущие P0/P1/P2/P3;
+2. создать TransitionOverride;
+3. сохранить offsets:
+
+   * `P1 - P0`;
+   * `P2 - P3`;
+4. применить drag;
+5. отметить Track Project dirty.
+
+После этого режим transition становится:
+
+```text
+Manual
+```
+
+---
+
+# 7. Drag handles
+
+Control handles перемещаются drag-and-drop.
+
+При движении:
+
+* обновляется TransitionOverride;
+* обновляется compiled transition;
+* обновляется preview;
+* устанавливается dirty state;
+* properties panel синхронизируется.
+
+Snap:
+
+* по умолчанию может использовать общий snap Track Editor;
+* должен существовать простой способ временно отключить snap для тонкой настройки.
+
+Рекомендуемый вариант:
+
+```text
+Alt while dragging — disable snap
+```
+
+Если Alt уже занят, допускается другой понятный modifier.
+
+---
+
+# 8. Properties panel
+
+Для выбранного transition отображать:
+
+```text
+Transition ID
+From Exercise
+To Exercise
+Mode
+Start X/Y
+Control 1 X/Y
+Control 2 X/Y
+End X/Y
+```
+
+Дополнительно:
+
+```text
+Control 1 Offset X/Y
+Control 2 Offset X/Y
+```
+
+Start и End — read-only.
+
+Control points или offsets можно редактировать численно.
+
+Предпочтительно редактировать абсолютные control point coordinates в UI, а сохранять offsets внутри Track Project.
+
+---
+
+# 9. Reset to Automatic
+
+Добавить действие:
+
+```text
+Reset to Automatic
+```
+
+Оно:
+
+1. удаляет соответствующий TransitionOverride;
+2. пересчитывает автоматическую кривую;
+3. обновляет preview;
+4. устанавливает dirty state;
+5. меняет режим на `Automatic`.
+
+Если override отсутствует, команда disabled.
+
+---
+
+# 10. Instance transform with override
+
+При перемещении, повороте или масштабировании связанных ExerciseInstance:
+
+* endpoints пересчитываются;
+* сохранённые offsets не изменяются;
+* control points перемещаются вместе с соответствующими endpoints.
+
+```text
+P1 = new P0 + saved Control1Offset
+P2 = new P3 + saved Control2Offset
+```
+
+Такое поведение является простым и предсказуемым для Iteration 3.
+
+Track Editor может показать warning, если после сильного изменения transform переход стал неестественным.
+
+Автоматически менять пользовательские offsets нельзя.
+
+---
+
+# 11. Reorder
+
+После изменения Route Order необходимо повторно сопоставить overrides с соседними парами.
+
+Если пара:
+
+```text
+A → B
+```
+
+сохранилась, override продолжает применяться.
+
+Если A и B больше не соседи:
+
+* override становится orphaned;
+* transition для новых соседей строится автоматически;
+* orphaned override не экспортируется;
+* пользователь получает warning.
+
+---
+
+# 12. Orphaned overrides UI
+
+Добавить минимальное представление orphaned overrides.
+
+Допустимые варианты:
+
+* отдельный список warnings;
+* секция validation;
+* диалог очистки.
+
+Минимально необходимая операция:
+
+```text
+Remove Orphaned Overrides
+```
+
+Она должна требовать подтверждение, поскольку удаляет ручные данные.
+
+Не удалять orphaned overrides автоматически при Open или Reorder.
+
+---
+
+# 13. Deleting instance
+
+При удалении ExerciseInstance, связанном с overrides, показать предупреждение:
+
+```text
+This instance is referenced by manual transition overrides.
+```
+
+Допустимые действия:
+
+```text
+Delete Instance and Keep Orphaned Overrides
+Delete Instance and Remove Related Overrides
+Cancel
+```
+
+Если полный диалог чрезмерно усложняет MVP, допустимо:
+
+* удалить instance;
+* сохранить orphaned overrides;
+* показать warning.
+
+Не удалять overrides молча.
+
+---
+
+# 14. Validation
+
+## Errors
+
+Экспорт блокируется при:
+
+* non-finite offset;
+* duplicate override для одной пары;
+* duplicate transitionId;
+* применимом override с невалидной geometry;
+* невозможности построить конечный cubicBezier.
+
+## Warnings
+
+Экспорт не блокируется из-за:
+
+* orphaned override;
+* слишком длинных handles;
+* перехода за пределами area;
+* резкого изгиба;
+* самопересечения preview, если оно обнаруживается простым способом.
+
+Orphaned override не экспортируется.
+
+---
+
+# 15. Save/Open
+
+Track Editor сохраняет Track Project:
+
+```text
+formatVersion = 2
+```
+
+и:
+
+```json
+"transitionOverrides": []
+```
+
+При Open:
+
+1. загрузить project DTO;
+2. выполнить migration v1 → v2 в памяти;
+3. разрешить Exercise Definitions;
+4. определить соседние пары;
+5. применить подходящие overrides;
+6. отметить остальные overrides orphaned;
+7. построить preview.
+
+Исходный v1-файл не перезаписывается до Save.
+
+---
+
+# 16. Export
+
+При экспорте:
+
+* automatic transition экспортируется с автоматически рассчитанными control points;
+* overridden transition экспортируется с control points из override;
+* оба становятся обычными `cubicBezier` в global trajectory;
+* Viewer не различает их источник.
+
+Exported Track formatVersion остаётся:
+
+```text
+3
+```
+
+---
+
+# 17. Visual distinction
+
+На canvas рекомендуется различать:
+
+```text
+Automatic transition
+Manual transition
+Selected transition
+Invalid transition
+```
+
+Например:
+
+* automatic — стандартный overlay;
+* manual — дополнительный значок или другой оттенок;
+* selected — яркое выделение;
+* invalid — предупреждающий стиль.
+
+Точные цвета не являются частью доменного контракта.
+
+---
+
+# 18. Не реализовывать
+
+В Iteration 3 не добавлять:
+
+* дополнительные anchors внутри перехода;
+* несколько spline segments между упражнениями;
+* split transition;
+* convert transition to polyline;
+* linked/mirrored handles;
+* automatic smoothing after manual edit;
+* obstacle avoidance;
+* minimum turn radius;
+* speed model;
+* environment;
+* undo/redo framework;
+* Viewer changes без необходимости;
+* Exercise Editor changes без необходимости.
+
+---
+
+# 19. Definition of Done
+
+* Transition можно выбрать.
+* Для выбранного transition видны handles.
+* Handles перемещаются мышью.
+* Первое изменение создаёт TransitionOverride.
+* Повторное изменение обновляет override.
+* Числовое редактирование работает.
+* Reset удаляет override.
+* Automatic transition восстанавливается.
+* Override сохраняется в Track Project v2.
+* Override восстанавливается после Open.
+* Track Project v1 открывается через in-memory migration.
+* Перемещение instance обновляет endpoints.
+* Offset сохраняется при изменении instance transform.
+* Reorder создаёт orphaned override при потере соседства.
+* Orphaned override не экспортируется.
+* Manual transition экспортируется в Viewer.
+* Viewer отображает итоговую кривую.
+* Exercise Editor не сломан.
+* Track Editor Iteration 1–2 не сломан.
+* Нет compile/runtime errors.
+
+
