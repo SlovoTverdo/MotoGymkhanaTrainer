@@ -46,6 +46,14 @@ Therefore:
 - JSON DTOs should be separate from Godot scene/node classes.
 - Do not implement motorcycle physics or a motorcycle model.
 - Camera movement only: WASD + mouse + Shift.
+- - Walk mode Viewer должен использовать `CharacterBody3D` и physics movement; запрещено перемещать физическую камеру прямым изменением position.
+- Collision geometry Venue object хранится внутри asset `.tscn`; Viewer не генерирует её автоматически.
+- `collisionEnabled=false` отключает существующие collision descendants instantiated asset.
+- Двумерная trajectory, markings, arrows и cones проецируются на walkable surfaces только в Viewer runtime.
+- Runtime projected height не сериализуется в Track, Venue или Exercise JSON.
+- Surface raycasts должны выполняться после добавления Venue collision bodies в physics space.
+- Projection ray mask не должен включать Track visual geometry и непроходимые стены.
+- Viewer reload обязан удалить старые physics bodies и projected geometry.
 
 ## Data and scaling
 
@@ -91,3 +99,5 @@ When documentation is ambiguous, choose the smallest implementation compatible w
 - Панорама отображается через `PanoramaSkyMaterial`, а не через cylinder/sphere mesh.
 - Venue object assets загружаются как PackedScene по `res://` path.
 - Не реализовывать compatibility или migration для старых Track Project и exports.
+  
+- `docs/ViewerVenuePhysicsPlan.md` — физический контроллер Viewer, collision Venue, движение по эстакаде и проекция Track geometry на поверхности.
