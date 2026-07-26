@@ -772,6 +772,209 @@ Override
 
 `CompiledTransition` является производной runtime-моделью и не сериализуется напрямую в Track Project.
 
+
+# Track Editor history and transient state
+
+## 1. Persisted document state
+
+Persisted-состоянием Track Editor является Track Project:
+
+```text
+TrackProject
+├─ Track metadata
+├─ Area
+├─ Instances
+└─ TransitionOverrides
+```
+
+Только это состояние сохраняется в Track Project JSON.
+
+---
+
+## 2. Transient editor state
+
+Transient-состояние существует только во время текущего редакторского сеанса.
+
+Примеры:
+
+```text
+TrackEditorSessionState
+├─ SelectedInstanceId
+├─ SelectedTransitionId
+├─ ActiveTool
+├─ Pan
+├─ Zoom
+├─ LockedInstanceIds
+├─ Clipboard
+├─ LastExportPath
+├─ TransitionPreviewVisibility
+└─ ValidationDisplayState
+```
+
+Transient state:
+
+* не сериализуется в Track Project;
+* не является частью Exported Track;
+* не влияет на domain formatVersion.
+
+---
+
+## 3. Edit transaction
+
+`EditTransaction` представляет одно логическое изменение persisted Track Project.
+
+Примеры:
+
+* перемещение instance;
+* поворот instance;
+* изменение scale;
+* reorder;
+* изменение TransitionOverride;
+* Duplicate;
+* Delete.
+
+Концептуально:
+
+```text
+EditTransaction
+├─ Description
+├─ BeforeState
+└─ AfterState
+```
+
+EditTransaction не создаётся для изменений только transient state.
+
+---
+
+## 4. TrackEditorHistory
+
+Концептуальная модель:
+
+```text
+TrackEditorHistory
+├─ Entries[]
+├─ CurrentPosition
+├─ SavedPosition
+└─ Capacity
+```
+
+`CurrentPosition` определяет применённое состояние истории.
+
+`SavedPosition` соответствует последнему успешно сохранённому Track Project.
+
+Dirty state:
+
+```text
+CurrentPosition != SavedPosition
+```
+
+При snapshot-based реализации допустимо сравнивать сохранённую revision identity вместо непосредственного номера позиции.
+
+---
+
+## 5. History restoration
+
+После Undo или Redo восстанавливается persisted Track Project.
+
+Затем производные данные пересчитываются:
+
+* resolved Exercise Definitions;
+* transformed previews;
+* automatic transitions;
+* overridden transitions;
+* global trajectory;
+* validation.
+
+Derived runtime data не хранится в history snapshot.
+
+---
+
+## 6. Duplicate semantics
+
+`Duplicate ExerciseInstance` создаёт новый доменный instance.
+
+Копируются:
+
+```text
+exercisePath
+position
+rotationDeg
+scale
+```
+
+Не копируются:
+
+```text
+instanceId
+TransitionOverrides
+editor lock state
+selection identity
+runtime cache
+```
+
+Duplicate является одной логической EditTransaction.
+
+---
+
+## 7. Temporary instance lock
+
+Temporary lock принадлежит:
+
+```text
+TrackEditorSessionState
+```
+
+а не `ExerciseInstance`.
+
+Lock обращается к instance через `instanceId`.
+
+Он регулирует editor interaction, но не изменяет семантику трассы.
+
+Lock не влияет на:
+
+* compilation;
+* validation;
+* transitions;
+* export;
+* Viewer.
+
+---
+
+## 8. Viewer preview
+
+Viewer preview создаётся через обычную track compilation:
+
+```text
+Track Project in memory
+        ↓
+Track compilation
+        ↓
+Exported Track snapshot
+        ↓
+Viewer
+```
+
+Viewer preview не должен обходить export contract и не должен читать Track Project напрямую.
+
+---
+
+## 9. Routing-only Exercise Definition
+
+Exercise Definition может не содержать конусов.
+
+Допустимый routing-only элемент содержит:
+
+```text
+cones = []
+trajectory = valid non-empty trajectory
+entryPoint = trajectory start
+exitPoint = trajectory end
+```
+
+Такой элемент используется для описания произвольного участка маршрута между другими упражнениями.
+
+Он не требует отдельной доменной категории и компилируется как обычный ExerciseInstance.
+
 ---
 
 ## 6. Identity
