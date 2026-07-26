@@ -34,6 +34,7 @@ public sealed class TrackProjectDocument
             Track = new TrackProjectMetadataDto { Id = id, Name = name },
             Area = new TrackProjectAreaDto { Width = width, Length = length },
             Instances = [],
+            TransitionOverrides = [],
         });
     }
 
@@ -136,6 +137,105 @@ public sealed class TrackProjectDocument
         return true;
     }
 
+    /// <summary>Finds the sole override for an oriented instance pair, if present.</summary>
+    public TransitionOverrideDto? FindTransitionOverride(string fromInstanceId, string toInstanceId) =>
+        Project.TransitionOverrides.FirstOrDefault(item =>
+            item.FromInstanceId == fromInstanceId && item.ToInstanceId == toInstanceId);
+
+    /// <summary>
+    /// Creates an override on first real edit, then updates one absolute handle.
+    /// Both initial offsets come from the compiled automatic curve, while the edited
+    /// coordinate is converted back to an offset from its current derived endpoint.
+    /// </summary>
+    public bool SetTransitionControlPoint(
+        CompiledTransition transition,
+        int controlIndex,
+        Point2Dto absolutePoint)
+    {
+        if (controlIndex is not (1 or 2) || !IsFinite(absolutePoint))
+        {
+            return false;
+        }
+
+        TransitionOverrideDto? item = FindTransitionOverride(
+            transition.FromInstanceId, transition.ToInstanceId);
+        if (item is null)
+        {
+            item = new TransitionOverrideDto
+            {
+                TransitionId = transition.TransitionId,
+                FromInstanceId = transition.FromInstanceId,
+                ToInstanceId = transition.ToInstanceId,
+                Control1Offset = Subtract(transition.Control1, transition.Start),
+                Control2Offset = Subtract(transition.Control2, transition.End),
+            };
+            Project.TransitionOverrides = [.. Project.TransitionOverrides, item];
+        }
+
+        if (controlIndex == 1)
+        {
+            item.Control1Offset = Subtract(absolutePoint, transition.Start);
+        }
+        else
+        {
+            item.Control2Offset = Subtract(absolutePoint, transition.End);
+        }
+
+        return true;
+    }
+
+    /// <summary>Removes the persisted correction so compilation returns to automatic mode.</summary>
+    public bool ResetTransition(string fromInstanceId, string toInstanceId)
+    {
+        int index = Array.FindIndex(Project.TransitionOverrides, item =>
+            item.FromInstanceId == fromInstanceId && item.ToInstanceId == toInstanceId);
+        if (index < 0)
+        {
+            return false;
+        }
+
+        Project.TransitionOverrides = Project.TransitionOverrides
+            .Where((_, itemIndex) => itemIndex != index).ToArray();
+        return true;
+    }
+
+    /// <summary>
+    /// Returns overrides whose oriented pair is not adjacent in the current route.
+    /// They remain persisted so reorder/delete never silently destroys manual work.
+    /// </summary>
+    public IReadOnlyList<TransitionOverrideDto> GetOrphanedTransitionOverrides()
+    {
+        var adjacentPairs = new HashSet<(string From, string To)>();
+        for (int index = 0; index + 1 < Project.Instances.Length; index++)
+        {
+            adjacentPairs.Add((Project.Instances[index].InstanceId,
+                Project.Instances[index + 1].InstanceId));
+        }
+
+        return Project.TransitionOverrides
+            .Where(item => !adjacentPairs.Contains((item.FromInstanceId, item.ToInstanceId)))
+            .ToArray();
+    }
+
+    /// <summary>Explicit destructive cleanup used only after UI confirmation.</summary>
+    public int RemoveOrphanedTransitionOverrides()
+    {
+        IReadOnlyList<TransitionOverrideDto> orphaned = GetOrphanedTransitionOverrides();
+        if (orphaned.Count == 0)
+        {
+            return 0;
+        }
+
+        var set = orphaned.ToHashSet();
+        Project.TransitionOverrides = Project.TransitionOverrides.Where(item => !set.Contains(item)).ToArray();
+        return orphaned.Count;
+    }
+
+    /// <summary>Counts manual overrides that mention an instance being deleted.</summary>
+    public int CountRelatedTransitionOverrides(string instanceId) =>
+        Project.TransitionOverrides.Count(item =>
+            item.FromInstanceId == instanceId || item.ToInstanceId == instanceId);
+
     public bool IsOutsideArea(string instanceId)
     {
         TrackProjectInstanceDto? instance = FindInstance(instanceId);
@@ -200,4 +300,10 @@ public sealed class TrackProjectDocument
     }
 
     private static Point2Dto CopyPoint(Point2Dto point) => new() { X = point.X, Y = point.Y };
+
+    private static Point2Dto Subtract(Point2Dto left, Point2Dto right) =>
+        new() { X = left.X - right.X, Y = left.Y - right.Y };
+
+    private static bool IsFinite(Point2Dto? point) =>
+        point is not null && float.IsFinite(point.X) && float.IsFinite(point.Y);
 }

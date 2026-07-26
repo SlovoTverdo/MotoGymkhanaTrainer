@@ -14,9 +14,12 @@ public partial class TrackEditorCanvas : Control
         ResizeX,
         ResizeY,
         Rotate,
+        TransitionControl1,
+        TransitionControl2,
     }
 
     private readonly record struct HandleHit(string InstanceId, ManipulationMode Mode, CursorShape Cursor);
+    private readonly record struct TransitionHandleHit(string TransitionId, int ControlIndex);
 
     private const float DefaultPixelsPerMeter = 14.0f;
     private const float MinimumPixelsPerMeter = 3.0f;
@@ -26,21 +29,25 @@ public partial class TrackEditorCanvas : Control
     private const float MinimumScaleMagnitude = 0.1f;
     private const float SideHitTolerancePixels = 8.0f;
     private const float CornerHitTolerancePixels = 11.0f;
+    private const float TransitionHitTolerancePixels = 9.0f;
+    private const float TransitionHandleTolerancePixels = 12.0f;
     private const int BezierSubdivisions = 32;
 
     private TrackProjectDocument _document = TrackProjectDocument.CreateNew();
     private string? _selectedInstanceId;
+    private string? _selectedTransitionId;
     private Vector2 _panPixels;
     private float _pixelsPerMeter = DefaultPixelsPerMeter;
     private bool _panning;
     private ManipulationMode _manipulationMode;
     private string? _manipulatedInstanceId;
+    private string? _manipulatedTransitionId;
     private Point2Dto _dragPointerStart = new();
     private Point2Dto _dragInstanceStart = new();
     private Point2Dto _dragScaleStart = new() { X = 1.0f, Y = 1.0f };
     private float _dragPointerAngle;
     private float _rotationAccumulator;
-    private IReadOnlyList<TrajectorySegmentDto> _transitionPreview = [];
+    private IReadOnlyList<CompiledTransition> _transitionPreview = [];
     private bool _showTransitions = true;
 
     [Signal]
@@ -52,8 +59,17 @@ public partial class TrackEditorCanvas : Control
     /// <summary>Raised when an Exercise JSON is dropped at a snapped track position.</summary>
     public event Action<string, Point2Dto>? ExerciseDropped;
 
+    /// <summary>
+    /// Raised with an absolute track-space handle position. The document converts
+    /// it to a persisted offset; the canvas never owns transition geometry.
+    /// </summary>
+    public event Action<string, int, Point2Dto>? TransitionControlPointDragged;
+
     /// <summary>Selected instance id is UI state and is never serialized.</summary>
     public string? SelectedInstanceId => _selectedInstanceId;
+
+    /// <summary>Selected derived transition id; this is editor UI state only.</summary>
+    public string? SelectedTransitionId => _selectedTransitionId;
 
     public override void _Ready()
     {
@@ -76,6 +92,7 @@ public partial class TrackEditorCanvas : Control
     {
         _document = document;
         _selectedInstanceId = null;
+        _selectedTransitionId = null;
         if (resetView)
         {
             _panPixels = Vector2.Zero;
@@ -123,11 +140,21 @@ public partial class TrackEditorCanvas : Control
     /// Project remains free of generated spline data.
     /// </summary>
     public void SetTransitionPreview(
-        IReadOnlyList<TrajectorySegmentDto> transitions,
+        IReadOnlyList<CompiledTransition> transitions,
         bool visible)
     {
         _transitionPreview = transitions;
         _showTransitions = visible;
+        if (!visible || (_selectedTransitionId is not null &&
+            transitions.All(item => item.TransitionId != _selectedTransitionId)))
+        {
+            bool changed = _selectedTransitionId is not null;
+            _selectedTransitionId = null;
+            if (changed)
+            {
+                EmitSignal(SignalName.SelectionChanged);
+            }
+        }
         QueueRedraw();
     }
 
@@ -137,6 +164,19 @@ public partial class TrackEditorCanvas : Control
         _selectedInstanceId = instanceId is not null && _document.FindInstance(instanceId) is not null
             ? instanceId
             : null;
+        _selectedTransitionId = null;
+        EmitSignal(SignalName.SelectionChanged);
+        QueueRedraw();
+    }
+
+    /// <summary>Selects a compiled transition and clears instance selection.</summary>
+    public void SelectTransition(string? transitionId)
+    {
+        _selectedTransitionId = transitionId is not null &&
+            _transitionPreview.Any(item => item.TransitionId == transitionId)
+            ? transitionId
+            : null;
+        _selectedInstanceId = null;
         EmitSignal(SignalName.SelectionChanged);
         QueueRedraw();
     }
@@ -171,18 +211,45 @@ public partial class TrackEditorCanvas : Control
 
     private void DrawTransitionPreview()
     {
-        Color color = new(1.0f, 0.38f, 0.92f, 0.95f);
-        foreach (TrajectorySegmentDto transition in _transitionPreview)
+        foreach (CompiledTransition transition in _transitionPreview)
         {
+            TrajectorySegmentDto segment = transition.ToTrajectorySegment();
             Point2Dto[] samples = TrajectoryGeometry.SampleCubicBezier(
-                transition, BezierSubdivisions);
-            // The dashed magenta overlay visually separates generated transitions
-            // from green persisted Exercise trajectory without changing the spline.
-            foreach (MarkingStroke stroke in MarkingGeometry.CreateStrokes(samples, "dashed"))
+                segment, BezierSubdivisions);
+            bool selected = transition.TransitionId == _selectedTransitionId;
+            Color color = selected
+                ? new Color(1.0f, 0.88f, 0.18f)
+                : transition.SourceMode == TransitionSourceMode.Override
+                    ? new Color(0.25f, 0.85f, 1.0f, 0.98f)
+                    : new Color(1.0f, 0.38f, 0.92f, 0.95f);
+            string style = selected || transition.SourceMode == TransitionSourceMode.Override
+                ? "solid"
+                : "dashed";
+            foreach (MarkingStroke stroke in MarkingGeometry.CreateStrokes(samples, style))
             {
-                DrawLine(ToScreen(stroke.Start), ToScreen(stroke.End), color, 4.0f, true);
+                DrawLine(ToScreen(stroke.Start), ToScreen(stroke.End), color, selected ? 6.0f : 4.0f, true);
+            }
+
+            if (selected)
+            {
+                DrawTransitionHandles(transition);
             }
         }
+    }
+
+    private void DrawTransitionHandles(CompiledTransition transition)
+    {
+        Vector2 start = ToScreen(transition.Start);
+        Vector2 control1 = ToScreen(transition.Control1);
+        Vector2 control2 = ToScreen(transition.Control2);
+        Vector2 end = ToScreen(transition.End);
+        Color guide = new(0.92f, 0.92f, 0.72f, 0.72f);
+        DrawLine(start, control1, guide, 2.0f, true);
+        DrawLine(end, control2, guide, 2.0f, true);
+        DrawCircle(start, 4.0f, Colors.White);
+        DrawCircle(end, 4.0f, Colors.White);
+        DrawCircle(control1, 8.0f, new Color(1.0f, 0.58f, 0.16f));
+        DrawCircle(control2, 8.0f, new Color(0.20f, 0.78f, 1.0f));
     }
 
     private void HandleMouseButton(InputEventMouseButton button)
@@ -215,7 +282,31 @@ public partial class TrackEditorCanvas : Control
         {
             _manipulationMode = ManipulationMode.None;
             _manipulatedInstanceId = null;
+            _manipulatedTransitionId = null;
             UpdateHoverCursor(button.Position);
+            return;
+        }
+
+        // Transition handles have the highest priority. Merely pressing/selecting
+        // one does not create an override; creation happens on the first motion.
+        TransitionHandleHit? transitionHandle = HitTestTransitionHandle(button.Position);
+        if (transitionHandle is TransitionHandleHit controlHit)
+        {
+            _manipulationMode = controlHit.ControlIndex == 1
+                ? ManipulationMode.TransitionControl1
+                : ManipulationMode.TransitionControl2;
+            _manipulatedTransitionId = controlHit.TransitionId;
+            GrabFocus();
+            AcceptEvent();
+            return;
+        }
+
+        string? transitionId = HitTestTransition(button.Position);
+        if (transitionId is not null)
+        {
+            SelectTransition(transitionId);
+            GrabFocus();
+            AcceptEvent();
             return;
         }
 
@@ -256,6 +347,23 @@ public partial class TrackEditorCanvas : Control
 
         if (_manipulationMode == ManipulationMode.None || _manipulatedInstanceId is null)
         {
+            if ((_manipulationMode is ManipulationMode.TransitionControl1 or
+                ManipulationMode.TransitionControl2) && _manipulatedTransitionId is not null)
+            {
+                Point2Dto point = ToDomain(motion.Position);
+                // Alt deliberately bypasses the shared 0.25 m snap for fine edits.
+                if (!motion.AltPressed)
+                {
+                    point = EditorCanvasMath.Snap(point, SnapMeters);
+                }
+
+                int controlIndex = _manipulationMode == ManipulationMode.TransitionControl1 ? 1 : 2;
+                TransitionControlPointDragged?.Invoke(_manipulatedTransitionId, controlIndex, point);
+                QueueRedraw();
+                AcceptEvent();
+                return;
+            }
+
             UpdateHoverCursor(motion.Position);
             return;
         }
@@ -394,10 +502,75 @@ public partial class TrackEditorCanvas : Control
         return null;
     }
 
+    private TransitionHandleHit? HitTestTransitionHandle(Vector2 screenPosition)
+    {
+        if (!_showTransitions || _selectedTransitionId is null)
+        {
+            return null;
+        }
+
+        CompiledTransition? transition = _transitionPreview.FirstOrDefault(
+            item => item.TransitionId == _selectedTransitionId);
+        if (transition is null)
+        {
+            return null;
+        }
+
+        if (ToScreen(transition.Control1).DistanceTo(screenPosition) <= TransitionHandleTolerancePixels)
+        {
+            return new TransitionHandleHit(transition.TransitionId, 1);
+        }
+
+        if (ToScreen(transition.Control2).DistanceTo(screenPosition) <= TransitionHandleTolerancePixels)
+        {
+            return new TransitionHandleHit(transition.TransitionId, 2);
+        }
+
+        return null;
+    }
+
+    private string? HitTestTransition(Vector2 screenPosition)
+    {
+        if (!_showTransitions)
+        {
+            return null;
+        }
+
+        /*
+         * Sampling is a rendering/hit-test cache only. Persisted geometry remains
+         * cubicBezier control points. Testing screen-space line segments keeps the
+         * pointer tolerance stable at every zoom level.
+         */
+        IEnumerable<CompiledTransition> ordered = _transitionPreview
+            .OrderByDescending(item => item.TransitionId == _selectedTransitionId);
+        foreach (CompiledTransition transition in ordered)
+        {
+            Point2Dto[] samples = TrajectoryGeometry.SampleCubicBezier(
+                transition.ToTrajectorySegment(), BezierSubdivisions);
+            for (int index = 0; index + 1 < samples.Length; index++)
+            {
+                if (DistanceToSegment(screenPosition, ToScreen(samples[index]),
+                    ToScreen(samples[index + 1])) <= TransitionHitTolerancePixels)
+                {
+                    return transition.TransitionId;
+                }
+            }
+        }
+
+        return null;
+    }
+
     private void UpdateHoverCursor(Vector2 screenPosition)
     {
+        if (HitTestTransitionHandle(screenPosition) is not null)
+        {
+            MouseDefaultCursorShape = CursorShape.PointingHand;
+            return;
+        }
+
         HandleHit? handle = HitTestHandle(screenPosition);
-        MouseDefaultCursorShape = handle?.Cursor ?? CursorShape.Arrow;
+        MouseDefaultCursorShape = handle?.Cursor ??
+            (HitTestTransition(screenPosition) is not null ? CursorShape.PointingHand : CursorShape.Arrow);
     }
 
     private void ResetHoverCursor()

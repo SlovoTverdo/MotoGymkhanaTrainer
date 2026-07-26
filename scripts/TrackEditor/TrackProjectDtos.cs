@@ -10,7 +10,7 @@ namespace MotoGymkhanaTrainer.TrackEditor;
 public sealed class TrackProjectDto
 {
     [JsonPropertyName("formatVersion")]
-    public int FormatVersion { get; set; } = 1;
+    public int FormatVersion { get; set; } = 2;
 
     [JsonPropertyName("track")]
     public TrackProjectMetadataDto Track { get; set; } = new();
@@ -20,6 +20,13 @@ public sealed class TrackProjectDto
 
     [JsonPropertyName("instances")]
     public TrackProjectInstanceDto[] Instances { get; set; } = [];
+
+    /// <summary>
+    /// Manual corrections for derived transitions. Automatic transition geometry
+    /// is deliberately absent from the project and is rebuilt during compilation.
+    /// </summary>
+    [JsonPropertyName("transitionOverrides")]
+    public TransitionOverrideDto[] TransitionOverrides { get; set; } = [];
 }
 
 /// <summary>Stable Track Project identity; its file path remains editor state.</summary>
@@ -59,4 +66,26 @@ public sealed class TrackProjectInstanceDto
 
     [JsonPropertyName("scale")]
     public Point2Dto Scale { get; set; } = new() { X = 1.0f, Y = 1.0f };
+}
+
+/// <summary>
+/// Persisted correction for one oriented adjacent instance pair. Endpoints are
+/// derived from the current instances, so only track-space handle offsets persist.
+/// </summary>
+public sealed class TransitionOverrideDto
+{
+    [JsonPropertyName("transitionId")]
+    public string TransitionId { get; set; } = string.Empty;
+
+    [JsonPropertyName("fromInstanceId")]
+    public string FromInstanceId { get; set; } = string.Empty;
+
+    [JsonPropertyName("toInstanceId")]
+    public string ToInstanceId { get; set; } = string.Empty;
+
+    [JsonPropertyName("control1Offset")]
+    public Point2Dto Control1Offset { get; set; } = new();
+
+    [JsonPropertyName("control2Offset")]
+    public Point2Dto Control2Offset { get; set; } = new();
 }

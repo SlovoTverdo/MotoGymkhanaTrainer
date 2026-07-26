@@ -27,10 +27,10 @@ public sealed class TrackProjectLoadResult
     public IReadOnlyList<string> Warnings { get; }
 }
 
-/// <summary>UTF-8 serialization and validation for Track Project formatVersion 1.</summary>
+/// <summary>UTF-8 serialization, v1 migration and validation for Track Project v2.</summary>
 public static class TrackProjectStore
 {
-    private const int SupportedFormatVersion = 1;
+    private const int SupportedFormatVersion = 2;
     private static readonly JsonSerializerOptions ReadOptions = new()
     {
         PropertyNameCaseInsensitive = false,
@@ -64,10 +64,22 @@ public static class TrackProjectStore
 
         try
         {
+            using JsonDocument parsed = JsonDocument.Parse(json);
+            if (parsed.RootElement.ValueKind == JsonValueKind.Object &&
+                parsed.RootElement.TryGetProperty("formatVersion", out JsonElement versionElement) &&
+                versionElement.TryGetInt32(out int sourceVersion) && sourceVersion == SupportedFormatVersion &&
+                !parsed.RootElement.TryGetProperty("transitionOverrides", out _))
+            {
+                throw ContractError(sourceName,
+                    "transitionOverrides is mandatory for formatVersion 2");
+            }
+
             TrackProjectDto project = JsonSerializer.Deserialize<TrackProjectDto>(json, ReadOptions)
                 ?? throw new InvalidDataException($"Track Project '{sourceName}' contains no JSON object.");
+            var migrationWarnings = new List<string>();
+            MigrateInMemory(project, sourceName, migrationWarnings);
             Validate(project, sourceName, exerciseLibrary);
-            return ResolveDefinitions(project, exerciseLibrary);
+            return ResolveDefinitions(project, exerciseLibrary, migrationWarnings);
         }
         catch (JsonException exception)
         {
@@ -124,6 +136,11 @@ public static class TrackProjectStore
             throw ContractError(sourceName, "instances must be an array");
         }
 
+        if (project.TransitionOverrides is null)
+        {
+            throw ContractError(sourceName, "transitionOverrides must be an array");
+        }
+
         var ids = new HashSet<string>(StringComparer.Ordinal);
         for (int index = 0; index < project.Instances.Length; index++)
         {
@@ -167,14 +184,63 @@ public static class TrackProjectStore
                 throw ContractError(sourceName, $"{prefix}.scale x/y must be finite non-zero numbers");
             }
         }
+
+
+        var transitionIds = new HashSet<string>(StringComparer.Ordinal);
+        var pairs = new HashSet<(string From, string To)>();
+        for (int index = 0; index < project.TransitionOverrides.Length; index++)
+        {
+            TransitionOverrideDto? item = project.TransitionOverrides[index];
+            string prefix = $"transitionOverrides[{index}]";
+            if (item is null || string.IsNullOrWhiteSpace(item.TransitionId) ||
+                !transitionIds.Add(item.TransitionId))
+            {
+                throw ContractError(sourceName,
+                    $"{prefix}.transitionId must be unique and non-empty");
+            }
+
+            if (string.IsNullOrWhiteSpace(item.FromInstanceId) ||
+                string.IsNullOrWhiteSpace(item.ToInstanceId) ||
+                !pairs.Add((item.FromInstanceId, item.ToInstanceId)))
+            {
+                throw ContractError(sourceName,
+                    $"{prefix} must identify a unique non-empty from/to pair");
+            }
+
+            ValidatePoint(item.Control1Offset, sourceName, $"{prefix}.control1Offset");
+            ValidatePoint(item.Control2Offset, sourceName, $"{prefix}.control2Offset");
+        }
+    }
+
+    private static void MigrateInMemory(
+        TrackProjectDto project,
+        string sourceName,
+        ICollection<string> warnings)
+    {
+        if (project.FormatVersion != 1)
+        {
+            return;
+        }
+
+        /*
+         * Version 1 had no manual transition state. Migration therefore has one
+         * lossless default: an empty override array. This changes only the loaded
+         * candidate in memory; the source file is untouched until explicit Save.
+         */
+        project.FormatVersion = SupportedFormatVersion;
+        project.TransitionOverrides = [];
+        warnings.Add(
+            $"Track Project '{sourceName}' was migrated in memory from formatVersion 1 to 2; " +
+            "transitionOverrides defaulted to an empty array.");
     }
 
     private static TrackProjectLoadResult ResolveDefinitions(
         TrackProjectDto project,
-        SandboxedJsonLibrary exerciseLibrary)
+        SandboxedJsonLibrary exerciseLibrary,
+        IEnumerable<string>? initialWarnings = null)
     {
         var definitions = new Dictionary<string, ExerciseDefinitionDto>(StringComparer.Ordinal);
-        var warnings = new List<string>();
+        var warnings = initialWarnings?.ToList() ?? [];
         foreach (TrackProjectInstanceDto instance in project.Instances)
         {
             try

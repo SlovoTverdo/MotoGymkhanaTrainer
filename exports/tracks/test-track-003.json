@@ -1,0 +1,1276 @@
+{
+  "formatVersion": 3,
+  "track": {
+    "id": "test-track-003",
+    "name": "\u0422\u0435\u0441\u0442\u043E\u0432\u044B\u0439 \u0442\u0440\u0435\u043A 003"
+  },
+  "area": {
+    "width": 100,
+    "length": 40
+  },
+  "elements": [
+    {
+      "instanceId": "exercise-instance-001",
+      "definitionId": "exercise-start",
+      "position": {
+        "x": 17.25,
+        "y": -17.5
+      },
+      "rotationDeg": -0,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-002",
+      "definitionId": "Slalom-3",
+      "position": {
+        "x": 21.5,
+        "y": -1.75
+      },
+      "rotationDeg": -39,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-003",
+      "definitionId": "snake-001",
+      "position": {
+        "x": 15.5,
+        "y": 12.5
+      },
+      "rotationDeg": 269,
+      "scale": {
+        "x": 1,
+        "y": -1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-004",
+      "definitionId": "exercise-circle-right",
+      "position": {
+        "x": -13,
+        "y": 3.25
+      },
+      "rotationDeg": 85,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-005",
+      "definitionId": "exercise-start",
+      "position": {
+        "x": 17.25,
+        "y": -17.5
+      },
+      "rotationDeg": -180,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    }
+  ],
+  "cones": [
+    {
+      "id": "exercise-instance-001--cone-001",
+      "position": {
+        "x": 16.25,
+        "y": -18.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-001--cone-003",
+      "position": {
+        "x": 18.25,
+        "y": -16.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-001--cone-004",
+      "position": {
+        "x": 16.25,
+        "y": -16.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-001--cone-002",
+      "position": {
+        "x": 18.25,
+        "y": -18.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-001",
+      "position": {
+        "x": 18.687067,
+        "y": -2.045651
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-002",
+      "position": {
+        "x": 23.637152,
+        "y": -3.480631
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-003",
+      "position": {
+        "x": 21.20435,
+        "y": 1.0629325
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-004",
+      "position": {
+        "x": 22.239128,
+        "y": -8.782331
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-005",
+      "position": {
+        "x": 14.467669,
+        "y": -2.4891276
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-006",
+      "position": {
+        "x": 20.760872,
+        "y": 5.2823315
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-007",
+      "position": {
+        "x": 28.532331,
+        "y": -1.0108724
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-008",
+      "position": {
+        "x": 26.200893,
+        "y": 0.8770888
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-009",
+      "position": {
+        "x": 19.90769,
+        "y": -6.89437
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-010",
+      "position": {
+        "x": 14.467669,
+        "y": -2.4891276
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-011",
+      "position": {
+        "x": 19.90769,
+        "y": -6.89437
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-012",
+      "position": {
+        "x": 19.90769,
+        "y": -6.89437
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-013",
+      "position": {
+        "x": 22.239128,
+        "y": -8.782331
+      },
+      "color": "orange",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-014",
+      "position": {
+        "x": 28.532331,
+        "y": -1.0108724
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-015",
+      "position": {
+        "x": 26.200893,
+        "y": 0.8770888
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-016",
+      "position": {
+        "x": 20.760872,
+        "y": 5.2823315
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-017",
+      "position": {
+        "x": 23.637152,
+        "y": -3.480631
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-018",
+      "position": {
+        "x": 21.20435,
+        "y": 1.0629325
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-019",
+      "position": {
+        "x": 18.687067,
+        "y": -2.045651
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-020",
+      "position": {
+        "x": 22.239128,
+        "y": -8.782331
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-001",
+      "position": {
+        "x": 23.542412,
+        "y": 14.860001
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-002",
+      "position": {
+        "x": 23.45515,
+        "y": 9.860763
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-003",
+      "position": {
+        "x": 7.4575872,
+        "y": 10.139999
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-004",
+      "position": {
+        "x": 7.544849,
+        "y": 15.139237
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-005",
+      "position": {
+        "x": 7.4924917,
+        "y": 12.139694
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-006",
+      "position": {
+        "x": 23.490055,
+        "y": 11.860457
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-007",
+      "position": {
+        "x": 15.491274,
+        "y": 12.000076
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-008",
+      "position": {
+        "x": 19.508118,
+        "y": 12.930115
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-009",
+      "position": {
+        "x": 11.5093355,
+        "y": 13.069733
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-004--cone-001",
+      "position": {
+        "x": -7.27188,
+        "y": 2.7488542
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-004--cone-002",
+      "position": {
+        "x": -13.273886,
+        "y": -2.7489572
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-004--cone-003",
+      "position": {
+        "x": -19.226217,
+        "y": 3.7947237
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-004--cone-004",
+      "position": {
+        "x": -12.477065,
+        "y": 9.227168
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-004--cone-005",
+      "position": {
+        "x": -8.39576,
+        "y": 7.1134157
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-004--cone-006",
+      "position": {
+        "x": -9.612893,
+        "y": -1.0616131
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-004--cone-007",
+      "position": {
+        "x": -17.647818,
+        "y": -1.1115127
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-004--cone-008",
+      "position": {
+        "x": -16.592577,
+        "y": 8.081499
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-005--cone-001",
+      "position": {
+        "x": 18.25,
+        "y": -16.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-005--cone-003",
+      "position": {
+        "x": 16.25,
+        "y": -18.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-005--cone-004",
+      "position": {
+        "x": 18.25,
+        "y": -18.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-005--cone-002",
+      "position": {
+        "x": 16.25,
+        "y": -16.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    }
+  ],
+  "markings": [
+    {
+      "id": "exercise-instance-002--marking-001",
+      "type": "line",
+      "points": [
+        {
+          "x": 26.200893,
+          "y": 0.8770888
+        },
+        {
+          "x": 28.532331,
+          "y": -1.0108724
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "dashed",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-002--marking-002",
+      "type": "line",
+      "points": [
+        {
+          "x": 22.239128,
+          "y": -8.782331
+        },
+        {
+          "x": 19.90769,
+          "y": -6.89437
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "dashed",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-002--marking-003",
+      "type": "line",
+      "points": [
+        {
+          "x": 20.760872,
+          "y": 5.2823315
+        },
+        {
+          "x": 26.200893,
+          "y": 0.8770888
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "solid",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-002--marking-004",
+      "type": "line",
+      "points": [
+        {
+          "x": 28.532331,
+          "y": -1.0108724
+        },
+        {
+          "x": 22.239128,
+          "y": -8.782331
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "solid",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-002--marking-005",
+      "type": "line",
+      "points": [
+        {
+          "x": 20.760872,
+          "y": 5.2823315
+        },
+        {
+          "x": 14.467669,
+          "y": -2.4891276
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "solid",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-002--marking-006",
+      "type": "line",
+      "points": [
+        {
+          "x": 19.90769,
+          "y": -6.89437
+        },
+        {
+          "x": 14.467669,
+          "y": -2.4891276
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "solid",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-003--marking-001",
+      "type": "polyline",
+      "points": [
+        {
+          "x": 7.4924917,
+          "y": 12.139694
+        },
+        {
+          "x": 7.544849,
+          "y": 15.139237
+        },
+        {
+          "x": 23.542412,
+          "y": 14.860001
+        },
+        {
+          "x": 23.490055,
+          "y": 11.860457
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "solid",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-003--marking-002",
+      "type": "line",
+      "points": [
+        {
+          "x": 7.4575872,
+          "y": 10.139999
+        },
+        {
+          "x": 23.45515,
+          "y": 9.860763
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "solid",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-003--marking-003",
+      "type": "line",
+      "points": [
+        {
+          "x": 7.4924917,
+          "y": 12.139694
+        },
+        {
+          "x": 7.4575872,
+          "y": 10.139999
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "dashed",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-003--marking-004",
+      "type": "line",
+      "points": [
+        {
+          "x": 23.45515,
+          "y": 9.860763
+        },
+        {
+          "x": 23.490055,
+          "y": 11.860457
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "dashed",
+      "visibleInViewer": true
+    }
+  ],
+  "trajectory": {
+    "segments": [
+      {
+        "id": "exercise-instance-001--trajectory-segment-001",
+        "type": "polyline",
+        "points": [
+          {
+            "x": 17.25,
+            "y": -17.5
+          },
+          {
+            "x": 17.25,
+            "y": -15.5
+          }
+        ]
+      },
+      {
+        "id": "transition--exercise-instance-001--exercise-instance-002",
+        "type": "cubicBezier",
+        "start": {
+          "x": 17.25,
+          "y": -15.5
+        },
+        "control1": {
+          "x": 17.25,
+          "y": -13.291988
+        },
+        "control2": {
+          "x": 18.42522,
+          "y": -11.10859
+        },
+        "end": {
+          "x": 19.814768,
+          "y": -9.392643
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-001",
+        "type": "cubicBezier",
+        "start": {
+          "x": 19.814768,
+          "y": -9.392643
+        },
+        "control1": {
+          "x": 20.601418,
+          "y": -8.42121
+        },
+        "control2": {
+          "x": 21.739685,
+          "y": -7.412822
+        },
+        "end": {
+          "x": 21.628817,
+          "y": -6.357972
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-006",
+        "type": "cubicBezier",
+        "start": {
+          "x": 21.628817,
+          "y": -6.357972
+        },
+        "control1": {
+          "x": 21.943478,
+          "y": -5.969399
+        },
+        "control2": {
+          "x": 19.248104,
+          "y": -4.0011883
+        },
+        "end": {
+          "x": 18.057747,
+          "y": -2.822797
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-005",
+        "type": "cubicBezier",
+        "start": {
+          "x": 18.057747,
+          "y": -2.822797
+        },
+        "control1": {
+          "x": 17.669174,
+          "y": -2.5081367
+        },
+        "control2": {
+          "x": 17.437931,
+          "y": -1.9991901
+        },
+        "end": {
+          "x": 17.909922,
+          "y": -1.4163307
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-003",
+        "type": "cubicBezier",
+        "start": {
+          "x": 17.909922,
+          "y": -1.4163307
+        },
+        "control1": {
+          "x": 18.381912,
+          "y": -0.83347124
+        },
+        "control2": {
+          "x": 18.927814,
+          "y": -0.95384496
+        },
+        "end": {
+          "x": 19.316387,
+          "y": -1.2685051
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-002",
+        "type": "polyline",
+        "points": [
+          {
+            "x": 19.316387,
+            "y": -1.2685051
+          },
+          {
+            "x": 23.007832,
+            "y": -4.257777
+          }
+        ]
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-007",
+        "type": "cubicBezier",
+        "start": {
+          "x": 23.007832,
+          "y": -4.257777
+        },
+        "control1": {
+          "x": 23.396404,
+          "y": -4.5724373
+        },
+        "control2": {
+          "x": 24.136593,
+          "y": -4.850141
+        },
+        "end": {
+          "x": 24.608583,
+          "y": -4.2672815
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-004",
+        "type": "cubicBezier",
+        "start": {
+          "x": 24.608583,
+          "y": -4.2672815
+        },
+        "control1": {
+          "x": 25.080574,
+          "y": -3.684422
+        },
+        "control2": {
+          "x": 24.655045,
+          "y": -3.0181453
+        },
+        "end": {
+          "x": 24.266472,
+          "y": -2.7034853
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-008",
+        "type": "polyline",
+        "points": [
+          {
+            "x": 24.266472,
+            "y": -2.7034853
+          },
+          {
+            "x": 20.57503,
+            "y": 0.28578663
+          }
+        ]
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-010",
+        "type": "cubicBezier",
+        "start": {
+          "x": 20.57503,
+          "y": 0.28578663
+        },
+        "control1": {
+          "x": 20.186455,
+          "y": 0.60044694
+        },
+        "control2": {
+          "x": 20.112543,
+          "y": 1.30368
+        },
+        "end": {
+          "x": 20.427202,
+          "y": 1.6922531
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-009",
+        "type": "cubicBezier",
+        "start": {
+          "x": 20.427202,
+          "y": 1.6922531
+        },
+        "control1": {
+          "x": 20.741863,
+          "y": 2.0808258
+        },
+        "control2": {
+          "x": 21.09348,
+          "y": 2.1177824
+        },
+        "end": {
+          "x": 21.83367,
+          "y": 1.8400786
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-011",
+        "type": "cubicBezier",
+        "start": {
+          "x": 21.83367,
+          "y": 1.8400786
+        },
+        "control1": {
+          "x": 23.298561,
+          "y": 0.8682921
+        },
+        "control2": {
+          "x": 25.40474,
+          "y": -1.6950964
+        },
+        "end": {
+          "x": 26.228346,
+          "y": -1.0752804
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-012",
+        "type": "cubicBezier",
+        "start": {
+          "x": 26.228346,
+          "y": -1.0752804
+        },
+        "control1": {
+          "x": 27.403568,
+          "y": -0.4185083
+        },
+        "control2": {
+          "x": 28.03289,
+          "y": 0.35863733
+        },
+        "end": {
+          "x": 28.81954,
+          "y": 1.33007
+        }
+      },
+      {
+        "id": "transition--exercise-instance-002--exercise-instance-003",
+        "type": "cubicBezier",
+        "start": {
+          "x": 28.81954,
+          "y": 1.33007
+        },
+        "control1": {
+          "x": 31.111942,
+          "y": 4.1609507
+        },
+        "control2": {
+          "x": 27.114712,
+          "y": 10.797037
+        },
+        "end": {
+          "x": 23.472603,
+          "y": 10.86061
+        }
+      },
+      {
+        "id": "exercise-instance-003--trajectory-segment-002",
+        "type": "cubicBezier",
+        "start": {
+          "x": 23.472603,
+          "y": 10.86061
+        },
+        "control1": {
+          "x": 22.97268,
+          "y": 10.869336
+        },
+        "control2": {
+          "x": 22.722717,
+          "y": 10.873699
+        },
+        "end": {
+          "x": 22.23152,
+          "y": 11.382349
+        }
+      },
+      {
+        "id": "exercise-instance-003--trajectory-segment-001",
+        "type": "cubicBezier",
+        "start": {
+          "x": 22.23152,
+          "y": 11.382349
+        },
+        "control1": {
+          "x": 21.412857,
+          "y": 12.2301
+        },
+        "control2": {
+          "x": 20.77538,
+          "y": 13.908147
+        },
+        "end": {
+          "x": 19.52557,
+          "y": 13.929962
+        }
+      },
+      {
+        "id": "exercise-instance-003--trajectory-segment-003",
+        "type": "cubicBezier",
+        "start": {
+          "x": 19.52557,
+          "y": 13.929962
+        },
+        "control1": {
+          "x": 18.025797,
+          "y": 13.9561405
+        },
+        "control2": {
+          "x": 16.973593,
+          "y": 10.97405
+        },
+        "end": {
+          "x": 15.473822,
+          "y": 11.000229
+        }
+      },
+      {
+        "id": "exercise-instance-003--trajectory-segment-004",
+        "type": "cubicBezier",
+        "start": {
+          "x": 15.473822,
+          "y": 11.000229
+        },
+        "control1": {
+          "x": 13.97405,
+          "y": 11.026407
+        },
+        "control2": {
+          "x": 13.026559,
+          "y": 14.043403
+        },
+        "end": {
+          "x": 11.526788,
+          "y": 14.069581
+        }
+      },
+      {
+        "id": "exercise-instance-003--trajectory-segment-005",
+        "type": "cubicBezier",
+        "start": {
+          "x": 11.526788,
+          "y": 14.069581
+        },
+        "control1": {
+          "x": 10.027016,
+          "y": 14.095759
+        },
+        "control2": {
+          "x": 9.246589,
+          "y": 12.359115
+        },
+        "end": {
+          "x": 8.733576,
+          "y": 11.617955
+        }
+      },
+      {
+        "id": "exercise-instance-003--trajectory-segment-006",
+        "type": "cubicBezier",
+        "start": {
+          "x": 8.733576,
+          "y": 11.617955
+        },
+        "control1": {
+          "x": 8.474888,
+          "y": 11.122395
+        },
+        "control2": {
+          "x": 7.808323,
+          "y": 11.134029
+        },
+        "end": {
+          "x": 7.4750395,
+          "y": 11.139847
+        }
+      },
+      {
+        "id": "transition--exercise-instance-003--exercise-instance-004",
+        "type": "cubicBezier",
+        "start": {
+          "x": 7.4750395,
+          "y": 11.139847
+        },
+        "control1": {
+          "x": 3.5527744,
+          "y": 11.20831
+        },
+        "control2": {
+          "x": -2.68573,
+          "y": 10.532156
+        },
+        "end": {
+          "x": -3.4147873,
+          "y": 6.677636
+        }
+      },
+      {
+        "id": "exercise-instance-004--trajectory-segment-001",
+        "type": "cubicBezier",
+        "start": {
+          "x": -3.4147873,
+          "y": 6.677636
+        },
+        "control1": {
+          "x": -3.8817244,
+          "y": 4.2089386
+        },
+        "control2": {
+          "x": -4.5977116,
+          "y": 1.7620296
+        },
+        "end": {
+          "x": -5.768218,
+          "y": -0.14320421
+        }
+      },
+      {
+        "id": "exercise-instance-004--trajectory-segment-002",
+        "type": "cubicBezier",
+        "start": {
+          "x": -5.768218,
+          "y": -0.14320421
+        },
+        "control1": {
+          "x": -6.711465,
+          "y": -2.3192754
+        },
+        "control2": {
+          "x": -9.712467,
+          "y": -5.068181
+        },
+        "end": {
+          "x": -12.246532,
+          "y": -5.3483887
+        }
+      },
+      {
+        "id": "exercise-instance-004--trajectory-segment-003",
+        "type": "cubicBezier",
+        "start": {
+          "x": -12.246532,
+          "y": -5.3483887
+        },
+        "control1": {
+          "x": -15.278694,
+          "y": -5.585019
+        },
+        "control2": {
+          "x": -18.429173,
+          "y": -4.3055677
+        },
+        "end": {
+          "x": -20.019989,
+          "y": -2.4097042
+        }
+      },
+      {
+        "id": "exercise-instance-004--trajectory-segment-004",
+        "type": "cubicBezier",
+        "start": {
+          "x": -20.019989,
+          "y": -2.4097042
+        },
+        "control1": {
+          "x": -22.065327,
+          "y": 0.027834415
+        },
+        "control2": {
+          "x": -21.511234,
+          "y": 3.492727
+        },
+        "end": {
+          "x": -21.467655,
+          "y": 3.9908242
+        }
+      },
+      {
+        "id": "exercise-instance-004--trajectory-segment-005",
+        "type": "cubicBezier",
+        "start": {
+          "x": -21.467655,
+          "y": 3.9908242
+        },
+        "control1": {
+          "x": -20.686302,
+          "y": 7.1848793
+        },
+        "control2": {
+          "x": -19.525166,
+          "y": 11.851438
+        },
+        "end": {
+          "x": -15.767646,
+          "y": 11.773651
+        }
+      },
+      {
+        "id": "exercise-instance-004--trajectory-segment-006",
+        "type": "cubicBezier",
+        "start": {
+          "x": -15.767646,
+          "y": 11.773651
+        },
+        "control1": {
+          "x": -12.237387,
+          "y": 11.966703
+        },
+        "control2": {
+          "x": -9.768688,
+          "y": 11.499765
+        },
+        "end": {
+          "x": -7.8634553,
+          "y": 10.32926
+        }
+      },
+      {
+        "id": "exercise-instance-004--trajectory-segment-007",
+        "type": "cubicBezier",
+        "start": {
+          "x": -7.8634553,
+          "y": 10.32926
+        },
+        "control1": {
+          "x": -6.229059,
+          "y": 8.931493
+        },
+        "control2": {
+          "x": -5.2359133,
+          "y": 3.07264
+        },
+        "end": {
+          "x": -4.046666,
+          "y": -0.54477525
+        }
+      },
+      {
+        "id": "transition--exercise-instance-004--exercise-instance-005",
+        "type": "cubicBezier",
+        "start": {
+          "x": -4.046666,
+          "y": -0.54477525
+        },
+        "control1": {
+          "x": 1.4546027,
+          "y": -8.29346
+        },
+        "control2": {
+          "x": 17.75,
+          "y": -5
+        },
+        "end": {
+          "x": 17.25,
+          "y": -17.5
+        }
+      },
+      {
+        "id": "exercise-instance-005--trajectory-segment-001",
+        "type": "polyline",
+        "points": [
+          {
+            "x": 17.25,
+            "y": -17.5
+          },
+          {
+            "x": 17.25,
+            "y": -19.5
+          }
+        ]
+      }
+    ]
+  },
+  "checkpoints": []
+}

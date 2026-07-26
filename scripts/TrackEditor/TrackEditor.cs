@@ -4,7 +4,7 @@ using MotoGymkhanaTrainer.Tracks;
 
 namespace MotoGymkhanaTrainer.TrackEditor;
 
-/// <summary>Separate application scene for authoring Track Project v1 files.</summary>
+/// <summary>Separate application scene for authoring Track Project v2 files.</summary>
 public partial class TrackEditor : Control
 {
     private enum PendingAction { None, New, OpenDialog, OpenLibrary }
@@ -30,6 +30,21 @@ public partial class TrackEditor : Control
     private SpinBox? _scaleY;
     private Button? _mirrorVerticalButton;
     private Button? _mirrorHorizontalButton;
+    private Label? _transitionTitle;
+    private Label? _transitionPair;
+    private Label? _transitionMode;
+    private Label? _transitionStart;
+    private Label? _transitionEnd;
+    private SpinBox? _control1X;
+    private SpinBox? _control1Y;
+    private SpinBox? _control2X;
+    private SpinBox? _control2Y;
+    private SpinBox? _control1OffsetX;
+    private SpinBox? _control1OffsetY;
+    private SpinBox? _control2OffsetX;
+    private SpinBox? _control2OffsetY;
+    private Button? _resetTransitionButton;
+    private Button? _removeOrphanedButton;
     private Label? _fileLabel;
     private Label? _dirtyLabel;
     private Label? _statusLabel;
@@ -40,6 +55,7 @@ public partial class TrackEditor : Control
     private FileDialog? _exportDialog;
     private ConfirmationDialog? _unsavedDialog;
     private ConfirmationDialog? _newFolderDialog;
+    private ConfirmationDialog? _removeOrphanedDialog;
     private LineEdit? _newFolderName;
     private string? _currentFilePath;
     private string _selectedExercisePath = string.Empty;
@@ -100,6 +116,7 @@ public partial class TrackEditor : Control
         _canvas.SelectionChanged += SynchronizeSelectionUi;
         _canvas.DocumentChanged += OnCanvasChanged;
         _canvas.ExerciseDropped += AddExerciseAt;
+        _canvas.TransitionControlPointDragged += OnTransitionControlPointDragged;
         center.AddChild(_canvas);
         center.AddChild(BuildRouteOrder());
         body.AddChild(center);
@@ -141,12 +158,15 @@ public partial class TrackEditor : Control
         _showTransitions = new CheckButton
         {
             Name = "ShowTransitions",
-            Text = "Show automatic transitions",
+            Text = "Show transitions",
             ButtonPressed = true,
         };
         _showTransitions.Toggled += visible =>
             _canvas?.SetTransitionPreview(_compilation.Transitions, visible);
         toolbar.AddChild(_showTransitions);
+        _removeOrphanedButton = CreateButton(
+            "RemoveOrphanedOverrides", "Remove Orphaned Overrides", ShowRemoveOrphanedConfirmation);
+        toolbar.AddChild(_removeOrphanedButton);
         toolbar.AddChild(new VSeparator());
         toolbar.AddChild(CreateButton("DeleteButton", "Delete Instance", () => DeleteSelected()));
         return toolbar;
@@ -244,6 +264,45 @@ public partial class TrackEditor : Control
         mirrorButtons.AddChild(_mirrorHorizontalButton);
         mirrorButtons.AddChild(_mirrorVerticalButton);
         panel.AddChild(mirrorButtons);
+
+        panel.AddChild(Section("Selected transition"));
+        _transitionTitle = new Label { Name = "TransitionId", Text = "None" };
+        _transitionPair = new Label { Name = "TransitionPair", AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        _transitionMode = new Label { Name = "TransitionMode" };
+        _transitionStart = new Label { Name = "TransitionStart" };
+        _transitionEnd = new Label { Name = "TransitionEnd" };
+        panel.AddChild(_transitionTitle);
+        panel.AddChild(_transitionPair);
+        panel.AddChild(_transitionMode);
+        panel.AddChild(_transitionStart);
+        _control1X = TransitionSpin("Control1X");
+        _control1Y = TransitionSpin("Control1Y");
+        _control2X = TransitionSpin("Control2X");
+        _control2Y = TransitionSpin("Control2Y");
+        _control1OffsetX = TransitionSpin("Control1OffsetX");
+        _control1OffsetY = TransitionSpin("Control1OffsetY");
+        _control2OffsetX = TransitionSpin("Control2OffsetX");
+        _control2OffsetY = TransitionSpin("Control2OffsetY");
+        _control1X.ValueChanged += _ => OnTransitionCoordinatesEdited(1, absolute: true);
+        _control1Y.ValueChanged += _ => OnTransitionCoordinatesEdited(1, absolute: true);
+        _control2X.ValueChanged += _ => OnTransitionCoordinatesEdited(2, absolute: true);
+        _control2Y.ValueChanged += _ => OnTransitionCoordinatesEdited(2, absolute: true);
+        _control1OffsetX.ValueChanged += _ => OnTransitionCoordinatesEdited(1, absolute: false);
+        _control1OffsetY.ValueChanged += _ => OnTransitionCoordinatesEdited(1, absolute: false);
+        _control2OffsetX.ValueChanged += _ => OnTransitionCoordinatesEdited(2, absolute: false);
+        _control2OffsetY.ValueChanged += _ => OnTransitionCoordinatesEdited(2, absolute: false);
+        panel.AddChild(Row("Control 1 X", _control1X));
+        panel.AddChild(Row("Control 1 Y", _control1Y));
+        panel.AddChild(Row("Control 2 X", _control2X));
+        panel.AddChild(Row("Control 2 Y", _control2Y));
+        panel.AddChild(_transitionEnd);
+        panel.AddChild(Row("C1 offset X", _control1OffsetX));
+        panel.AddChild(Row("C1 offset Y", _control1OffsetY));
+        panel.AddChild(Row("C2 offset X", _control2OffsetX));
+        panel.AddChild(Row("C2 offset Y", _control2OffsetY));
+        _resetTransitionButton = CreateButton(
+            "ResetTransition", "Reset to Automatic", ResetSelectedTransition);
+        panel.AddChild(_resetTransitionButton);
         scroll.AddChild(panel);
         return scroll;
     }
@@ -304,6 +363,17 @@ public partial class TrackEditor : Control
         _newFolderDialog.AddChild(_newFolderName);
         _newFolderDialog.Confirmed += CreateTrackFolder;
         AddChild(_newFolderDialog);
+
+        _removeOrphanedDialog = new ConfirmationDialog
+        {
+            Name = "RemoveOrphanedOverridesDialog",
+            Title = "Remove orphaned transition overrides",
+            DialogText = "Permanently remove all orphaned manual transition overrides?",
+            OkButtonText = "Remove",
+            Size = new Vector2I(560, 180),
+        };
+        _removeOrphanedDialog.Confirmed += RemoveOrphanedOverrides;
+        AddChild(_removeOrphanedDialog);
     }
 
     private void RefreshExerciseTree()
@@ -614,6 +684,96 @@ public partial class TrackEditor : Control
         SynchronizeSelectionUi();
     }
 
+    private void OnTransitionControlPointDragged(
+        string transitionId,
+        int controlIndex,
+        Point2Dto absolutePoint)
+    {
+        CompiledTransition? transition = _compilation.Transitions.FirstOrDefault(
+            item => item.TransitionId == transitionId);
+        if (transition is null ||
+            !_document.SetTransitionControlPoint(transition, controlIndex, absolutePoint))
+        {
+            return;
+        }
+
+        MarkChanged();
+    }
+
+    private void OnTransitionCoordinatesEdited(int controlIndex, bool absolute)
+    {
+        if (_updatingUi || CurrentSelectedTransition() is not CompiledTransition transition)
+        {
+            return;
+        }
+
+        Point2Dto point;
+        if (absolute)
+        {
+            point = controlIndex == 1
+                ? new Point2Dto { X = (float)_control1X!.Value, Y = (float)_control1Y!.Value }
+                : new Point2Dto { X = (float)_control2X!.Value, Y = (float)_control2Y!.Value };
+        }
+        else
+        {
+            Point2Dto endpoint = controlIndex == 1 ? transition.Start : transition.End;
+            point = controlIndex == 1
+                ? new Point2Dto
+                {
+                    X = endpoint.X + (float)_control1OffsetX!.Value,
+                    Y = endpoint.Y + (float)_control1OffsetY!.Value,
+                }
+                : new Point2Dto
+                {
+                    X = endpoint.X + (float)_control2OffsetX!.Value,
+                    Y = endpoint.Y + (float)_control2OffsetY!.Value,
+                };
+        }
+
+        if (_document.SetTransitionControlPoint(transition, controlIndex, point))
+        {
+            MarkChanged();
+        }
+    }
+
+    private void ResetSelectedTransition()
+    {
+        if (CurrentSelectedTransition() is not CompiledTransition transition ||
+            !_document.ResetTransition(transition.FromInstanceId, transition.ToInstanceId))
+        {
+            return;
+        }
+
+        MarkChanged();
+        SetStatus($"Transition '{transition.TransitionId}' reset to automatic.", false);
+    }
+
+    private void ShowRemoveOrphanedConfirmation()
+    {
+        int count = _document.GetOrphanedTransitionOverrides().Count;
+        if (count == 0)
+        {
+            SetStatus("There are no orphaned transition overrides.", false);
+            return;
+        }
+
+        _removeOrphanedDialog!.DialogText =
+            $"Permanently remove {count} orphaned manual transition override(s)?";
+        _removeOrphanedDialog.PopupCentered();
+    }
+
+    private void RemoveOrphanedOverrides()
+    {
+        int removed = _document.RemoveOrphanedTransitionOverrides();
+        if (removed == 0)
+        {
+            return;
+        }
+
+        MarkChanged();
+        SetStatus($"Removed {removed} orphaned transition override(s).", false);
+    }
+
     private void Reorder(bool up)
     {
         if (_canvas!.SelectedInstanceId is not string id) return;
@@ -623,10 +783,15 @@ public partial class TrackEditor : Control
 
     private bool DeleteSelected()
     {
-        if (_canvas?.SelectedInstanceId is not string id || !_document.DeleteInstance(id)) return false;
+        if (_canvas?.SelectedInstanceId is not string id) return false;
+        int relatedOverrides = _document.CountRelatedTransitionOverrides(id);
+        if (!_document.DeleteInstance(id)) return false;
         _canvas.SelectInstance(null);
         MarkChanged();
-        SetStatus($"Deleted instance '{id}'. Exercise Definition file was not changed.", false);
+        SetStatus(relatedOverrides == 0
+            ? $"Deleted instance '{id}'. Exercise Definition file was not changed."
+            : $"Deleted instance '{id}'; {relatedOverrides} related override(s) were kept orphaned.",
+            relatedOverrides > 0);
         return true;
     }
 
@@ -682,9 +847,55 @@ public partial class TrackEditor : Control
             _scaleX!.Value = instance.Scale.X;
             _scaleY!.Value = instance.Scale.Y;
         }
+        SynchronizeTransitionProperties();
+        _removeOrphanedButton!.Disabled = _document.GetOrphanedTransitionOverrides().Count == 0;
         _updatingUi = false;
         SynchronizeRouteList();
     }
+
+    private void SynchronizeTransitionProperties()
+    {
+        CompiledTransition? transition = CurrentSelectedTransition();
+        bool enabled = transition is not null;
+        _transitionTitle!.Text = enabled ? transition!.TransitionId : "None";
+        _transitionPair!.Text = enabled
+            ? $"from: {transition!.FromInstanceId}\nto: {transition.ToInstanceId}"
+            : string.Empty;
+        _transitionMode!.Text = enabled ? $"Mode: {transition!.SourceMode}" : string.Empty;
+        _transitionStart!.Text = enabled
+            ? $"Start: {FormatPoint(transition!.Start)} (read-only)"
+            : string.Empty;
+        _transitionEnd!.Text = enabled
+            ? $"End: {FormatPoint(transition!.End)} (read-only)"
+            : string.Empty;
+        foreach (SpinBox spin in TransitionSpins())
+        {
+            spin.Editable = enabled;
+        }
+
+        _resetTransitionButton!.Disabled = !enabled ||
+            transition!.SourceMode != TransitionSourceMode.Override;
+        if (!enabled)
+        {
+            return;
+        }
+
+        Point2Dto offset1 = Subtract(transition!.Control1, transition.Start);
+        Point2Dto offset2 = Subtract(transition.Control2, transition.End);
+        _control1X!.Value = transition.Control1.X;
+        _control1Y!.Value = transition.Control1.Y;
+        _control2X!.Value = transition.Control2.X;
+        _control2Y!.Value = transition.Control2.Y;
+        _control1OffsetX!.Value = offset1.X;
+        _control1OffsetY!.Value = offset1.Y;
+        _control2OffsetX!.Value = offset2.X;
+        _control2OffsetY!.Value = offset2.Y;
+    }
+
+    private CompiledTransition? CurrentSelectedTransition() =>
+        _canvas?.SelectedTransitionId is string id
+            ? _compilation.Transitions.FirstOrDefault(item => item.TransitionId == id)
+            : null;
 
     private void MarkChanged()
     {
@@ -807,6 +1018,19 @@ public partial class TrackEditor : Control
         AllowGreater = false,
         AllowLesser = false,
     };
+
+    private static SpinBox TransitionSpin(string name) => Spin(name, -10000, 10000, 0.05, " m");
+
+    private IEnumerable<SpinBox> TransitionSpins() =>
+    [
+        _control1X!, _control1Y!, _control2X!, _control2Y!,
+        _control1OffsetX!, _control1OffsetY!, _control2OffsetX!, _control2OffsetY!,
+    ];
+
+    private static string FormatPoint(Point2Dto point) => $"({point.X:0.###}, {point.Y:0.###}) m";
+
+    private static Point2Dto Subtract(Point2Dto left, Point2Dto right) =>
+        new() { X = left.X - right.X, Y = left.Y - right.Y };
 
     private static FileDialog JsonDialog(string name, string title, FileDialog.FileModeEnum mode) => new()
     {

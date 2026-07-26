@@ -534,6 +534,9 @@ try
         EditorCanvasMath.FitPixelsPerMeter(100, 40, new Vector2(636, 420), 28, 3, 120),
         "Track canvas fit uses the central panel size after side-panel layout");
     AssertEqual(0, trackDocument.Project.Instances.Length, "new Track Project starts with no instances");
+    AssertEqual(2, trackDocument.Project.FormatVersion, "new Track Project uses formatVersion 2");
+    AssertEqual(0, trackDocument.Project.TransitionOverrides.Length,
+        "new Track Project starts with an explicit empty transitionOverrides array");
     trackDocument.Project.Area.Width = 72.0f;
     trackDocument.Project.Area.Length = 110.0f;
     string emptyProjectJson = TrackProjectStore.Serialize(trackDocument.Project, exerciseLibrary);
@@ -631,9 +634,16 @@ try
         unresolvedJson, "unresolved.track.json", exerciseLibrary);
     AssertEqual(2, unresolved.Project.Instances.Length, "missing and damaged Exercise files do not remove instances");
     AssertEqual(0, unresolved.Definitions.Count, "bad Exercise dependencies remain unresolved caches");
-    AssertEqual(2, unresolved.Warnings.Count, "each unresolved instance produces a diagnostic warning");
+    AssertEqual(2, unresolved.Project.FormatVersion, "Track Project v1 migrates to v2 in memory");
+    AssertEqual(0, unresolved.Project.TransitionOverrides.Length,
+        "Track Project v1 migration defaults transitionOverrides to empty");
+    AssertEqual(3, unresolved.Warnings.Count,
+        "v1 migration plus each unresolved instance produces a diagnostic warning");
     string unresolvedSaved = TrackProjectStore.Serialize(unresolved.Project, exerciseLibrary);
-    AssertTrue(unresolvedSaved.Contains("missing.json"), "unresolved instances can be saved again");
+    AssertTrue(unresolvedSaved.Contains("missing.json") &&
+        unresolvedSaved.Contains("\"formatVersion\": 2") &&
+        unresolvedSaved.Contains("\"transitionOverrides\": []"),
+        "explicit Save writes migrated unresolved projects as canonical v2");
 
     AssertThrows<InvalidDataException>(
         () => TrackProjectStore.LoadFromJson(
@@ -720,6 +730,127 @@ try
     AssertTrue(twoInstanceCompilation.Snapshot.Trajectory.Segments[1].Points is null,
         "Bezier rendering samples are not persisted in exported geometry");
 
+    CompiledTransition automaticTransition = twoInstanceCompilation.Transitions[0];
+    Point2Dto editedControl1 = new()
+    {
+        X = automaticTransition.Control1.X + 2.25f,
+        Y = automaticTransition.Control1.Y - 1.5f,
+    };
+    AssertTrue(compileDocument.SetTransitionControlPoint(automaticTransition, 1, editedControl1),
+        "first manual handle edit creates a TransitionOverride");
+    TrackCompilationResult firstManualCompilation = TrackCompiler.Compile(compileDocument);
+    AssertEqual(1, compileDocument.Project.TransitionOverrides.Length,
+        "first edit creates exactly one override");
+    AssertTrue(firstManualCompilation.Transitions[0].SourceMode == TransitionSourceMode.Override,
+        "compiled transition reports Override mode after first edit");
+    AssertEqual(editedControl1.X, firstManualCompilation.Transitions[0].Control1.X,
+        "manual control1 is applied to derived transition geometry");
+
+    Point2Dto editedControl2 = new()
+    {
+        X = firstManualCompilation.Transitions[0].Control2.X - 1.75f,
+        Y = firstManualCompilation.Transitions[0].Control2.Y + 2.0f,
+    };
+    AssertTrue(compileDocument.SetTransitionControlPoint(
+        firstManualCompilation.Transitions[0], 2, editedControl2),
+        "control2 can be edited after the override exists");
+    AssertEqual(1, compileDocument.Project.TransitionOverrides.Length,
+        "repeated handle edits do not create duplicate overrides");
+    TransitionOverrideDto savedOverride = compileDocument.Project.TransitionOverrides[0];
+    Point2Dto savedOffset1 = new() { X = savedOverride.Control1Offset.X, Y = savedOverride.Control1Offset.Y };
+    Point2Dto savedOffset2 = new() { X = savedOverride.Control2Offset.X, Y = savedOverride.Control2Offset.Y };
+
+    string manualProjectJson = TrackProjectStore.Serialize(compileDocument.Project, exerciseLibrary);
+    TrackProjectLoadResult manualReload = TrackProjectStore.LoadFromJson(
+        manualProjectJson, "manual-v2.track.json", exerciseLibrary);
+    var manualReloadDocument = new TrackProjectDocument(manualReload.Project, manualReload.Definitions);
+    TrackCompilationResult manualReloadCompilation = TrackCompiler.Compile(manualReloadDocument);
+    AssertTrue(manualReloadCompilation.Transitions[0].SourceMode == TransitionSourceMode.Override,
+        "saved and reopened Track Project restores manual transition mode");
+    AssertEqual(editedControl2.Y, manualReloadCompilation.Transitions[0].Control2.Y,
+        "saved and reopened Track Project restores the manual curve shape");
+
+    TrackProjectInstanceDto movedFrom = compileDocument.FindInstance(compileA)!;
+    Point2Dto oldFromPosition = new() { X = movedFrom.Position.X, Y = movedFrom.Position.Y };
+    compileDocument.MoveInstance(compileA,
+        new Point2Dto { X = oldFromPosition.X + 3.0f, Y = oldFromPosition.Y + 1.0f });
+    TrackCompilationResult movedManual = TrackCompiler.Compile(compileDocument);
+    AssertTrue(MathF.Abs(movedManual.Transitions[0].Start.X - automaticTransition.Start.X) > 0.001f,
+        "manual transition endpoint follows a moved instance");
+    AssertEqual(savedOffset1.X,
+        movedManual.Transitions[0].Control1.X - movedManual.Transitions[0].Start.X,
+        "control1 offset remains unchanged when its endpoint moves");
+    AssertEqual(savedOffset2.Y,
+        movedManual.Transitions[0].Control2.Y - movedManual.Transitions[0].End.Y,
+        "control2 offset remains unchanged when the other endpoint is unchanged");
+    compileDocument.MoveInstance(compileA, oldFromPosition);
+
+    TrackProjectInstanceDto transformedManualFrom = compileDocument.FindInstance(compileA)!;
+    float oldManualRotation = transformedManualFrom.RotationDeg;
+    Point2Dto oldManualScale = new()
+    {
+        X = transformedManualFrom.Scale.X,
+        Y = transformedManualFrom.Scale.Y,
+    };
+    compileDocument.SetTransform(compileA, transformedManualFrom.Position,
+        oldManualRotation + 17.0f, new Point2Dto { X = 1.7f, Y = 0.8f });
+    TrackCompilationResult rotatedScaledManual = TrackCompiler.Compile(compileDocument);
+    AssertEqual(savedOffset1.Y,
+        rotatedScaledManual.Transitions[0].Control1.Y - rotatedScaledManual.Transitions[0].Start.Y,
+        "manual offsets remain track-space constants after rotation and non-uniform scale");
+    compileDocument.SetTransform(compileA, transformedManualFrom.Position,
+        oldManualRotation, oldManualScale);
+
+    string manualExportRoot = Path.Combine(temporaryTrackTestRoot, "exports", "tracks");
+    var manualExportLibrary = new SandboxedJsonLibrary(
+        manualExportRoot, "Track export library", "res://exports/tracks/");
+    string manualExportPath = manualExportLibrary.ResolveSaveJson(string.Empty, "manual-transition.json");
+    TrackCompilationResult manualForExport = TrackCompiler.Compile(compileDocument);
+    TrackExportStore.SaveToFile(manualForExport.Snapshot!, manualExportPath);
+    TrackSnapshotDto manualViewerTrack = TrackLoader.LoadFromJson(
+        File.ReadAllText(manualExportPath), manualExportPath);
+    AssertEqual(savedOverride.TransitionId, manualViewerTrack.Trajectory.Segments[1].Id,
+        "manual transition keeps the same exported segment id");
+    AssertEqual(manualForExport.Transitions[0].Control1.X,
+        manualViewerTrack.Trajectory.Segments[1].Control1!.X,
+        "Viewer export contains manual control points and no override metadata");
+
+    float finiteOffset = manualReloadDocument.Project.TransitionOverrides[0].Control1Offset.X;
+    float finiteOffsetY = manualReloadDocument.Project.TransitionOverrides[0].Control1Offset.Y;
+    manualReloadDocument.Project.TransitionOverrides[0].Control1Offset =
+        new Point2Dto { X = float.NaN, Y = finiteOffsetY };
+    TrackCompilationResult nonFiniteOverride = TrackCompiler.Compile(manualReloadDocument);
+    AssertTrue(!nonFiniteOverride.CanExport &&
+        nonFiniteOverride.Errors.Any(item => item.Message.Contains("non-finite offset")),
+        "non-finite TransitionOverride offset blocks export without throwing");
+    manualReloadDocument.Project.TransitionOverrides[0].Control1Offset =
+        new Point2Dto { X = finiteOffset, Y = finiteOffsetY };
+
+    TrackProjectLoadResult deletionReload = TrackProjectStore.LoadFromJson(
+        manualProjectJson, "manual-delete.track.json", exerciseLibrary);
+    var deletionDocument = new TrackProjectDocument(deletionReload.Project, deletionReload.Definitions);
+    AssertTrue(deletionDocument.DeleteInstance(compileB),
+        "an instance related to a manual transition can be deleted");
+    AssertEqual(1, deletionDocument.Project.TransitionOverrides.Length,
+        "deleting an instance preserves its related override as orphaned");
+    AssertTrue(TrackCompiler.Compile(deletionDocument).Warnings.Any(item => item.Message.Contains("orphaned")),
+        "deleting a related instance produces an orphaned override warning");
+
+    AssertTrue(manualReloadDocument.ResetTransition(compileA, compileB),
+        "Reset to Automatic removes the applicable override");
+    AssertEqual(0, manualReloadDocument.Project.TransitionOverrides.Length,
+        "reset removes persisted manual data");
+    AssertTrue(TrackCompiler.Compile(manualReloadDocument).Transitions[0].SourceMode ==
+        TransitionSourceMode.Automatic,
+        "reset recompiles the automatic transition");
+
+    AssertThrows<InvalidDataException>(
+        () => TrackProjectStore.LoadFromJson(
+            manualProjectJson.Replace("\"transitionOverrides\": [", "\"transitionOverrides\": [" +
+                "{\"transitionId\":\"duplicate\",\"fromInstanceId\":\"exercise-instance-001\",\"toInstanceId\":\"exercise-instance-002\",\"control1Offset\":{\"x\":1,\"y\":1},\"control2Offset\":{\"x\":-1,\"y\":-1}},"),
+            "duplicate-override.track.json", exerciseLibrary),
+        "duplicate override pair is a blocking Track Project validation error");
+
     Point2Dto transformedDirection = ExerciseInstanceGeometry.TransformDirection(
         new Point2Dto { X = 2, Y = 3 }, 90, new Point2Dto { X = 2, Y = 0.5f });
     AssertTrue(MathF.Abs(transformedDirection.X - -1.5f) < 0.0001f &&
@@ -737,8 +868,21 @@ try
 
     compileDocument.MoveUp(compileC);
     TrackCompilationResult reordered = TrackCompiler.Compile(compileDocument);
+    AssertTrue(reordered.Warnings.Any(item => item.Message.Contains("orphaned")),
+        "reorder preserves but warns about a now-orphaned override");
+    AssertEqual(1, compileDocument.Project.TransitionOverrides.Length,
+        "reorder never deletes persisted manual transition data");
     AssertEqual("exercise-instance-003--fixture-polyline", reordered.Snapshot!.Trajectory.Segments[2].Id,
         "Route Order changes the global segment sequence without changing stable ids");
+    compileDocument.MoveDown(compileC);
+    AssertTrue(TrackCompiler.Compile(compileDocument).Transitions[0].SourceMode ==
+        TransitionSourceMode.Override,
+        "restoring adjacency reapplies the preserved override");
+    compileDocument.MoveUp(compileC);
+    AssertEqual(1, compileDocument.RemoveOrphanedTransitionOverrides(),
+        "confirmed orphan cleanup removes the orphaned override explicitly");
+    AssertEqual(0, compileDocument.Project.TransitionOverrides.Length,
+        "orphan cleanup leaves no hidden override records");
     Point2Dto transitionStartBeforeMove = reordered.Transitions[0].Start!;
     compileDocument.MoveInstance(compileA, new Point2Dto { X = 6, Y = -6 });
     TrackCompilationResult movedCompilation = TrackCompiler.Compile(compileDocument);
@@ -812,7 +956,7 @@ finally
     }
 }
 
-Console.WriteLine("All Viewer, Exercise Editor Iteration 4 and Track Editor Iteration 2 checks passed.");
+Console.WriteLine("All Viewer, Exercise Editor Iteration 4 and Track Editor Iteration 3 checks passed.");
 
 static void AssertEqual<T>(T expected, T actual, string description)
     where T : IEquatable<T>

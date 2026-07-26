@@ -6,20 +6,56 @@ namespace MotoGymkhanaTrainer.TrackEditor;
 /// <summary>Severity-tagged compilation message shown before Viewer export.</summary>
 public sealed record TrackCompilationDiagnostic(string Message);
 
+/// <summary>Origin of the control points in a derived transition preview.</summary>
+public enum TransitionSourceMode
+{
+    Automatic,
+    Override,
+}
+
+/// <summary>
+/// Runtime-only transition geometry. It is rebuilt from current instance endpoints
+/// plus an optional persisted override and is never serialized as Track Project data.
+/// </summary>
+public sealed class CompiledTransition
+{
+    public required string TransitionId { get; init; }
+    public required string FromInstanceId { get; init; }
+    public required string ToInstanceId { get; init; }
+    public required Point2Dto Start { get; init; }
+    public required Point2Dto Control1 { get; init; }
+    public required Point2Dto Control2 { get; init; }
+    public required Point2Dto End { get; init; }
+    public required TransitionSourceMode SourceMode { get; init; }
+
+    /// <summary>Creates the ordinary cubicBezier segment consumed by Viewer.</summary>
+    public TrajectorySegmentDto ToTrajectorySegment() => new()
+    {
+        Id = TransitionId,
+        Type = "cubicBezier",
+        Start = Copy(Start),
+        Control1 = Copy(Control1),
+        Control2 = Copy(Control2),
+        End = Copy(End),
+    };
+
+    private static Point2Dto Copy(Point2Dto point) => new() { X = point.X, Y = point.Y };
+}
+
 /// <summary>
 /// Derived compilation output. Snapshot and transition preview are never written
-/// into Track Project v1; they can always be rebuilt from project + definitions.
+/// into Track Project v2; they can always be rebuilt from project + definitions.
 /// </summary>
 public sealed class TrackCompilationResult
 {
     public TrackSnapshotDto? Snapshot { get; init; }
-    public IReadOnlyList<TrajectorySegmentDto> Transitions { get; init; } = [];
+    public IReadOnlyList<CompiledTransition> Transitions { get; init; } = [];
     public IReadOnlyList<TrackCompilationDiagnostic> Errors { get; init; } = [];
     public IReadOnlyList<TrackCompilationDiagnostic> Warnings { get; init; } = [];
     public bool CanExport => Snapshot is not null && Errors.Count == 0;
 }
 
-/// <summary>Compiles editable Track Project v1 into self-contained Track v3.</summary>
+/// <summary>Compiles editable Track Project v2 into self-contained Track v3.</summary>
 public static class TrackCompiler
 {
     public const float MinTransitionHandleLength = 0.5f;
@@ -28,6 +64,7 @@ public static class TrackCompiler
     private const float TangentTolerance = 0.00001f;
     private const float ShortTransitionMeters = 1.0f;
     private const float LongTransitionMeters = 45.0f;
+    private const float LongManualHandleMeters = 30.0f;
     private const int TransitionSamples = 32;
 
     private sealed class CompiledInstance
@@ -58,7 +95,7 @@ public static class TrackCompiler
         var markings = new List<MarkingDto>();
         var elements = new List<ElementDto>();
         var globalSegments = new List<TrajectorySegmentDto>();
-        var transitions = new List<TrajectorySegmentDto>();
+        var transitions = new List<CompiledTransition>();
 
         if (string.IsNullOrWhiteSpace(document.Project.Track.Id) ||
             string.IsNullOrWhiteSpace(document.Project.Track.Name))
@@ -70,6 +107,9 @@ public static class TrackCompiler
         {
             errors.Add(Error("Export requires at least one ExerciseInstance."));
         }
+
+        IReadOnlyDictionary<(string From, string To), TransitionOverrideDto> applicableOverrides =
+            ValidateTransitionOverrides(document, errors, warnings);
 
         foreach (TrackProjectInstanceDto instance in document.Project.Instances)
         {
@@ -114,12 +154,17 @@ public static class TrackCompiler
                 continue;
             }
 
-            TrajectorySegmentDto? transition = BuildTransition(current, next, errors, warnings);
+            applicableOverrides.TryGetValue(
+                (current.Instance.InstanceId, next.Instance.InstanceId),
+                out TransitionOverrideDto? transitionOverride);
+            CompiledTransition? transition = BuildTransition(
+                current, next, transitionOverride, errors, warnings);
             if (transition is not null)
             {
                 transitions.Add(transition);
-                globalSegments.Add(transition);
-                WarnForTransitionArea(transition, document.Project.Area, warnings);
+                TrajectorySegmentDto segment = transition.ToTrajectorySegment();
+                globalSegments.Add(segment);
+                WarnForTransitionArea(segment, document.Project.Area, warnings);
             }
         }
 
@@ -398,9 +443,10 @@ public static class TrackCompiler
         return TryNormalize(entryTangent, out _) && TryNormalize(exitTangent, out _);
     }
 
-    private static TrajectorySegmentDto? BuildTransition(
+    private static CompiledTransition? BuildTransition(
         CompiledInstance from,
         CompiledInstance to,
+        TransitionOverrideDto? transitionOverride,
         ICollection<TrackCompilationDiagnostic> errors,
         ICollection<TrackCompilationDiagnostic> warnings)
     {
@@ -419,7 +465,7 @@ public static class TrackCompiler
             return null;
         }
 
-        if (distance <= PointTolerance)
+        if (distance <= PointTolerance && transitionOverride is null)
         {
             if (Dot(exitTangent, entryTangent) < 0.5f)
                 warnings.Add(Warning($"Very short transition {pair} has conflicting directions."));
@@ -433,16 +479,135 @@ public static class TrackCompiler
         if (Dot(exitTangent, entryTangent) < -0.25f)
             warnings.Add(Warning($"Transition {pair} has a sharp direction change."));
 
-        float handle = Math.Clamp(distance / 3.0f, MinTransitionHandleLength, MaxTransitionHandleLength);
-        return new TrajectorySegmentDto
+        string transitionId = $"transition--{from.Instance.InstanceId}--{to.Instance.InstanceId}";
+        Point2Dto control1;
+        Point2Dto control2;
+        TransitionSourceMode sourceMode;
+        if (transitionOverride is not null)
         {
-            Id = $"transition--{from.Instance.InstanceId}--{to.Instance.InstanceId}",
-            Type = "cubicBezier",
+            /*
+             * Endpoints always follow the latest compiled exercises. Persisted
+             * offsets remain unchanged through move/rotate/scale and translate the
+             * manual handles together with their respective endpoint.
+             */
+            control1 = Add(from.Exit, transitionOverride.Control1Offset);
+            control2 = Add(to.Entry, transitionOverride.Control2Offset);
+            sourceMode = TransitionSourceMode.Override;
+            if (!IsFinite(control1) || !IsFinite(control2))
+            {
+                errors.Add(Error($"Transition {pair} override produces non-finite geometry."));
+                return null;
+            }
+
+            WarnForManualHandles(
+                transitionId, from.Exit, control1, control2, to.Entry,
+                exitTangent, entryTangent, warnings);
+        }
+        else
+        {
+            float handle = Math.Clamp(distance / 3.0f, MinTransitionHandleLength, MaxTransitionHandleLength);
+            control1 = Add(from.Exit, Multiply(exitTangent, handle));
+            control2 = Add(to.Entry, Multiply(entryTangent, -handle));
+            sourceMode = TransitionSourceMode.Automatic;
+        }
+
+        return new CompiledTransition
+        {
+            TransitionId = transitionId,
+            FromInstanceId = from.Instance.InstanceId,
+            ToInstanceId = to.Instance.InstanceId,
             Start = Copy(from.Exit),
-            Control1 = Add(from.Exit, Multiply(exitTangent, handle)),
-            Control2 = Add(to.Entry, Multiply(entryTangent, -handle)),
+            Control1 = control1,
+            Control2 = control2,
             End = Copy(to.Entry),
+            SourceMode = sourceMode,
         };
+    }
+
+    private static IReadOnlyDictionary<(string From, string To), TransitionOverrideDto>
+        ValidateTransitionOverrides(
+            TrackProjectDocument document,
+            ICollection<TrackCompilationDiagnostic> errors,
+            ICollection<TrackCompilationDiagnostic> warnings)
+    {
+        var adjacentPairs = new HashSet<(string From, string To)>();
+        for (int index = 0; index + 1 < document.Project.Instances.Length; index++)
+        {
+            adjacentPairs.Add((document.Project.Instances[index].InstanceId,
+                document.Project.Instances[index + 1].InstanceId));
+        }
+
+        var applicable = new Dictionary<(string From, string To), TransitionOverrideDto>();
+        var transitionIds = new HashSet<string>(StringComparer.Ordinal);
+        var seenPairs = new HashSet<(string From, string To)>();
+        foreach (TransitionOverrideDto item in document.Project.TransitionOverrides ?? [])
+        {
+            bool valid = true;
+            if (string.IsNullOrWhiteSpace(item.TransitionId) || !transitionIds.Add(item.TransitionId))
+            {
+                errors.Add(Error($"Duplicate or empty TransitionOverride transitionId '{item.TransitionId}'."));
+                valid = false;
+            }
+
+            var pair = (item.FromInstanceId, item.ToInstanceId);
+            if (string.IsNullOrWhiteSpace(pair.FromInstanceId) ||
+                string.IsNullOrWhiteSpace(pair.ToInstanceId) ||
+                !seenPairs.Add(pair))
+            {
+                errors.Add(Error(
+                    $"Duplicate or empty TransitionOverride pair '{pair.FromInstanceId}' -> '{pair.ToInstanceId}'."));
+                valid = false;
+            }
+
+            if (!IsFinite(item.Control1Offset) || !IsFinite(item.Control2Offset))
+            {
+                errors.Add(Error($"TransitionOverride '{item.TransitionId}' contains a non-finite offset."));
+                valid = false;
+            }
+
+            if (!adjacentPairs.Contains(pair))
+            {
+                warnings.Add(Warning(
+                    $"TransitionOverride '{item.TransitionId}' is orphaned: " +
+                    $"'{item.FromInstanceId}' does not directly precede '{item.ToInstanceId}'."));
+                continue;
+            }
+
+            if (valid)
+            {
+                applicable.Add(pair, item);
+            }
+        }
+
+        return applicable;
+    }
+
+    private static void WarnForManualHandles(
+        string transitionId,
+        Point2Dto start,
+        Point2Dto control1,
+        Point2Dto control2,
+        Point2Dto end,
+        Point2Dto exitTangent,
+        Point2Dto entryTangent,
+        ICollection<TrackCompilationDiagnostic> warnings)
+    {
+        float firstLength = Distance(start, control1);
+        float secondLength = Distance(end, control2);
+        if (firstLength > LongManualHandleMeters || secondLength > LongManualHandleMeters)
+        {
+            warnings.Add(Warning(
+                $"Manual transition '{transitionId}' has unusually long handles " +
+                $"({firstLength:F1} m, {secondLength:F1} m)."));
+        }
+
+        if ((TryNormalize(Subtract(control1, start), out Point2Dto firstDirection) &&
+             Dot(firstDirection, exitTangent) < -0.25f) ||
+            (TryNormalize(Subtract(end, control2), out Point2Dto secondDirection) &&
+             Dot(secondDirection, entryTangent) < -0.25f))
+        {
+            warnings.Add(Warning($"Manual transition '{transitionId}' has an unusually sharp handle direction."));
+        }
     }
 
     private static TrajectorySegmentDto TransformSegment(
