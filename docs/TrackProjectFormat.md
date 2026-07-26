@@ -56,7 +56,7 @@ Viewer не должен загружать Track Project.
 
 ```json
 {
-  "formatVersion": 2
+  "formatVersion": 3
 }
 ```
 
