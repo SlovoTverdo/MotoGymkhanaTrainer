@@ -795,3 +795,57 @@ TrackProject
 └─ TransitionOverrides[]
 ```
 * runtime logs не содержат необработанных ошибок.
+
+
+# Viewer physical completion
+
+Track/Venue Integration считается визуально завершённой после Exported Track v4, но физическое взаимодействие реализуется отдельной итерацией:
+
+```text
+docs/ViewerVenuePhysicsPlan.md
+```
+
+Viewer должен использовать:
+
+* `CharacterBody3D` для Walk mode;
+* collision Venue assets;
+* collision основной surface;
+* gravity;
+* `MoveAndSlide`;
+* floor snapping;
+* surface projection Track visuals.
+
+## Collision ownership
+
+Venue Definition хранит только:
+
+```text
+collisionEnabled
+```
+
+Фактическая collision geometry находится внутри Venue object `.tscn`.
+
+Viewer:
+
+* не создаёт collision автоматически;
+* оставляет collision включённой при `collisionEnabled = true`;
+* рекурсивно отключает её при `collisionEnabled = false`.
+
+## Track visual projection
+
+Двумерная geometry Exported Track v4 проецируется Viewer на runtime surface.
+
+Это относится к:
+
+* trajectory;
+* arrows;
+* markings;
+* cones.
+
+Projection не изменяет Exported Track JSON.
+
+## Walkable surfaces
+
+Основная площадка и проходимые части Venue assets должны участвовать в surface projection и character floor detection.
+
+Непроходимые стены и заборы участвуют в character collision, но не должны использоваться как поверхность для projection.
