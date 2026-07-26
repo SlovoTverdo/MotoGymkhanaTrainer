@@ -649,6 +649,189 @@ Automatic transition существует:
 
 ---
 
+# TransitionOverride
+
+## 1. Назначение
+
+`TransitionOverride` представляет ручную коррекцию автоматически построенного перехода между соседними ExerciseInstance.
+
+```text
+ExerciseInstance A
+        ↓
+TransitionOverride
+        ↓
+ExerciseInstance B
+```
+
+TransitionOverride принадлежит Track Project.
+
+Он не принадлежит:
+
+* Exercise Definition;
+* Viewer;
+* Exported Track как отдельная runtime-сущность.
+
+В Exported Track результат override становится обычным `cubicBezier` segment.
+
+---
+
+## 2. Структура
+
+Концептуальная доменная модель:
+
+```text
+TransitionOverride
+├─ TransitionId
+├─ FromInstanceId
+├─ ToInstanceId
+├─ Control1Offset
+└─ Control2Offset
+```
+
+Offsets находятся в системе координат трассы.
+
+---
+
+## 3. Endpoints
+
+TransitionOverride не хранит endpoints.
+
+Они вычисляются:
+
+```text
+P0 = compiled WorldExitPoint FromInstance
+P3 = compiled WorldEntryPoint ToInstance
+```
+
+Управляющие точки:
+
+```text
+P1 = P0 + Control1Offset
+P2 = P3 + Control2Offset
+```
+
+Это обеспечивает перемещение endpoints вместе с ExerciseInstance.
+
+---
+
+## 4. Automatic transition state
+
+Переход между соседними instances имеет один из режимов:
+
+```text
+Automatic
+ManualOverride
+Invalid
+```
+
+### Automatic
+
+Override отсутствует.
+
+Control points вычисляются алгоритмом автоматического перехода.
+
+### ManualOverride
+
+Существует валидный TransitionOverride для текущей соседней пары.
+
+### Invalid
+
+Невозможно построить transition из-за:
+
+* unresolved instance;
+* invalid trajectory;
+* undefined tangent;
+* non-finite data;
+* invalid override.
+
+---
+
+## 5. Transition runtime representation
+
+Track Editor может использовать runtime-модель:
+
+```text
+CompiledTransition
+├─ TransitionId
+├─ FromInstanceId
+├─ ToInstanceId
+├─ Start
+├─ Control1
+├─ Control2
+├─ End
+├─ SourceMode
+└─ ValidationState
+```
+
+Где `SourceMode`:
+
+```text
+Automatic
+Override
+```
+
+`CompiledTransition` является производной runtime-моделью и не сериализуется напрямую в Track Project.
+
+---
+
+## 6. Identity
+
+Transition identity определяется ориентированной парой:
+
+```text
+FromInstanceId → ToInstanceId
+```
+
+Route Order является источником соседства.
+
+Номер позиции в массиве не является стабильной identity.
+
+---
+
+## 7. Orphaned override
+
+`TransitionOverride` является orphaned, если:
+
+* FromInstance отсутствует;
+* ToInstance отсутствует;
+* instances больше не являются соседними;
+* порядок стал обратным.
+
+Orphaned override:
+
+* сохраняется;
+* не применяется;
+* не экспортируется;
+* создаёт warning;
+* может быть удалён пользователем.
+
+---
+
+## 8. Reset
+
+Reset удаляет TransitionOverride и возвращает transition в режим:
+
+```text
+Automatic
+```
+
+Он не создаёт новый автоматический объект в Track Project.
+
+---
+
+## 9. Source of truth
+
+Источниками истины являются:
+
+```text
+TrackProject.Instances
+TrackProject.TransitionOverrides
+ExerciseDefinitions
+```
+
+Canvas handles и compiled cubicBezier не являются отдельными источниками persisted state.
+
+
 ## 7. Transition identity
 
 Переход получает детерминированный runtime/export ID:
