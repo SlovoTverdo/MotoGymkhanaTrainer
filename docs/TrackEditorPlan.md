@@ -2733,3 +2733,27 @@ Iteration 4 завершена, если:
 * проект собирается без compile errors;
 * runtime logs не содержат необработанных ошибок.
 
+
+---
+
+Venue Editor Iteration 1
+
+```markdown
+# Future Venue integration
+
+Track Editor в будущей итерации будет создавать Track Project только на основе существующей Venue Definition.
+
+Планируемая схема:
+
+```text
+Venue Definition
+        ↓
+Track Project with venuePath
+        ↓
+Track compilation
+        ↓
+Exported Track snapshot
+        ↓
+Viewer
+```
+
