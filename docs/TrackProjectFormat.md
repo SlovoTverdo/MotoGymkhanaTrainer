@@ -56,7 +56,7 @@ Viewer не должен загружать Track Project.
 
 ```json
 {
-  "formatVersion": 1
+  "formatVersion": 2
 }
 ```
 
@@ -395,6 +395,397 @@ Exported Track JSON решает проблему стабильности, со
 ---
 
 # Derived geometry and export
+
+# Transition overrides
+
+## 1. Назначение
+
+Track Project formatVersion 2 может сохранять ручную коррекцию переходной trajectory между соседними ExerciseInstance.
+
+По умолчанию Track Editor автоматически создаёт переходный `cubicBezier` между:
+
+```text
+ExitPoint предыдущего instance
+        ↓
+EntryPoint следующего instance
+```
+
+Если автоматически построенная кривая неудобна, пользователь может изменить её управляющие точки.
+
+Такая коррекция сохраняется как:
+
+```text
+TransitionOverride
+```
+
+---
+
+## 2. Основной принцип
+
+Track Project не сохраняет все автоматически вычисленные переходы.
+
+В `transitionOverrides[]` находятся только переходы, которые пользователь изменил вручную.
+
+```text
+automatic transition
+        ↓
+не сохраняется
+
+manually adjusted transition
+        ↓
+сохраняется как TransitionOverride
+```
+
+Это предотвращает дублирование полностью производных данных.
+
+---
+
+## 3. Каноническая структура
+
+```json
+{
+  "formatVersion": 2,
+
+  "track": {
+    "id": "training-track",
+    "name": "Training Track"
+  },
+
+  "area": {
+    "width": 60.0,
+    "length": 100.0
+  },
+
+  "instances": [],
+
+  "transitionOverrides": []
+}
+```
+
+Поле:
+
+```text
+transitionOverrides
+```
+
+является обязательным в Track Project formatVersion 2.
+
+При отсутствии ручных изменений оно содержит пустой массив.
+
+---
+
+## 4. TransitionOverride structure
+
+```json
+{
+  "transitionId": "transition--exercise-instance-001--exercise-instance-002",
+
+  "fromInstanceId": "exercise-instance-001",
+  "toInstanceId": "exercise-instance-002",
+
+  "control1Offset": {
+    "x": 3.0,
+    "y": 1.5
+  },
+
+  "control2Offset": {
+    "x": -2.0,
+    "y": -1.0
+  }
+}
+```
+
+Поля:
+
+* `transitionId`;
+* `fromInstanceId`;
+* `toInstanceId`;
+* `control1Offset`;
+* `control2Offset`.
+
+---
+
+## 5. Identity
+
+TransitionOverride относится к упорядоченной паре соседних instances:
+
+```text
+fromInstanceId → toInstanceId
+```
+
+Рекомендуемый идентификатор:
+
+```text
+transition--{fromInstanceId}--{toInstanceId}
+```
+
+Например:
+
+```text
+transition--exercise-instance-001--exercise-instance-002
+```
+
+`transitionId` должен соответствовать паре instances.
+
+Однако источником связи являются отдельные поля:
+
+* `fromInstanceId`;
+* `toInstanceId`.
+
+Track Editor должен валидировать их согласованность.
+
+---
+
+## 6. Почему сохраняются offsets
+
+Track Project сохраняет не абсолютные мировые позиции управляющих точек, а смещения относительно endpoints перехода.
+
+Для перехода:
+
+```text
+P0 = world ExitPoint fromInstance
+P3 = world EntryPoint toInstance
+```
+
+ручные точки восстанавливаются как:
+
+```text
+P1 = P0 + control1Offset
+P2 = P3 + control2Offset
+```
+
+Это позволяет переходу сохранять связь с упражнениями при перемещении instances.
+
+Если пользователь перемещает оба упражнения, transition следует за ними.
+
+---
+
+## 7. Coordinate system
+
+`control1Offset` и `control2Offset` хранятся в мировой двумерной системе Track Project:
+
+```text
+track X / Y
+1 unit = 1 meter
+```
+
+Они не являются:
+
+* экранными координатами;
+* локальными координатами Exercise Definition;
+* координатами относительно rotation instance.
+
+---
+
+## 8. Automatic and overridden transition
+
+Для соседней пары Track Editor действует следующим образом:
+
+```text
+есть валидный TransitionOverride
+        ↓
+использовать сохранённые offsets
+
+override отсутствует
+        ↓
+построить automatic transition
+```
+
+Endpoints всегда вычисляются из актуальных ExerciseInstance:
+
+```text
+P0 = current world ExitPoint fromInstance
+P3 = current world EntryPoint toInstance
+```
+
+Override изменяет только:
+
+* `P1`;
+* `P2`.
+
+Он не сохраняет и не заменяет endpoints.
+
+---
+
+## 9. Создание override
+
+При первом ручном изменении автоматически рассчитанного перехода:
+
+1. Track Editor берёт текущие automatic `P1` и `P2`;
+2. вычисляет:
+
+```text
+control1Offset = P1 - P0
+control2Offset = P2 - P3
+```
+
+3. создаёт TransitionOverride;
+4. применяет пользовательское изменение;
+5. устанавливает dirty state.
+
+---
+
+## 10. Reset to automatic
+
+Команда:
+
+```text
+Reset Transition to Automatic
+```
+
+удаляет соответствующий TransitionOverride.
+
+После удаления Track Editor:
+
+1. повторно вычисляет automatic transition;
+2. обновляет preview;
+3. устанавливает dirty state.
+
+В Track Project больше не остаётся записи для этой пары.
+
+---
+
+## 11. Reorder
+
+Override действителен только пока instances являются соседними в указанном порядке:
+
+```text
+fromInstanceId → toInstanceId
+```
+
+Если Route Order изменился и пара больше не соседняя:
+
+* override не применяется;
+* запись не должна автоматически применяться к другой паре;
+* Track Editor должен пометить её как orphaned.
+
+Рекомендуемое поведение Iteration 3:
+
+* сохранить orphaned override в Track Project;
+* показать warning;
+* предоставить возможность удалить его;
+* не экспортировать его как transition.
+
+Не следует молча удалять пользовательскую ручную работу.
+
+---
+
+## 12. Reversed order
+
+Override:
+
+```text
+A → B
+```
+
+не является override для:
+
+```text
+B → A
+```
+
+Изменение порядка создаёт другую ориентированную пару.
+
+Track Editor не должен:
+
+* переставлять control points автоматически;
+* отражать старый override;
+* считать направления эквивалентными.
+
+---
+
+## 13. Deleted instance
+
+Если один из связанных instances удалён:
+
+* override становится orphaned;
+* он не применяется;
+* Track Editor показывает warning.
+
+Перед окончательным удалением instance рекомендуется предложить удалить связанные overrides.
+
+Допустим и более простой безопасный вариант:
+
+* удалить instance;
+* сохранить orphaned overrides;
+* предоставить отдельную очистку.
+
+Главное требование — не применять override к неверной паре.
+
+---
+
+## 14. Duplicate overrides
+
+Для одной ориентированной пары допускается максимум один TransitionOverride.
+
+Недопустимо:
+
+```text
+A → B override 1
+A → B override 2
+```
+
+При загрузке duplicate entries являются validation error Track Project.
+
+---
+
+## 15. Validation
+
+Track Editor должен проверять:
+
+* уникальный `transitionId`;
+* уникальную пару `fromInstanceId/toInstanceId`;
+* существование связанных instances;
+* соседство пары;
+* правильный порядок пары;
+* конечность offset coordinates;
+* отсутствие NaN и Infinity.
+
+Orphaned override не делает Track Project полностью неоткрываемым.
+
+Он создаёт warning.
+
+Экспорт использует только применимые overrides.
+
+---
+
+## 16. Migration version 1 → version 2
+
+Track Project version 1 не содержит `transitionOverrides`.
+
+При загрузке version 1 Track Editor создаёт in-memory:
+
+```json
+{
+  "transitionOverrides": []
+}
+```
+
+Файл не перезаписывается автоматически.
+
+После явного Save он сохраняется как:
+
+```text
+formatVersion = 2
+```
+
+---
+
+## 17. Что не сохраняется
+
+Даже в version 2 Track Project не сохраняет:
+
+* автоматически вычисленные transitions;
+* transition endpoints;
+* Bezier rendering samples;
+* selected transition;
+* selected control handle;
+* transition preview visibility;
+* validation warnings;
+* transformed Exercise geometry.
+
+Сохраняются только ручные offsets.
+
 
 ## 1. Track Project не содержит готовую мировую geometry
 
