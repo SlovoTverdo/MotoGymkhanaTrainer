@@ -494,6 +494,68 @@ Warnings не блокируют export.
 
 ---
 
+# Runtime surface projection
+
+Exported Track formatVersion 4 хранит двумерную world geometry:
+
+```text
+Track X/Y
+```
+
+Она не содержит обязательную высоту поверхности.
+
+Viewer преобразует:
+
+```text
+Track X/Y
+    ↓
+Godot X/Z
+    ↓
+downward surface query
+    ↓
+Godot X/Y/Z
+```
+
+Runtime projection применяется к:
+
+* trajectory samples;
+* direction arrows;
+* Venue markings;
+* Exercise markings;
+* Venue cones;
+* Exercise cones.
+
+## Projection source
+
+Проекция использует physics collision проходимых поверхностей:
+
+* основную Venue surface;
+* ramps;
+* platforms;
+* другие walkable Venue surfaces.
+
+Стены, заборы и Track visual geometry не должны использоваться как projection surface.
+
+## Persisted independence
+
+Projected Y coordinates:
+
+* не записываются обратно в Exported Track JSON;
+* не изменяют Track Project;
+* не изменяют Venue Definition;
+* не изменяют Exercise Definition.
+
+## Runtime fallback
+
+Если Viewer не обнаружил surface hit:
+
+* он использует безопасную fallback height;
+* выводит diagnostic warning;
+* продолжает загрузку остальной трассы.
+
+Отсутствие projection hit не должно приводить к падению Viewer.
+
+
 # 26. Что не входит в formatVersion 4
 
 * встроенные asset bytes;
