@@ -11,8 +11,17 @@ public sealed class TrackSnapshotDto
     [JsonPropertyName("track")]
     public TrackMetadataDto Track { get; init; } = new();
 
+    [JsonPropertyName("venue")]
+    public VenueMetadataSnapshotDto Venue { get; init; } = new();
+
     [JsonPropertyName("area")]
     public AreaDto Area { get; init; } = new();
+
+    [JsonPropertyName("panorama")]
+    public PanoramaSnapshotDto Panorama { get; init; } = new();
+
+    [JsonPropertyName("venueObjects")]
+    public VenueObjectSnapshotDto[] VenueObjects { get; init; } = [];
 
     [JsonPropertyName("elements")]
     public ElementDto[] Elements { get; init; } = [];
@@ -40,6 +49,79 @@ public sealed class TrackMetadataDto
     public string Name { get; init; } = string.Empty;
 }
 
+/// <summary>Identity copied from the source Venue Definition.</summary>
+public sealed class VenueMetadataSnapshotDto
+{
+    [JsonPropertyName("id")]
+    public string Id { get; init; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; init; } = string.Empty;
+}
+
+/// <summary>Runtime panorama configuration copied from Venue.</summary>
+public sealed class PanoramaSnapshotDto
+{
+    [JsonPropertyName("enabled")]
+    public bool Enabled { get; init; }
+
+    [JsonPropertyName("texturePath")]
+    public string TexturePath { get; init; } = string.Empty;
+
+    [JsonPropertyName("rotationDeg")]
+    public float RotationDeg { get; init; }
+
+    [JsonPropertyName("energyMultiplier")]
+    public float EnergyMultiplier { get; init; } = 1.0f;
+}
+
+/// <summary>One immutable Venue object placement consumed by Viewer.</summary>
+public sealed class VenueObjectSnapshotDto
+{
+    [JsonPropertyName("id")]
+    public string Id { get; init; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; init; } = string.Empty;
+
+    [JsonPropertyName("assetPath")]
+    public string AssetPath { get; init; } = string.Empty;
+
+    [JsonPropertyName("position")]
+    public Point2Dto Position { get; init; } = new();
+
+    [JsonPropertyName("elevation")]
+    public float Elevation { get; init; }
+
+    [JsonPropertyName("rotationDeg")]
+    public float RotationDeg { get; init; }
+
+    [JsonPropertyName("scale")]
+    public Point3Dto Scale { get; init; } = new();
+
+    [JsonPropertyName("footprint")]
+    public AreaDto Footprint { get; init; } = new();
+
+    [JsonPropertyName("collisionEnabled")]
+    public bool CollisionEnabled { get; init; } = true;
+
+    [JsonPropertyName("visibleInViewer")]
+    public bool VisibleInViewer { get; init; } = true;
+}
+
+/// <summary>Three independent scale components for a Viewer scene instance.</summary>
+public sealed class Point3Dto
+{
+    [JsonPropertyName("x")]
+    public float X { get; init; } = 1.0f;
+
+    [JsonPropertyName("y")]
+    public float Y { get; init; } = 1.0f;
+
+    [JsonPropertyName("z")]
+    public float Z { get; init; } = 1.0f;
+}
+
 /// <summary>Rectangular training area dimensions in metres.</summary>
 public sealed class AreaDto
 {
@@ -62,6 +144,9 @@ public sealed class ElementDto
 
     [JsonPropertyName("definitionId")]
     public string DefinitionId { get; init; } = string.Empty;
+
+    [JsonPropertyName("exercisePath")]
+    public string ExercisePath { get; init; } = string.Empty;
 
     [JsonPropertyName("position")]
     public Point2Dto Position { get; init; } = new();

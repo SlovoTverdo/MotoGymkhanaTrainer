@@ -34,11 +34,16 @@ public partial class TrackViewer : Node3D
     private CheckBox? _trajectoryToggle;
     private FileDialog? _trackFileDialog;
     private SandboxedJsonLibrary? _trackExportLibrary;
+    private WorldEnvironment? _worldEnvironment;
+    private Godot.Environment? _fallbackEnvironment;
     private bool _trajectoryVisible = true;
 
     /// <inheritdoc />
     public override void _Ready()
     {
+        _worldEnvironment = GetNode<WorldEnvironment>("../WorldEnvironment");
+        _fallbackEnvironment = _worldEnvironment.Environment ?? throw new InvalidOperationException(
+            "Viewer fallback WorldEnvironment has no Environment resource.");
         _trackExportLibrary = new SandboxedJsonLibrary(
             ProjectSettings.GlobalizePath(TrackExportRoot),
             "Viewer track export library",
@@ -250,8 +255,12 @@ public partial class TrackViewer : Node3D
             PackedScene coneModel = _coneModel ?? throw new InvalidOperationException(
                 "The traffic cone model is not available.");
             Node3D candidate = CreateRuntimeTrack(track, coneModel);
+            Godot.Environment nextEnvironment = CreatePanoramaEnvironment(track.Panorama) ??
+                _fallbackEnvironment ?? throw new InvalidOperationException(
+                    "Viewer fallback environment is unavailable.");
 
             ReplaceRuntimeTrack(candidate);
+            _worldEnvironment!.Environment = nextEnvironment;
             GetNode<FirstPersonCamera>("../CameraRig").PlaceAtTrajectoryStart(
                 trajectoryStart,
                 trajectoryDirection);
@@ -278,23 +287,34 @@ public partial class TrackViewer : Node3D
     private static Node3D CreateRuntimeTrack(TrackSnapshotDto track, PackedScene coneModel)
     {
         var root = new Node3D { Name = "RuntimeTrackCandidate" };
-        root.AddChild(CreateGround(track.Area));
-        root.AddChild(CreateGridOverlay(track.Area));
-        root.AddChild(CreateMarkings(track.Markings));
-        root.AddChild(CreateTrajectory(track.Trajectory));
 
-        foreach (ConeDto cone in track.Cones)
-        {
-            root.AddChild(CreateCone(cone, coneModel));
-        }
+        var venueRoot = new Node3D { Name = "VenueRoot" };
+        var surfaceRoot = new Node3D { Name = "Surface" };
+        surfaceRoot.AddChild(CreateGround(track.Area));
+        venueRoot.AddChild(surfaceRoot);
+        venueRoot.AddChild(CreateGridOverlay(track.Area));
+        venueRoot.AddChild(CreateVenueObjects(track.VenueObjects));
+        venueRoot.AddChild(CreateConeCollection(
+            "Cones", track.Cones.Where(IsVenueCone), coneModel));
+        venueRoot.AddChild(CreateMarkings(
+            track.Markings.Where(IsVenueMarking), "Markings"));
+        root.AddChild(venueRoot);
+
+        var trackRoot = new Node3D { Name = "TrackRoot" };
+        trackRoot.AddChild(CreateConeCollection(
+            "ExerciseCones", track.Cones.Where(cone => !IsVenueCone(cone)), coneModel));
+        trackRoot.AddChild(CreateMarkings(
+            track.Markings.Where(marking => !IsVenueMarking(marking)), "ExerciseMarkings"));
+        trackRoot.AddChild(CreateTrajectory(track.Trajectory));
+        root.AddChild(trackRoot);
 
         return root;
     }
 
     private void ReplaceRuntimeTrack(Node3D candidate)
     {
-        Node3D newGridOverlay = candidate.GetNode<Node3D>("GridOverlay");
-        Node3D newTrajectoryOverlay = candidate.GetNode<Node3D>("Trajectory");
+        Node3D newGridOverlay = candidate.GetNode<Node3D>("VenueRoot/GridOverlay");
+        Node3D newTrajectoryOverlay = candidate.GetNode<Node3D>("TrackRoot/Trajectory");
 
         // Attach the complete candidate before removing the old root. No frame is
         // rendered between these synchronous operations, so replacement is atomic.
@@ -353,6 +373,103 @@ public partial class TrackViewer : Node3D
         return coneModel ?? throw new InvalidDataException(
             $"Cone model '{path}' could not be loaded as a Godot scene.");
     }
+
+    private static Godot.Environment? CreatePanoramaEnvironment(PanoramaSnapshotDto panorama)
+    {
+        if (!panorama.Enabled) return null;
+        Texture2D? texture = ResourceLoader.Load<Texture2D>(panorama.TexturePath);
+        if (texture is null)
+        {
+            GD.PushError(
+                $"Panorama texture '{panorama.TexturePath}' could not be loaded as Texture2D; fallback environment remains active.");
+            return null;
+        }
+
+        var material = new PanoramaSkyMaterial
+        {
+            Panorama = texture,
+            EnergyMultiplier = panorama.EnergyMultiplier,
+        };
+        var sky = new Sky { SkyMaterial = material };
+        var environment = new Godot.Environment
+        {
+            BackgroundMode = Godot.Environment.BGMode.Sky,
+            Sky = sky,
+            SkyRotation = new Vector3(0.0f, Mathf.DegToRad(panorama.RotationDeg), 0.0f),
+        };
+        return environment;
+    }
+
+    private static Node3D CreateVenueObjects(IEnumerable<VenueObjectSnapshotDto> objects)
+    {
+        var root = new Node3D { Name = "Objects" };
+        foreach (VenueObjectSnapshotDto item in objects)
+        {
+            if (!item.VisibleInViewer) continue;
+            try
+            {
+                PackedScene? scene = ResourceLoader.Load<PackedScene>(item.AssetPath);
+                if (scene is null)
+                {
+                    GD.PushError($"Venue object '{item.Id}' asset '{item.AssetPath}' is missing or is not a PackedScene; object skipped.");
+                    continue;
+                }
+
+                Node instance = scene.Instantiate();
+                if (instance is not Node3D spatial)
+                {
+                    GD.PushError($"Venue object '{item.Id}' asset '{item.AssetPath}' root is not Node3D; object skipped.");
+                    instance.Free();
+                    continue;
+                }
+
+                spatial.Name = item.Id;
+                spatial.Position = DomainCoordinateMapper.ToGodot(item.Position, item.Elevation);
+                spatial.Rotation = new Vector3(0.0f, Mathf.DegToRad(item.RotationDeg), 0.0f);
+                spatial.Scale = new Vector3(item.Scale.X, item.Scale.Y, item.Scale.Z);
+                if (!item.CollisionEnabled) DisableCollisionRecursively(spatial);
+                root.AddChild(spatial);
+            }
+            catch (Exception exception)
+            {
+                GD.PushError(
+                    $"Venue object '{item.Id}' asset '{item.AssetPath}' failed at runtime and was skipped: {exception.Message}");
+            }
+        }
+
+        return root;
+    }
+
+    /// <summary>Disables authored collision without creating or deleting collision geometry.</summary>
+    internal static void DisableCollisionRecursively(Node node)
+    {
+        if (node is CollisionShape3D shape) shape.Disabled = true;
+        if (node is CollisionPolygon3D polygon) polygon.Disabled = true;
+        if (node is CollisionObject3D collisionObject)
+        {
+            collisionObject.CollisionLayer = 0;
+            collisionObject.CollisionMask = 0;
+            collisionObject.InputRayPickable = false;
+        }
+
+        foreach (Node child in node.GetChildren()) DisableCollisionRecursively(child);
+    }
+
+    private static Node3D CreateConeCollection(
+        string name,
+        IEnumerable<ConeDto> cones,
+        PackedScene coneModel)
+    {
+        var root = new Node3D { Name = name };
+        foreach (ConeDto cone in cones) root.AddChild(CreateCone(cone, coneModel));
+        return root;
+    }
+
+    private static bool IsVenueCone(ConeDto cone) =>
+        cone.Id.StartsWith("venue--cone--", StringComparison.Ordinal);
+
+    private static bool IsVenueMarking(MarkingDto marking) =>
+        marking.Id.StartsWith("venue--marking--", StringComparison.Ordinal);
 
     private static MeshInstance3D CreateGround(AreaDto area)
     {
@@ -497,9 +614,9 @@ public partial class TrackViewer : Node3D
         return BaseGridLineThickness;
     }
 
-    private static Node3D CreateMarkings(IEnumerable<MarkingDto> markings)
+    private static Node3D CreateMarkings(IEnumerable<MarkingDto> markings, string rootName)
     {
-        var root = new Node3D { Name = "Markings" };
+        var root = new Node3D { Name = rootName };
 
         foreach (MarkingDto marking in markings)
         {

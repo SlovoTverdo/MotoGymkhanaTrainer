@@ -21,14 +21,20 @@ public sealed class VenueDocument
     public ConeDto? FindCone(string? id) => Definition.Cones.FirstOrDefault(item => item.Id == id);
     public MarkingDto? FindMarking(string? id) => Definition.Markings.FirstOrDefault(item => item.Id == id);
 
-    /// <summary>Adds an unresolved-safe scene reference at the area centre/origin.</summary>
-    public VenueObjectInstanceDto AddObject(string assetPath)
+    /// <summary>Adds a measured scene reference at the area centre/origin.</summary>
+    public VenueObjectInstanceDto AddObject(string assetPath, FootprintDto footprint)
     {
+        ArgumentNullException.ThrowIfNull(footprint);
         var item = new VenueObjectInstanceDto
         {
             ObjectId = NextId("venue-object", Definition.Objects.Select(value => value.ObjectId)),
             Name = Path.GetFileNameWithoutExtension(assetPath),
             AssetPath = assetPath,
+            Footprint = new FootprintDto
+            {
+                Width = footprint.Width,
+                Length = footprint.Length,
+            },
         };
         Definition.Objects = [.. Definition.Objects, item];
         return item;

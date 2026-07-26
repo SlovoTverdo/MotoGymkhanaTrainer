@@ -1,13 +1,24 @@
 {
-  "formatVersion": 2,
+  "formatVersion": 4,
   "track": {
     "id": "alternate-test",
     "name": "Alternate Test Track"
+  },
+  "venue": {
+    "id": "alternate-test-venue",
+    "name": "Alternate Test Venue"
   },
   "area": {
     "width": 20.0,
     "length": 30.0
   },
+  "panorama": {
+    "enabled": false,
+    "texturePath": "",
+    "rotationDeg": 0.0,
+    "energyMultiplier": 1.0
+  },
+  "venueObjects": [],
   "elements": [],
   "cones": [
     {
@@ -32,7 +43,9 @@
         { "x": 18.0, "y": 3.0 }
       ],
       "color": "white",
-      "widthMeters": 0.1
+      "widthMeters": 0.1,
+      "style": "solid",
+      "visibleInViewer": true
     }
   ],
   "trajectory": {

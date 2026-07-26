@@ -1,0 +1,94 @@
+{
+  "formatVersion": 4,
+  "track": { "id": "integration-smoke", "name": "Track Venue Integration Smoke" },
+  "venue": { "id": "created-assets-smoke", "name": "Created Assets Smoke Venue" },
+  "area": { "width": 40.0, "length": 100.0 },
+  "panorama": {
+    "enabled": false,
+    "texturePath": "",
+    "rotationDeg": 0.0,
+    "energyMultiplier": 1.0
+  },
+  "venueObjects": [
+    {
+      "id": "venue--object--shed",
+      "name": "Shed",
+      "assetPath": "res://venues/shared_assets/scenes/house_reference_model.tscn",
+      "position": { "x": -10.0, "y": 20.0 },
+      "elevation": 0.0,
+      "rotationDeg": 15.0,
+      "scale": { "x": 0.7, "y": 0.7, "z": 0.7 },
+      "footprint": { "width": 9.0, "length": 6.7 },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--ramp",
+      "name": "Ramp",
+      "assetPath": "res://venues/shared_assets/scenes/overpass_model.tscn",
+      "position": { "x": 8.0, "y": 10.0 },
+      "elevation": 0.25,
+      "rotationDeg": 90.0,
+      "scale": { "x": 0.8, "y": 1.0, "z": 0.8 },
+      "footprint": { "width": 11.0, "length": 2.4 },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--fence",
+      "name": "Fence",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": { "x": 0.0, "y": 35.0 },
+      "elevation": 0.0,
+      "rotationDeg": 0.0,
+      "scale": { "x": 1.0, "y": 1.0, "z": 1.0 },
+      "footprint": { "width": 2.0, "length": 0.2 },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    }
+  ],
+  "elements": [
+    {
+      "instanceId": "exercise-instance-001",
+      "definitionId": "smoke-exercise",
+      "exercisePath": "Common/exercise-start.json",
+      "position": { "x": 0.0, "y": -20.0 },
+      "rotationDeg": 0.0,
+      "scale": { "x": 1.0, "y": 1.0 }
+    }
+  ],
+  "cones": [
+    { "id": "venue--cone--entry", "position": { "x": -2.0, "y": -25.0 }, "color": "blue", "type": "standard" },
+    { "id": "exercise-instance-001--cone-001", "position": { "x": 2.0, "y": -15.0 }, "color": "red", "type": "standard" }
+  ],
+  "markings": [
+    {
+      "id": "venue--marking--edge",
+      "type": "line",
+      "points": [{ "x": -15.0, "y": -30.0 }, { "x": 15.0, "y": -30.0 }],
+      "color": "#FFFFFF",
+      "widthMeters": 0.12,
+      "style": "dashed",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-001--marking-001",
+      "type": "line",
+      "points": [{ "x": -3.0, "y": -10.0 }, { "x": 3.0, "y": -10.0 }],
+      "color": "#FFD10D",
+      "widthMeters": 0.08,
+      "style": "solid",
+      "visibleInViewer": true
+    }
+  ],
+  "trajectory": {
+    "segments": [
+      {
+        "id": "exercise-instance-001--trajectory-segment-001",
+        "type": "polyline",
+        "points": [{ "x": 0.0, "y": -40.0 }, { "x": 0.0, "y": 0.0 }, { "x": 5.0, "y": 20.0 }]
+      }
+    ]
+  },
+  "checkpoints": []
+}

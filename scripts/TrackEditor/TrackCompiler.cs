@@ -1,5 +1,6 @@
 using MotoGymkhanaTrainer.ExerciseEditor;
 using MotoGymkhanaTrainer.Tracks;
+using MotoGymkhanaTrainer.VenueEditor;
 
 namespace MotoGymkhanaTrainer.TrackEditor;
 
@@ -44,7 +45,7 @@ public sealed class CompiledTransition
 
 /// <summary>
 /// Derived compilation output. Snapshot and transition preview are never written
-/// into Track Project v2; they can always be rebuilt from project + definitions.
+/// into Track Project v3; they can always be rebuilt from project + dependencies.
 /// </summary>
 public sealed class TrackCompilationResult
 {
@@ -55,7 +56,7 @@ public sealed class TrackCompilationResult
     public bool CanExport => Snapshot is not null && Errors.Count == 0;
 }
 
-/// <summary>Compiles editable Track Project v2 into self-contained Track v3.</summary>
+/// <summary>Compiles Track Project v3 plus resolved Venue and Exercises into Track v4.</summary>
 public static class TrackCompiler
 {
     public const float MinTransitionHandleLength = 0.5f;
@@ -96,17 +97,22 @@ public static class TrackCompiler
         var elements = new List<ElementDto>();
         var globalSegments = new List<TrajectorySegmentDto>();
         var transitions = new List<CompiledTransition>();
+        VenueDefinitionDto venue = document.Venue.Definition;
+        VenueAreaDto area = venue.Area;
+        var venueObjects = new List<VenueObjectSnapshotDto>();
 
         if (string.IsNullOrWhiteSpace(document.Project.Track.Id) ||
             string.IsNullOrWhiteSpace(document.Project.Track.Name))
             errors.Add(Error("Track id and name must be non-empty."));
-        if (!float.IsFinite(document.Project.Area.Width) || document.Project.Area.Width <= 0 ||
-            !float.IsFinite(document.Project.Area.Length) || document.Project.Area.Length <= 0)
+        if (!float.IsFinite(area.Width) || area.Width <= 0 ||
+            !float.IsFinite(area.Length) || area.Length <= 0)
             errors.Add(Error("Track area width and length must be finite positive numbers."));
         if (document.Project.Instances.Length == 0)
         {
             errors.Add(Error("Export requires at least one ExerciseInstance."));
         }
+
+        CompileVenue(document.Venue, venueObjects, cones, markings, errors, warnings);
 
         IReadOnlyDictionary<(string From, string To), TransitionOverrideDto> applicableOverrides =
             ValidateTransitionOverrides(document, errors, warnings);
@@ -124,6 +130,7 @@ public static class TrackCompiler
             {
                 InstanceId = item.Instance.InstanceId,
                 DefinitionId = item.Definition.Exercise.Id,
+                ExercisePath = item.Instance.ExercisePath,
                 Position = Copy(item.Instance.Position),
                 RotationDeg = item.Instance.RotationDeg,
                 Scale = Copy(item.Instance.Scale),
@@ -164,27 +171,40 @@ public static class TrackCompiler
                 transitions.Add(transition);
                 TrajectorySegmentDto segment = transition.ToTrajectorySegment();
                 globalSegments.Add(segment);
-                WarnForTransitionArea(segment, document.Project.Area, warnings);
+                WarnForTransitionArea(segment, area, warnings);
             }
         }
 
-        ValidateBounds(compiled, document.Project.Area, warnings);
-        ValidateUniqueIds(cones, markings, globalSegments, errors);
+        ValidateBounds(compiled, venue.Objects, area, warnings);
+        ValidateUniqueIds(venueObjects, elements, cones, markings, globalSegments, errors);
         ValidateGlobalContinuity(globalSegments, errors);
 
         TrackSnapshotDto candidate = new()
         {
-            FormatVersion = 3,
+            FormatVersion = 4,
             Track = new TrackMetadataDto
             {
                 Id = document.Project.Track.Id,
                 Name = document.Project.Track.Name,
             },
+            Venue = new VenueMetadataSnapshotDto
+            {
+                Id = venue.Venue.Id,
+                Name = venue.Venue.Name,
+            },
             Area = new AreaDto
             {
-                Width = document.Project.Area.Width,
-                Length = document.Project.Area.Length,
+                Width = area.Width,
+                Length = area.Length,
             },
+            Panorama = new PanoramaSnapshotDto
+            {
+                Enabled = venue.Panorama.Enabled,
+                TexturePath = venue.Panorama.TexturePath,
+                RotationDeg = venue.Panorama.RotationDeg,
+                EnergyMultiplier = venue.Panorama.EnergyMultiplier,
+            },
+            VenueObjects = [.. venueObjects],
             Elements = [.. elements],
             Cones = [.. cones],
             Markings = [.. markings],
@@ -211,6 +231,104 @@ public static class TrackCompiler
             Errors = errors,
             Warnings = warnings,
         };
+    }
+
+    /// <summary>Copies Venue world data without applying an Exercise transform.</summary>
+    private static void CompileVenue(
+        ResolvedVenue resolved,
+        ICollection<VenueObjectSnapshotDto> objects,
+        ICollection<ConeDto> cones,
+        ICollection<MarkingDto> markings,
+        ICollection<TrackCompilationDiagnostic> errors,
+        ICollection<TrackCompilationDiagnostic> warnings)
+    {
+        VenueDefinitionDto venue = resolved.Definition;
+        if (venue.Panorama.Enabled &&
+            (string.IsNullOrWhiteSpace(venue.Panorama.TexturePath) || !resolved.PanoramaTextureResolved))
+        {
+            errors.Add(Error(
+                $"Venue '{venue.Venue.Id}' panorama is enabled but texturePath " +
+                $"'{venue.Panorama.TexturePath}' is not loadable as Texture2D."));
+        }
+
+        foreach (VenueObjectInstanceDto item in venue.Objects)
+        {
+            bool assetResolved = resolved.IsObjectResolved(item.ObjectId);
+            string context = $"Venue object '{item.ObjectId}' assetPath '{item.AssetPath}'";
+            if (!assetResolved && item.VisibleInViewer)
+            {
+                errors.Add(Error($"{context} is visibleInViewer but is not loadable as PackedScene."));
+            }
+            else if (!assetResolved)
+            {
+                warnings.Add(Warning($"{context} is hidden and unresolved; it remains in the exported snapshot."));
+            }
+
+            objects.Add(new VenueObjectSnapshotDto
+            {
+                Id = $"venue--object--{item.ObjectId}",
+                Name = item.Name,
+                AssetPath = item.AssetPath,
+                Position = Copy(item.Position),
+                Elevation = item.Elevation,
+                RotationDeg = item.RotationDeg,
+                Scale = new Point3Dto { X = item.Scale.X, Y = item.Scale.Y, Z = item.Scale.Z },
+                Footprint = new AreaDto { Width = item.Footprint.Width, Length = item.Footprint.Length },
+                CollisionEnabled = item.CollisionEnabled,
+                VisibleInViewer = item.VisibleInViewer,
+            });
+        }
+
+        var footprints = venue.Objects.Select(item =>
+            (Item: item, Polygon: VenueGeometry.TransformFootprint(item))).ToArray();
+        for (int index = 0; index < footprints.Length; index++)
+        {
+            if (footprints[index].Polygon.Any(point => VenueGeometry.IsOutsideArea(point, venue.Area)))
+            {
+                warnings.Add(Warning(
+                    $"Venue object '{footprints[index].Item.ObjectId}' assetPath " +
+                    $"'{footprints[index].Item.AssetPath}' footprint extends outside Venue area."));
+            }
+
+            for (int other = index + 1; other < footprints.Length; other++)
+            {
+                if (VenueGeometry.Overlaps(footprints[index].Polygon, footprints[other].Polygon))
+                {
+                    warnings.Add(Warning(
+                        $"Venue object footprints '{footprints[index].Item.ObjectId}' and " +
+                        $"'{footprints[other].Item.ObjectId}' overlap."));
+                }
+            }
+        }
+
+        foreach (ConeDto cone in venue.Cones)
+        {
+            if (VenueGeometry.IsOutsideArea(cone.Position, venue.Area))
+                warnings.Add(Warning($"Venue cone '{cone.Id}' is outside Venue area."));
+            cones.Add(new ConeDto
+            {
+                Id = $"venue--cone--{cone.Id}",
+                Position = Copy(cone.Position),
+                Color = cone.Color,
+                Type = cone.Type,
+            });
+        }
+
+        foreach (MarkingDto marking in venue.Markings)
+        {
+            if (marking.Points.Any(point => VenueGeometry.IsOutsideArea(point, venue.Area)))
+                warnings.Add(Warning($"Venue marking '{marking.Id}' extends outside Venue area."));
+            markings.Add(new MarkingDto
+            {
+                Id = $"venue--marking--{marking.Id}",
+                Type = marking.Type,
+                Points = marking.Points.Select(Copy).ToArray(),
+                Color = marking.Color,
+                WidthMeters = marking.WidthMeters,
+                Style = marking.Style,
+                VisibleInViewer = marking.VisibleInViewer,
+            });
+        }
     }
 
     private static void CompileInstance(
@@ -297,7 +415,7 @@ public static class TrackCompiler
             return;
         }
 
-        if (GeometryOutsideArea(cones, markings, segments, document.Project.Area))
+        if (GeometryOutsideArea(cones, markings, segments, document.Venue.Definition.Area))
         {
             warnings.Add(Warning($"Instance '{instance.InstanceId}' has geometry outside the track area."));
         }
@@ -638,13 +756,25 @@ public static class TrackCompiler
 
     private static void ValidateBounds(
         IReadOnlyList<CompiledInstance> instances,
-        TrackProjectAreaDto area,
+        IReadOnlyList<VenueObjectInstanceDto> venueObjects,
+        VenueAreaDto area,
         ICollection<TrackCompilationDiagnostic> warnings)
     {
+        var footprints = venueObjects.Select(item =>
+            (Item: item, Polygon: VenueGeometry.TransformFootprint(item))).ToArray();
         for (int index = 0; index < instances.Count; index++)
         {
             if (ExerciseInstanceGeometry.IsOutsideArea(instances[index].Bounds, area.Width, area.Length))
-                warnings.Add(Warning($"Instance '{instances[index].Instance.InstanceId}' bounds extend outside the track area."));
+                warnings.Add(Warning($"Instance '{instances[index].Instance.InstanceId}' bounds extend outside Venue area."));
+            foreach ((VenueObjectInstanceDto item, Point2Dto[] polygon) in footprints)
+            {
+                if (VenueGeometry.Overlaps(instances[index].Bounds, polygon))
+                {
+                    warnings.Add(Warning(
+                        $"Instance '{instances[index].Instance.InstanceId}' bounds intersect Venue object " +
+                        $"'{item.ObjectId}' assetPath '{item.AssetPath}'."));
+                }
+            }
             for (int other = index + 1; other < instances.Count; other++)
             {
                 if (BoundsOverlap(instances[index].Bounds, instances[other].Bounds))
@@ -655,7 +785,7 @@ public static class TrackCompiler
 
     private static void WarnForTransitionArea(
         TrajectorySegmentDto transition,
-        TrackProjectAreaDto area,
+        VenueAreaDto area,
         ICollection<TrackCompilationDiagnostic> warnings)
     {
         if (TrajectoryGeometry.SampleCubicBezier(transition, TransitionSamples)
@@ -666,22 +796,27 @@ public static class TrackCompiler
     }
 
     private static void ValidateUniqueIds(
+        IReadOnlyList<VenueObjectSnapshotDto> objects,
+        IReadOnlyList<ElementDto> elements,
         IReadOnlyList<ConeDto> cones,
         IReadOnlyList<MarkingDto> markings,
         IReadOnlyList<TrajectorySegmentDto> segments,
         ICollection<TrackCompilationDiagnostic> errors)
     {
-        AddDuplicateErrors(cones.Select(item => item.Id), "cone", errors);
-        AddDuplicateErrors(markings.Select(item => item.Id), "marking", errors);
-        AddDuplicateErrors(segments.Select(item => item.Id), "trajectory segment", errors);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        AddDuplicateErrors(objects.Select(item => item.Id), "Venue object", seen, errors);
+        AddDuplicateErrors(elements.Select(item => item.InstanceId), "element", seen, errors);
+        AddDuplicateErrors(cones.Select(item => item.Id), "cone", seen, errors);
+        AddDuplicateErrors(markings.Select(item => item.Id), "marking", seen, errors);
+        AddDuplicateErrors(segments.Select(item => item.Id), "trajectory segment", seen, errors);
     }
 
     private static void AddDuplicateErrors(
         IEnumerable<string> ids,
         string kind,
+        ISet<string> seen,
         ICollection<TrackCompilationDiagnostic> errors)
     {
-        var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (string id in ids)
             if (string.IsNullOrWhiteSpace(id) || !seen.Add(id))
                 errors.Add(Error($"Duplicate or empty exported {kind} id '{id}'."));
@@ -703,7 +838,7 @@ public static class TrackCompiler
         IEnumerable<ConeDto> cones,
         IEnumerable<MarkingDto> markings,
         IEnumerable<TrajectorySegmentDto> segments,
-        TrackProjectAreaDto area) =>
+        VenueAreaDto area) =>
         cones.Any(cone => IsOutsideArea(cone.Position, area)) ||
         markings.SelectMany(marking => marking.Points).Any(point => IsOutsideArea(point, area)) ||
         segments.SelectMany(EnumerateRenderedGeometry).Any(point => IsOutsideArea(point, area));
@@ -771,7 +906,7 @@ public static class TrackCompiler
         segment.Type == "polyline" ? segment.Points![^1] : segment.End!;
     private static string ExportId(string instanceId, string localId) => $"{instanceId}--{localId}";
     private static bool IsFinite(Point2Dto? point) => point is not null && float.IsFinite(point.X) && float.IsFinite(point.Y);
-    private static bool IsOutsideArea(Point2Dto point, TrackProjectAreaDto area) =>
+    private static bool IsOutsideArea(Point2Dto point, VenueAreaDto area) =>
         MathF.Abs(point.X) > area.Width * 0.5f || MathF.Abs(point.Y) > area.Length * 0.5f;
     private static float Distance(Point2Dto a, Point2Dto b) => MathF.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y));
     private static float Dot(Point2Dto a, Point2Dto b) => a.X * b.X + a.Y * b.Y;

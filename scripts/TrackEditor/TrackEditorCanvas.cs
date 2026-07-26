@@ -1,6 +1,7 @@
 using Godot;
 using MotoGymkhanaTrainer.ExerciseEditor;
 using MotoGymkhanaTrainer.Tracks;
+using MotoGymkhanaTrainer.VenueEditor;
 
 namespace MotoGymkhanaTrainer.TrackEditor;
 
@@ -33,7 +34,7 @@ public partial class TrackEditorCanvas : Control
     private const float TransitionHandleTolerancePixels = 12.0f;
     private const int BezierSubdivisions = 32;
 
-    private TrackProjectDocument _document = TrackProjectDocument.CreateNew();
+    private TrackProjectDocument _document = null!;
     private string? _selectedInstanceId;
     private string? _selectedTransitionId;
     private Vector2 _panPixels;
@@ -128,10 +129,11 @@ public partial class TrackEditorCanvas : Control
     /// <summary>Centres the whole Track area inside the current central canvas.</summary>
     public void FitAreaInView()
     {
+        if (_document is null) return;
         _panPixels = Vector2.Zero;
         _pixelsPerMeter = EditorCanvasMath.FitPixelsPerMeter(
-            _document.Project.Area.Width,
-            _document.Project.Area.Length,
+            _document.Venue.Definition.Area.Width,
+            _document.Venue.Definition.Area.Length,
             Size,
             paddingPixels: 28.0f,
             MinimumPixelsPerMeter,
@@ -211,6 +213,7 @@ public partial class TrackEditorCanvas : Control
 
     public override void _GuiInput(InputEvent @event)
     {
+        if (_document is null) return;
         switch (@event)
         {
             case InputEventMouseButton button:
@@ -224,16 +227,27 @@ public partial class TrackEditorCanvas : Control
 
     public override void _Draw()
     {
+        if (_document is null) return;
         DrawGrid();
         DrawArea();
-        for (int index = 0; index < _document.Project.Instances.Length; index++)
-        {
-            DrawInstance(_document.Project.Instances[index], index);
-        }
+        DrawVenuePreview();
+
+        // Exercise geometry is rendered in document-defined passes so route
+        // order cannot accidentally place one instance's cones beneath another
+        // instance's markings or trajectory.
+        foreach (TrackProjectInstanceDto instance in _document.Project.Instances)
+            DrawInstanceMarkings(instance);
+        foreach (TrackProjectInstanceDto instance in _document.Project.Instances)
+            DrawInstanceCones(instance);
+        foreach (TrackProjectInstanceDto instance in _document.Project.Instances)
+            DrawInstanceTrajectory(instance);
 
         if (_showTransitions)
-        {
             DrawTransitionPreview();
+
+        for (int index = 0; index < _document.Project.Instances.Length; index++)
+        {
+            DrawInstanceOverlay(_document.Project.Instances[index], index);
         }
     }
 
@@ -676,8 +690,8 @@ public partial class TrackEditorCanvas : Control
 
     private void DrawGrid()
     {
-        float halfWidth = _document.Project.Area.Width * 0.5f;
-        float halfLength = _document.Project.Area.Length * 0.5f;
+        float halfWidth = _document.Venue.Definition.Area.Width * 0.5f;
+        float halfLength = _document.Venue.Definition.Area.Length * 0.5f;
         int minimumX = Mathf.CeilToInt(-halfWidth);
         int maximumX = Mathf.FloorToInt(halfWidth);
         int minimumY = Mathf.CeilToInt(-halfLength);
@@ -709,8 +723,8 @@ public partial class TrackEditorCanvas : Control
 
     private void DrawArea()
     {
-        float halfWidth = _document.Project.Area.Width * 0.5f;
-        float halfLength = _document.Project.Area.Length * 0.5f;
+        float halfWidth = _document.Venue.Definition.Area.Width * 0.5f;
+        float halfLength = _document.Venue.Definition.Area.Length * 0.5f;
         Vector2[] corners =
         [
             ToScreen(new Point2Dto { X = -halfWidth, Y = -halfLength }),
@@ -721,25 +735,52 @@ public partial class TrackEditorCanvas : Control
         DrawClosedPolyline(corners, new Color(0.55f, 0.72f, 0.90f), 3.0f);
     }
 
-    private void DrawInstance(TrackProjectInstanceDto instance, int routeIndex)
+    /// <summary>
+    /// Draws immutable Venue world geometry as a muted background. None of these
+    /// shapes participate in Track hit testing, selection or manipulation.
+    /// </summary>
+    private void DrawVenuePreview()
     {
-        ExerciseDefinitionDto? definition = _document.FindDefinition(instance.InstanceId);
-        bool selected = instance.InstanceId == _selectedInstanceId;
-        if (definition is null)
+        VenueDefinitionDto venue = _document.Venue.Definition;
+        foreach (MarkingDto marking in venue.Markings)
         {
-            DrawUnresolved(instance, routeIndex, selected);
-            return;
+            Color color = ResolveRgb(marking.Color);
+            color.A = marking.VisibleInViewer ? 0.58f : 0.22f;
+            foreach (MarkingStroke stroke in MarkingGeometry.CreateStrokes(marking.Points, marking.Style))
+            {
+                DrawLine(ToScreen(stroke.Start), ToScreen(stroke.End), color,
+                    MathF.Max(1.0f, marking.WidthMeters * _pixelsPerMeter), true);
+            }
         }
 
-        Point2Dto[] bounds = ExerciseInstanceGeometry.TransformBounds(
-            definition.Bounds.Width, definition.Bounds.Length,
-            instance.Position, instance.RotationDeg, instance.Scale);
-        bool outside = ExerciseInstanceGeometry.IsOutsideArea(
-            bounds, _document.Project.Area.Width, _document.Project.Area.Length);
-        DrawClosedPolyline(bounds.Select(ToScreen).ToArray(),
-            outside ? Colors.OrangeRed : selected ? Colors.Cyan : new Color(0.45f, 0.62f, 0.75f, 0.8f),
-            selected ? 4.0f : 2.0f);
+        foreach (VenueObjectInstanceDto item in venue.Objects)
+        {
+            Point2Dto[] footprint = VenueGeometry.TransformFootprint(item);
+            bool resolved = _document.Venue.IsObjectResolved(item.ObjectId);
+            Color color = !resolved
+                ? new Color(1.0f, 0.28f, 0.22f, 0.9f)
+                : item.VisibleInViewer
+                    ? new Color(0.58f, 0.56f, 0.45f, 0.78f)
+                    : new Color(0.45f, 0.45f, 0.48f, 0.36f);
+            DrawClosedPolyline(footprint.Select(ToScreen).ToArray(), color, resolved ? 2.0f : 3.0f);
+            Vector2 labelPosition = ToScreen(item.Position) + new Vector2(6.0f, -6.0f);
+            string marker = !resolved ? "! " : item.VisibleInViewer ? "" : "HIDDEN ";
+            DrawString(ThemeDB.FallbackFont, labelPosition, $"{marker}{item.Name}",
+                HorizontalAlignment.Left, -1.0f, 12, color);
+        }
 
+        foreach (ConeDto cone in venue.Cones)
+        {
+            DrawCircle(ToScreen(cone.Position), 4.5f, ResolveConeColor(cone.Color));
+            DrawArc(ToScreen(cone.Position), 7.0f, 0, MathF.Tau, 16,
+                new Color(0.72f, 0.72f, 0.72f, 0.7f), 1.0f);
+        }
+    }
+
+    private void DrawInstanceMarkings(TrackProjectInstanceDto instance)
+    {
+        ExerciseDefinitionDto? definition = _document.FindDefinition(instance.InstanceId);
+        if (definition is null) return;
         foreach (MarkingDto marking in definition.Markings)
         {
             Color color = ResolveRgb(marking.Color);
@@ -755,7 +796,12 @@ public partial class TrackEditorCanvas : Control
                     MathF.Max(1.0f, marking.WidthMeters * _pixelsPerMeter), true);
             }
         }
+    }
 
+    private void DrawInstanceTrajectory(TrackProjectInstanceDto instance)
+    {
+        ExerciseDefinitionDto? definition = _document.FindDefinition(instance.InstanceId);
+        if (definition is null) return;
         foreach (TrajectorySegmentDto segment in definition.Trajectory.Segments)
         {
             Point2Dto[] points = segment.Type == "polyline"
@@ -768,11 +814,36 @@ public partial class TrackEditorCanvas : Control
                     new Color(0.2f, 0.95f, 0.55f), 3.0f, true);
             }
         }
+    }
 
+    private void DrawInstanceCones(TrackProjectInstanceDto instance)
+    {
+        ExerciseDefinitionDto? definition = _document.FindDefinition(instance.InstanceId);
+        if (definition is null) return;
         foreach (ConeDto cone in definition.Cones)
         {
             DrawCircle(ToScreen(Transform(cone.Position, instance)), 5.0f, ResolveConeColor(cone.Color));
         }
+    }
+
+    private void DrawInstanceOverlay(TrackProjectInstanceDto instance, int routeIndex)
+    {
+        ExerciseDefinitionDto? definition = _document.FindDefinition(instance.InstanceId);
+        bool selected = instance.InstanceId == _selectedInstanceId;
+        if (definition is null)
+        {
+            DrawUnresolved(instance, routeIndex, selected);
+            return;
+        }
+
+        Point2Dto[] bounds = ExerciseInstanceGeometry.TransformBounds(
+            definition.Bounds.Width, definition.Bounds.Length,
+            instance.Position, instance.RotationDeg, instance.Scale);
+        bool outside = ExerciseInstanceGeometry.IsOutsideArea(
+            bounds, _document.Venue.Definition.Area.Width, _document.Venue.Definition.Area.Length);
+        DrawClosedPolyline(bounds.Select(ToScreen).ToArray(),
+            outside ? Colors.OrangeRed : selected ? Colors.Cyan : new Color(0.45f, 0.62f, 0.75f, 0.8f),
+            selected ? 4.0f : 2.0f);
 
         DrawRouteNumber(instance.Position, routeIndex, outside ? Colors.OrangeRed : Colors.White);
         if (_lockedInstanceIds.Contains(instance.InstanceId))

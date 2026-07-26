@@ -221,17 +221,26 @@ Delete Object
 * elevation = 0;
 * rotationDeg = 0;
 * scale = 1/1/1;
-* default footprint;
+* footprint, автоматически измеренный по визуальной геометрии asset;
 * collisionEnabled = true;
 * visibleInViewer = true.
 
-Рекомендуемый default footprint:
+При `Add Object` Venue Editor временно создаёт выбранный `PackedScene`,
+объединяет локальные `AABB` всех его `VisualInstance3D` и записывает проекцию
+общих габаритов на X/Z как:
 
 ```text
-1 × 1 meter
+footprint.width  = visual bounds size X
+footprint.length = visual bounds size Z
 ```
 
-Пользователь должен явно скорректировать footprint под asset.
+Трансформации дочерних узлов учитываются в координатах корня asset scene.
+Collision shapes не участвуют в измерении: footprint описывает видимый размер,
+а не физическую collision geometry.
+
+Если asset не содержит конечных положительных визуальных габаритов по X/Z,
+`Add Object` завершается понятной ошибкой и Venue Definition не изменяется.
+После добавления пользователь по-прежнему может явно скорректировать footprint.
 
 ---
 

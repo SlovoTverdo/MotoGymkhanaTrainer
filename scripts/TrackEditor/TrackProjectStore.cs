@@ -11,15 +11,19 @@ public sealed class TrackProjectLoadResult
 {
     public TrackProjectLoadResult(
         TrackProjectDto project,
+        ResolvedVenue venue,
         IReadOnlyDictionary<string, ExerciseDefinitionDto> definitions,
         IReadOnlyList<string> warnings)
     {
         Project = project;
+        Venue = venue;
         Definitions = definitions;
         Warnings = warnings;
     }
 
     public TrackProjectDto Project { get; }
+
+    public ResolvedVenue Venue { get; }
 
     /// <summary>Definitions keyed by instanceId; absent keys are unresolved instances.</summary>
     public IReadOnlyDictionary<string, ExerciseDefinitionDto> Definitions { get; }
@@ -27,10 +31,10 @@ public sealed class TrackProjectLoadResult
     public IReadOnlyList<string> Warnings { get; }
 }
 
-/// <summary>UTF-8 serialization, v1 migration and validation for Track Project v2.</summary>
+/// <summary>Strict UTF-8 serialization and validation for Venue-bound Track Project v3.</summary>
 public static class TrackProjectStore
 {
-    private const int SupportedFormatVersion = 2;
+    private const int SupportedFormatVersion = 3;
     private static readonly JsonSerializerOptions ReadOptions = new()
     {
         PropertyNameCaseInsensitive = false,
@@ -46,16 +50,25 @@ public static class TrackProjectStore
     /// Loads and validates the project before resolving references. Missing or bad
     /// Exercise files produce unresolved entries rather than invalidating the root.
     /// </summary>
-    public static TrackProjectLoadResult LoadFromFile(string path, SandboxedJsonLibrary exerciseLibrary)
+    public static TrackProjectLoadResult LoadFromFile(
+        string path,
+        SandboxedJsonLibrary exerciseLibrary,
+        SandboxedJsonLibrary venueLibrary,
+        string projectRoot,
+        Func<string, VenueResourceKind, bool> resourceProbe)
     {
-        return LoadFromJson(File.ReadAllText(path, Encoding.UTF8), path, exerciseLibrary);
+        return LoadFromJson(File.ReadAllText(path, Encoding.UTF8), path, exerciseLibrary,
+            venueLibrary, projectRoot, resourceProbe);
     }
 
     /// <summary>Deserializes a candidate without mutating a live Track document.</summary>
     public static TrackProjectLoadResult LoadFromJson(
         string json,
         string sourceName,
-        SandboxedJsonLibrary exerciseLibrary)
+        SandboxedJsonLibrary exerciseLibrary,
+        SandboxedJsonLibrary venueLibrary,
+        string projectRoot,
+        Func<string, VenueResourceKind, bool> resourceProbe)
     {
         if (string.IsNullOrWhiteSpace(json))
         {
@@ -65,21 +78,23 @@ public static class TrackProjectStore
         try
         {
             using JsonDocument parsed = JsonDocument.Parse(json);
-            if (parsed.RootElement.ValueKind == JsonValueKind.Object &&
-                parsed.RootElement.TryGetProperty("formatVersion", out JsonElement versionElement) &&
-                versionElement.TryGetInt32(out int sourceVersion) && sourceVersion == SupportedFormatVersion &&
-                !parsed.RootElement.TryGetProperty("transitionOverrides", out _))
+            if (parsed.RootElement.ValueKind != JsonValueKind.Object)
+                throw ContractError(sourceName, "root must be an object");
+            if (parsed.RootElement.TryGetProperty("formatVersion", out JsonElement versionElement) &&
+                versionElement.TryGetInt32(out int sourceVersion) && sourceVersion == SupportedFormatVersion)
             {
-                throw ContractError(sourceName,
-                    "transitionOverrides is mandatory for formatVersion 2");
+                RequireProperty(parsed.RootElement, "track", JsonValueKind.Object, sourceName);
+                RequireProperty(parsed.RootElement, "venuePath", JsonValueKind.String, sourceName);
+                RequireProperty(parsed.RootElement, "instances", JsonValueKind.Array, sourceName);
+                RequireProperty(parsed.RootElement, "transitionOverrides", JsonValueKind.Array, sourceName);
             }
 
             TrackProjectDto project = JsonSerializer.Deserialize<TrackProjectDto>(json, ReadOptions)
                 ?? throw new InvalidDataException($"Track Project '{sourceName}' contains no JSON object.");
-            var migrationWarnings = new List<string>();
-            MigrateInMemory(project, sourceName, migrationWarnings);
-            Validate(project, sourceName, exerciseLibrary);
-            return ResolveDefinitions(project, exerciseLibrary, migrationWarnings);
+            Validate(project, sourceName, exerciseLibrary, venueLibrary);
+            ResolvedVenue venue = ResolvedVenueLoader.Load(
+                project.VenuePath, venueLibrary, projectRoot, resourceProbe);
+            return ResolveDefinitions(project, venue, exerciseLibrary, venue.Warnings);
         }
         catch (JsonException exception)
         {
@@ -88,8 +103,22 @@ public static class TrackProjectStore
         }
     }
 
+    private static void RequireProperty(
+        JsonElement root,
+        string property,
+        JsonValueKind kind,
+        string sourceName)
+    {
+        if (!root.TryGetProperty(property, out JsonElement value) || value.ValueKind != kind)
+            throw ContractError(sourceName, $"{property} is mandatory and must be {kind}");
+    }
+
     /// <summary>Saves domain data only as readable UTF-8 without a BOM.</summary>
-    public static void SaveToFile(TrackProjectDto project, string path, SandboxedJsonLibrary exerciseLibrary)
+    public static void SaveToFile(
+        TrackProjectDto project,
+        string path,
+        SandboxedJsonLibrary exerciseLibrary,
+        SandboxedJsonLibrary venueLibrary)
     {
         string? directory = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(directory))
@@ -97,14 +126,17 @@ public static class TrackProjectStore
             Directory.CreateDirectory(directory);
         }
 
-        File.WriteAllText(path, Serialize(project, exerciseLibrary), new UTF8Encoding(false));
+        File.WriteAllText(path, Serialize(project, exerciseLibrary, venueLibrary), new UTF8Encoding(false));
     }
 
     /// <summary>Serializes no cached definitions, transformed geometry or UI state.</summary>
-    public static string Serialize(TrackProjectDto project, SandboxedJsonLibrary exerciseLibrary)
+    public static string Serialize(
+        TrackProjectDto project,
+        SandboxedJsonLibrary exerciseLibrary,
+        SandboxedJsonLibrary venueLibrary)
     {
         project.FormatVersion = SupportedFormatVersion;
-        Validate(project, "in-memory Track Project", exerciseLibrary);
+        Validate(project, "in-memory Track Project", exerciseLibrary, venueLibrary);
         return JsonSerializer.Serialize(project, WriteOptions);
     }
 
@@ -119,7 +151,8 @@ public static class TrackProjectStore
     /// <summary>Restores a trusted in-process history snapshot and resolves dependencies anew.</summary>
     public static TrackProjectLoadResult RestoreHistorySnapshot(
         string snapshot,
-        SandboxedJsonLibrary exerciseLibrary)
+        SandboxedJsonLibrary exerciseLibrary,
+        ResolvedVenue venue)
     {
         TrackProjectDto project = JsonSerializer.Deserialize<TrackProjectDto>(snapshot, ReadOptions)
             ?? throw new InvalidDataException("Undo history snapshot contains no Track Project object.");
@@ -129,13 +162,16 @@ public static class TrackProjectStore
             throw new InvalidDataException("Undo history snapshot has an incompatible Track Project shape.");
         }
 
-        return ResolveDefinitions(project, exerciseLibrary);
+        if (!string.Equals(project.VenuePath, venue.VenuePath, StringComparison.Ordinal))
+            throw new InvalidDataException("Undo history snapshot references a different Venue.");
+        return ResolveDefinitions(project, venue, exerciseLibrary);
     }
 
     private static void Validate(
         TrackProjectDto project,
         string sourceName,
-        SandboxedJsonLibrary exerciseLibrary)
+        SandboxedJsonLibrary exerciseLibrary,
+        SandboxedJsonLibrary venueLibrary)
     {
         if (project.FormatVersion != SupportedFormatVersion)
         {
@@ -149,10 +185,22 @@ public static class TrackProjectStore
             throw ContractError(sourceName, "track.id and track.name must be non-empty");
         }
 
-        if (project.Area is null || !IsPositiveFinite(project.Area.Width) ||
-            !IsPositiveFinite(project.Area.Length))
+        try
         {
-            throw ContractError(sourceName, "area width and length must be finite positive numbers");
+            if (string.IsNullOrWhiteSpace(project.VenuePath) || Path.IsPathRooted(project.VenuePath) ||
+                project.VenuePath.StartsWith("res://", StringComparison.OrdinalIgnoreCase) ||
+                project.VenuePath.Contains('\\') || project.VenuePath.Contains(':') ||
+                project.VenuePath.Split('/').Any(value => value is "" or "." or "..") ||
+                !string.Equals(Path.GetExtension(project.VenuePath), ".json", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidDataException("venuePath must be a JSON path relative to res://venues/");
+            }
+
+            venueLibrary.ResolveUserPath(project.VenuePath);
+        }
+        catch (Exception exception) when (exception is InvalidDataException or IOException)
+        {
+            throw ContractError(sourceName, $"venuePath is unsafe: {exception.Message}");
         }
 
         if (project.Instances is null)
@@ -236,30 +284,9 @@ public static class TrackProjectStore
         }
     }
 
-    private static void MigrateInMemory(
-        TrackProjectDto project,
-        string sourceName,
-        ICollection<string> warnings)
-    {
-        if (project.FormatVersion != 1)
-        {
-            return;
-        }
-
-        /*
-         * Version 1 had no manual transition state. Migration therefore has one
-         * lossless default: an empty override array. This changes only the loaded
-         * candidate in memory; the source file is untouched until explicit Save.
-         */
-        project.FormatVersion = SupportedFormatVersion;
-        project.TransitionOverrides = [];
-        warnings.Add(
-            $"Track Project '{sourceName}' was migrated in memory from formatVersion 1 to 2; " +
-            "transitionOverrides defaulted to an empty array.");
-    }
-
     private static TrackProjectLoadResult ResolveDefinitions(
         TrackProjectDto project,
+        ResolvedVenue venue,
         SandboxedJsonLibrary exerciseLibrary,
         IEnumerable<string>? initialWarnings = null)
     {
@@ -283,7 +310,7 @@ public static class TrackProjectStore
             }
         }
 
-        return new TrackProjectLoadResult(project, definitions, warnings);
+        return new TrackProjectLoadResult(project, venue, definitions, warnings);
     }
 
     private static void ValidatePoint(Point2Dto? point, string sourceName, string path)
@@ -293,8 +320,6 @@ public static class TrackProjectStore
             throw ContractError(sourceName, $"{path} must contain finite x/y coordinates");
         }
     }
-
-    private static bool IsPositiveFinite(float value) => float.IsFinite(value) && value > 0.0f;
 
     private static InvalidDataException ContractError(string sourceName, string message) =>
         new($"Track Project '{sourceName}' is invalid: {message}.");

@@ -13,9 +13,11 @@ public sealed class TrackProjectDocument
 
     public TrackProjectDocument(
         TrackProjectDto project,
+        ResolvedVenue venue,
         IReadOnlyDictionary<string, ExerciseDefinitionDto>? definitions = null)
     {
         Project = project;
+        Venue = venue;
         _definitions = definitions is null
             ? new Dictionary<string, ExerciseDefinitionDto>(StringComparer.Ordinal)
             : new Dictionary<string, ExerciseDefinitionDto>(definitions, StringComparer.Ordinal);
@@ -23,19 +25,33 @@ public sealed class TrackProjectDocument
 
     public TrackProjectDto Project { get; }
 
+    /// <summary>Replaceable runtime dependency; never serialized into <see cref="Project"/>.</summary>
+    public ResolvedVenue Venue { get; private set; }
+
     public static TrackProjectDocument CreateNew(
-        string id = "new-track",
-        string name = "New Track",
-        float width = 100.0f,
-        float length = 40.0f)
+        string id,
+        string name,
+        string venuePath,
+        ResolvedVenue venue)
     {
         return new TrackProjectDocument(new TrackProjectDto
         {
             Track = new TrackProjectMetadataDto { Id = id, Name = name },
-            Area = new TrackProjectAreaDto { Width = width, Length = length },
+            VenuePath = venuePath,
             Instances = [],
             TransitionOverrides = [],
-        });
+        }, venue);
+    }
+
+    /// <summary>Replaces only the derived Venue dependency after a successful reload.</summary>
+    public void ReplaceVenue(ResolvedVenue venue)
+    {
+        if (!string.Equals(Project.VenuePath, venue.VenuePath, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Reloaded Venue path does not match the Track Project venuePath.");
+        }
+
+        Venue = venue;
     }
 
     /// <summary>Adds a reference at the area origin; the definition itself is never copied into JSON.</summary>
@@ -289,7 +305,8 @@ public sealed class TrackProjectDocument
             instance.Position,
             instance.RotationDeg,
             instance.Scale);
-        return ExerciseInstanceGeometry.IsOutsideArea(corners, Project.Area.Width, Project.Area.Length);
+        return ExerciseInstanceGeometry.IsOutsideArea(
+            corners, Venue.Definition.Area.Width, Venue.Definition.Area.Length);
     }
 
     private bool MoveBy(string instanceId, int offset)

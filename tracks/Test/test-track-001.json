@@ -1,13 +1,10 @@
 {
-  "formatVersion": 1,
+  "formatVersion": 3,
   "track": {
     "id": "test-track-001",
     "name": "First Test Track"
   },
-  "area": {
-    "width": 40,
-    "length": 100
-  },
+  "venuePath": "_tests/created-assets-smoke-40x100.json",
   "instances": [
     {
       "instanceId": "exercise-instance-001",
@@ -61,5 +58,6 @@
         "y": 1
       }
     }
-  ]
+  ],
+  "transitionOverrides": []
 }

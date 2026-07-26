@@ -10,13 +10,14 @@ namespace MotoGymkhanaTrainer.TrackEditor;
 public sealed class TrackProjectDto
 {
     [JsonPropertyName("formatVersion")]
-    public int FormatVersion { get; set; } = 2;
+    public int FormatVersion { get; set; } = 3;
 
     [JsonPropertyName("track")]
     public TrackProjectMetadataDto Track { get; set; } = new();
 
-    [JsonPropertyName("area")]
-    public TrackProjectAreaDto Area { get; set; } = new();
+    /// <summary>Venue-library-relative path; the Venue remains an external source document.</summary>
+    [JsonPropertyName("venuePath")]
+    public string VenuePath { get; set; } = string.Empty;
 
     [JsonPropertyName("instances")]
     public TrackProjectInstanceDto[] Instances { get; set; } = [];
@@ -37,16 +38,6 @@ public sealed class TrackProjectMetadataDto
 
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
-}
-
-/// <summary>Track workspace bounds in domain metres.</summary>
-public sealed class TrackProjectAreaDto
-{
-    [JsonPropertyName("width")]
-    public float Width { get; set; } = 100.0f;
-
-    [JsonPropertyName("length")]
-    public float Length { get; set; } = 40.0f;
 }
 
 /// <summary>One ordered Exercise reference and its only persisted transform.</summary>

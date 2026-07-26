@@ -156,7 +156,13 @@ public partial class VenueEditorCanvas : Control
             else if (button.Pressed && button.ButtonIndex == MouseButton.Right &&
                      _selectionKind == VenueSelectionKind.Object && _selectedId is not null)
             {
-                _objectContextMenu!.Position = DisplayServer.MouseGetPosition();
+                // PopupMenu.Position is expressed in this viewport's screen coordinates.
+                // DisplayServer.MouseGetPosition() is desktop-global and therefore offsets
+                // the menu when the game is embedded in the Godot editor.
+                Vector2 popupPosition = GetScreenTransform() * button.Position;
+                _objectContextMenu!.Position = new Vector2I(
+                    Mathf.RoundToInt(popupPosition.X),
+                    Mathf.RoundToInt(popupPosition.Y));
                 _objectContextMenu.Popup();
                 AcceptEvent();
             }

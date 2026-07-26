@@ -5,8 +5,7 @@ namespace MotoGymkhanaTrainer.Tracks;
 /// <summary>Deserializes and validates the exported Track JSON contract used by the Viewer.</summary>
 public static class TrackLoader
 {
-    private const int SupportedFormatVersion = 3;
-    private const int LegacyFormatVersion = 2;
+    private const int SupportedFormatVersion = 4;
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -25,10 +24,11 @@ public static class TrackLoader
 
         try
         {
+            using JsonDocument parsed = JsonDocument.Parse(json);
+            ValidateRequiredShape(parsed.RootElement, sourceName);
             TrackSnapshotDto track = JsonSerializer.Deserialize<TrackSnapshotDto>(json, SerializerOptions)
                 ?? throw new InvalidDataException($"Track file '{sourceName}' contains no JSON object.");
 
-            MigrateToCurrentVersion(track, sourceName);
             Validate(track, sourceName);
             return track;
         }
@@ -37,6 +37,33 @@ public static class TrackLoader
             throw new InvalidDataException(
                 $"Track file '{sourceName}' contains invalid JSON: {exception.Message}", exception);
         }
+    }
+
+    private static void ValidateRequiredShape(JsonElement root, string sourceName)
+    {
+        if (root.ValueKind != JsonValueKind.Object)
+            throw ContractError(sourceName, "root must be an object");
+        Require(root, "formatVersion", JsonValueKind.Number, sourceName);
+        Require(root, "track", JsonValueKind.Object, sourceName);
+        Require(root, "venue", JsonValueKind.Object, sourceName);
+        Require(root, "area", JsonValueKind.Object, sourceName);
+        Require(root, "panorama", JsonValueKind.Object, sourceName);
+        Require(root, "venueObjects", JsonValueKind.Array, sourceName);
+        Require(root, "elements", JsonValueKind.Array, sourceName);
+        Require(root, "cones", JsonValueKind.Array, sourceName);
+        Require(root, "markings", JsonValueKind.Array, sourceName);
+        Require(root, "trajectory", JsonValueKind.Object, sourceName);
+        Require(root, "checkpoints", JsonValueKind.Array, sourceName);
+    }
+
+    private static void Require(
+        JsonElement root,
+        string property,
+        JsonValueKind kind,
+        string sourceName)
+    {
+        if (!root.TryGetProperty(property, out JsonElement value) || value.ValueKind != kind)
+            throw ContractError(sourceName, $"{property} must be present as {kind}");
     }
 
     private static void Validate(TrackSnapshotDto track, string sourceName)
@@ -48,9 +75,16 @@ public static class TrackLoader
                 $"expected {SupportedFormatVersion}.");
         }
 
-        if (track.Track is null)
+        if (track.Track is null || string.IsNullOrWhiteSpace(track.Track.Id) ||
+            string.IsNullOrWhiteSpace(track.Track.Name))
         {
-            throw ContractError(sourceName, "track must be an object");
+            throw ContractError(sourceName, "track.id and track.name must be non-empty strings");
+        }
+
+        if (track.Venue is null || string.IsNullOrWhiteSpace(track.Venue.Id) ||
+            string.IsNullOrWhiteSpace(track.Venue.Name))
+        {
+            throw ContractError(sourceName, "venue.id and venue.name must be non-empty strings");
         }
 
         if (track.Area is null)
@@ -62,6 +96,54 @@ public static class TrackLoader
             track.Area.Width <= 0 || track.Area.Length <= 0)
         {
             throw ContractError(sourceName, "area width and length must be finite positive numbers");
+        }
+
+        if (track.Panorama is null || !float.IsFinite(track.Panorama.RotationDeg) ||
+            !float.IsFinite(track.Panorama.EnergyMultiplier) || track.Panorama.EnergyMultiplier < 0 ||
+            (track.Panorama.Enabled && string.IsNullOrWhiteSpace(track.Panorama.TexturePath)))
+        {
+            throw ContractError(sourceName,
+                "panorama rotation/energy must be finite and enabled panorama requires texturePath");
+        }
+        if (!string.IsNullOrWhiteSpace(track.Panorama.TexturePath) &&
+            !IsCanonicalResourcePath(track.Panorama.TexturePath))
+        {
+            throw ContractError(sourceName, "panorama.texturePath must be a canonical res:// path");
+        }
+
+        if (track.VenueObjects is null)
+        {
+            throw ContractError(sourceName, "venueObjects must be an array");
+        }
+
+        for (int index = 0; index < track.VenueObjects.Length; index++)
+        {
+            VenueObjectSnapshotDto? item = track.VenueObjects[index];
+            string prefix = $"venueObjects[{index}]";
+            if (item is null || string.IsNullOrWhiteSpace(item.Id) || string.IsNullOrWhiteSpace(item.Name) ||
+                string.IsNullOrWhiteSpace(item.AssetPath) || !IsCanonicalResourcePath(item.AssetPath, ".tscn") ||
+                !item.AssetPath.EndsWith(".tscn", StringComparison.OrdinalIgnoreCase))
+                throw ContractError(sourceName, $"{prefix} identity/name/assetPath is invalid");
+            ValidatePoint(item.Position, sourceName, $"{prefix}.position");
+            if (!float.IsFinite(item.Elevation) || !float.IsFinite(item.RotationDeg) ||
+                item.Scale is null || !Positive(item.Scale.X) || !Positive(item.Scale.Y) || !Positive(item.Scale.Z) ||
+                item.Footprint is null || !Positive(item.Footprint.Width) || !Positive(item.Footprint.Length))
+                throw ContractError(sourceName, $"{prefix} transform/scale/footprint is invalid");
+        }
+
+        if (track.Elements is null)
+            throw ContractError(sourceName, "elements must be an array");
+        for (int index = 0; index < track.Elements.Length; index++)
+        {
+            ElementDto? item = track.Elements[index];
+            if (item is null || string.IsNullOrWhiteSpace(item.InstanceId) ||
+                string.IsNullOrWhiteSpace(item.DefinitionId) || !IsSafeRelativeJsonPath(item.ExercisePath))
+                throw ContractError(sourceName, $"elements[{index}] identity or exercisePath is invalid");
+            ValidatePoint(item.Position, sourceName, $"elements[{index}].position");
+            if (!float.IsFinite(item.RotationDeg) || item.Scale is null ||
+                !float.IsFinite(item.Scale.X) || !float.IsFinite(item.Scale.Y) ||
+                item.Scale.X == 0 || item.Scale.Y == 0)
+                throw ContractError(sourceName, $"elements[{index}] transform is invalid");
         }
 
         if (track.Cones is null)
@@ -78,6 +160,8 @@ public static class TrackLoader
             }
 
             ValidatePoint(cone.Position, sourceName, $"cones[{index}].position");
+            if (string.IsNullOrWhiteSpace(cone.Id))
+                throw ContractError(sourceName, $"cones[{index}].id must be non-empty");
         }
 
         if (track.Markings is null)
@@ -146,31 +230,39 @@ public static class TrackLoader
 
             ValidateTrajectorySegment(segment, index, sourceName);
         }
+
+        ValidateUniqueIds(track, sourceName);
     }
 
-    private static void MigrateToCurrentVersion(TrackSnapshotDto track, string sourceName)
+    private static bool IsCanonicalResourcePath(string path, string? requiredExtension = null)
     {
-        if (track.FormatVersion == SupportedFormatVersion)
-        {
-            return;
-        }
+        if (!path.StartsWith("res://", StringComparison.Ordinal) || path.Contains('\\') ||
+            Path.IsPathRooted(path) || path[6..].Split('/').Any(part =>
+                string.IsNullOrWhiteSpace(part) || part is "." or ".."))
+            return false;
+        return requiredExtension is null || path.EndsWith(requiredExtension, StringComparison.OrdinalIgnoreCase);
+    }
 
-        if (track.FormatVersion != LegacyFormatVersion)
-        {
-            throw new InvalidDataException(
-                $"Track file '{sourceName}' uses unsupported formatVersion {track.FormatVersion}; " +
-                $"expected {LegacyFormatVersion} or {SupportedFormatVersion}.");
-        }
+    private static bool IsSafeRelativeJsonPath(string path) =>
+        !string.IsNullOrWhiteSpace(path) && !path.StartsWith("res://", StringComparison.Ordinal) &&
+        !path.Contains('\\') && !path.Contains(':') && !Path.IsPathRooted(path) &&
+        path.EndsWith(".json", StringComparison.OrdinalIgnoreCase) &&
+        path.Split('/').All(part => !string.IsNullOrWhiteSpace(part) && part is not ("." or ".."));
 
-        foreach (MarkingDto marking in track.Markings ?? [])
+    private static void ValidateUniqueIds(TrackSnapshotDto track, string sourceName)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        IEnumerable<string> ids = track.VenueObjects.Select(item => item.Id)
+            .Concat(track.Elements?.Select(item => item.InstanceId) ?? [])
+            .Concat(track.Cones.Select(item => item.Id))
+            .Concat(track.Markings.Select(item => item.Id))
+            .Concat(track.Trajectory.Segments.Select(item => item.Id))
+            .Concat(track.Checkpoints?.Select(item => item.Id) ?? []);
+        foreach (string id in ids)
         {
-            // Track v2 predated style/visibility. DTO initializers make missing
-            // properties deterministic without introducing a migration framework.
-            marking.Style = "solid";
-            marking.VisibleInViewer = true;
+            if (string.IsNullOrWhiteSpace(id) || !seen.Add(id))
+                throw ContractError(sourceName, $"exported id '{id}' is empty or duplicated");
         }
-
-        track.FormatVersion = SupportedFormatVersion;
     }
 
     private static void ValidateTrajectorySegment(
@@ -244,6 +336,8 @@ public static class TrackLoader
             throw ContractError(sourceName, $"{propertyPath} coordinates must be finite numbers");
         }
     }
+
+    private static bool Positive(float value) => float.IsFinite(value) && value > 0.0f;
 
     private static InvalidDataException ContractError(string sourceName, string message)
     {

@@ -1,13 +1,10 @@
 {
-  "formatVersion": 2,
+  "formatVersion": 3,
   "track": {
     "id": "test-track-003",
     "name": "\u0422\u0435\u0441\u0442\u043E\u0432\u044B\u0439 \u0442\u0440\u0435\u043A 003"
   },
-  "area": {
-    "width": 100,
-    "length": 40
-  },
+  "venuePath": "_tests/created-assets-smoke-40x100.json",
   "instances": [
     {
       "instanceId": "exercise-instance-001",

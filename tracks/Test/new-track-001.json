@@ -1,30 +1,30 @@
 {
   "formatVersion": 3,
   "track": {
-    "id": "test-track-002",
-    "name": "Test Track 002"
+    "id": "new-track-001",
+    "name": "New Track"
   },
-  "venuePath": "_tests/created-assets-smoke-40x100.json",
+  "venuePath": "default-venue.json",
   "instances": [
     {
       "instanceId": "exercise-instance-001",
       "exercisePath": "Common/exercise-start.json",
       "position": {
-        "x": -7.25,
-        "y": -42.25
+        "x": -15,
+        "y": -13.5
       },
       "rotationDeg": 0,
       "scale": {
-        "x": 0.75,
-        "y": 0.90000004
+        "x": 1,
+        "y": 1
       }
     },
     {
       "instanceId": "exercise-instance-002",
       "exercisePath": "\u0413\u0418\u0411\u0414\u0414/snake-001.json",
       "position": {
-        "x": -11,
-        "y": -24.75
+        "x": -15,
+        "y": 2.5
       },
       "rotationDeg": 0,
       "scale": {
@@ -34,25 +34,12 @@
     },
     {
       "instanceId": "exercise-instance-003",
-      "exercisePath": "Common/exercise-circle-right.json",
+      "exercisePath": "\u0413\u0418\u0411\u0414\u0414/snake-001.json",
       "position": {
-        "x": 2.5,
-        "y": -2
+        "x": 18.5,
+        "y": 2.5
       },
-      "rotationDeg": -177,
-      "scale": {
-        "x": 1,
-        "y": 1
-      }
-    },
-    {
-      "instanceId": "exercise-instance-004",
-      "exercisePath": "Common/exercise-start.json",
-      "position": {
-        "x": 9,
-        "y": -42.5
-      },
-      "rotationDeg": 179,
+      "rotationDeg": -180,
       "scale": {
         "x": 1,
         "y": 1

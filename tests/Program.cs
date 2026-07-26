@@ -13,7 +13,7 @@ string invalidFixturePath = Path.Combine(ProjectDirectory, "tests", "fixtures", 
 string noColorFixturePath = Path.Combine(ProjectDirectory, "tests", "fixtures", "no-color-track.json");
 
 TrackSnapshotDto snapshot = TrackLoader.LoadFromJson(json, samplePath);
-AssertEqual(3, snapshot.FormatVersion, "sample uses formatVersion 3");
+AssertEqual(4, snapshot.FormatVersion, "sample uses formatVersion 4");
 AssertEqual("basic-demo", snapshot.Track.Id, "valid JSON loads track metadata");
 AssertEqual(4, snapshot.Cones.Length, "valid JSON loads every sample cone");
 AssertEqual(4, snapshot.Markings.Length, "valid JSON loads solid, dashed, dotted and hidden markings");
@@ -26,9 +26,9 @@ AssertEqual("alternate-test", alternate.Track.Id, "a second exported track loads
 AssertEqual(20.0f, alternate.Area.Width, "the second track supplies a different area width");
 AssertEqual(30.0f, alternate.Area.Length, "the second track supplies a different area length");
 AssertEqual(2, alternate.Cones.Length, "the second track supplies its own runtime cone set");
-AssertEqual(3, alternate.FormatVersion, "Track version 2 migrates to version 3 in memory");
-AssertEqual("solid", alternate.Markings[0].Style, "Track v2 marking receives the solid default");
-AssertTrue(alternate.Markings[0].VisibleInViewer, "Track v2 marking receives visibleInViewer=true");
+AssertEqual(4, alternate.FormatVersion, "a second exported Track uses formatVersion 4");
+AssertEqual("solid", alternate.Markings[0].Style, "Track v4 keeps the marking style");
+AssertTrue(alternate.Markings[0].VisibleInViewer, "Track v4 keeps visibleInViewer=true");
 
 TrackSnapshotDto noColorTrack = TrackLoader.LoadFromJson(
     File.ReadAllText(noColorFixturePath), noColorFixturePath);
@@ -145,7 +145,7 @@ AssertThrows<InvalidDataException>(
     "cubicBezier with a missing control point is rejected");
 
 TrackSnapshotDto futureTrack = TrackLoader.LoadFromJson(
-    """{"formatVersion":2,"track":{},"area":{"width":40,"length":100},"cones":[],"markings":[],"trajectory":{"segments":[{"id":"future-segment","type":"arc"}]}}""",
+    """{"formatVersion":4,"track":{"id":"future","name":"Future"},"venue":{"id":"venue","name":"Venue"},"area":{"width":40,"length":100},"panorama":{"enabled":false,"texturePath":"","rotationDeg":0,"energyMultiplier":1},"venueObjects":[],"elements":[],"cones":[],"markings":[],"trajectory":{"segments":[{"id":"future-segment","type":"arc"}]},"checkpoints":[]}""",
     "future-segment.json");
 AssertEqual(1, futureTrack.Trajectory.Segments.Length, "unknown segment type does not reject the track");
 AssertEqual("arc", futureTrack.Trajectory.Segments[0].Type, "unknown segment type remains diagnostic data");
@@ -470,7 +470,7 @@ AssertEqual(2, normalizedMarking.Warnings.Count,
     "style fallback and color normalization both produce diagnostics");
 
 TrackSnapshotDto unknownStyleTrack = TrackLoader.LoadFromJson(
-    """{"formatVersion":3,"track":{"id":"unknown-style","name":"Unknown Style"},"area":{"width":10,"length":10},"elements":[],"cones":[],"markings":[{"id":"marking-001","type":"line","points":[{"x":0,"y":0},{"x":1,"y":0}],"color":"#FFFFFF","widthMeters":0.1,"style":"futureStyle","visibleInViewer":true}],"trajectory":{"segments":[]},"checkpoints":[]}""",
+    """{"formatVersion":4,"track":{"id":"unknown-style","name":"Unknown Style"},"venue":{"id":"venue","name":"Venue"},"area":{"width":10,"length":10},"panorama":{"enabled":false,"texturePath":"","rotationDeg":0,"energyMultiplier":1},"venueObjects":[],"elements":[],"cones":[],"markings":[{"id":"marking-001","type":"line","points":[{"x":0,"y":0},{"x":1,"y":0}],"color":"#FFFFFF","widthMeters":0.1,"style":"futureStyle","visibleInViewer":true}],"trajectory":{"segments":[]},"checkpoints":[]}""",
     "unknown-style-track.json");
 AssertEqual("futureStyle", unknownStyleTrack.Markings[0].Style,
     "unknown Track marking style remains available for Viewer warning and solid fallback");
@@ -516,8 +516,26 @@ try
 {
     string exerciseRoot = Path.Combine(temporaryTrackTestRoot, "exercises");
     string trackRoot = Path.Combine(temporaryTrackTestRoot, "tracks");
+    string venueRoot = Path.Combine(temporaryTrackTestRoot, "venues");
     var exerciseLibrary = new SandboxedJsonLibrary(exerciseRoot, "Exercise library", "res://exercises/");
     var trackLibrary = new SandboxedJsonLibrary(trackRoot, "Track Project library", "res://tracks/");
+    var venueLibrary = new SandboxedJsonLibrary(venueRoot, "Venue library", "res://venues/");
+    string venueFolder = venueLibrary.CreateFolder(string.Empty, "empty-ground");
+    string venueFile = venueLibrary.ResolveSaveJson(venueFolder, "venue.json");
+    VenueDefinitionDto emptyVenueDefinition = VenueDocument.CreateNew("empty-ground", "Empty Ground").Definition;
+    emptyVenueDefinition.Area.Width = 80;
+    emptyVenueDefinition.Area.Length = 120;
+    VenueStore.SaveToFile(emptyVenueDefinition, venueFile);
+    const string VenuePath = "empty-ground/venue.json";
+    Func<string, VenueResourceKind, bool> fileProbe =
+        ResolvedVenueLoader.CreateFilesystemProbe(temporaryTrackTestRoot);
+    ResolvedVenue resolvedVenue = ResolvedVenueLoader.Load(
+        VenuePath, venueLibrary, temporaryTrackTestRoot, fileProbe);
+    TrackProjectDocument NewTrack(string id = "new-track", string name = "New Track", ResolvedVenue? venue = null) =>
+        TrackProjectDocument.CreateNew(id, name, (venue ?? resolvedVenue).VenuePath, venue ?? resolvedVenue);
+    TrackProjectLoadResult LoadProject(string json, string sourceName) =>
+        TrackProjectStore.LoadFromJson(
+            json, sourceName, exerciseLibrary, venueLibrary, temporaryTrackTestRoot, fileProbe);
     string firstExercisePath = Path.Combine(exerciseRoot, "polyline.json");
     string secondExercisePath = Path.Combine(exerciseRoot, "multi.json");
     File.Copy(Path.Combine(ProjectDirectory, "tests", "fixtures", "polyline-exercise.json"), firstExercisePath);
@@ -525,28 +543,27 @@ try
     ExerciseDefinitionDto firstDefinition = ExerciseDefinitionStore.LoadFromFile(firstExercisePath);
     ExerciseDefinitionDto secondDefinition = ExerciseDefinitionStore.LoadFromFile(secondExercisePath);
 
-    TrackProjectDocument trackDocument = TrackProjectDocument.CreateNew();
+    TrackProjectDocument trackDocument = NewTrack();
     TrackCompilationResult emptyCompilation = TrackCompiler.Compile(trackDocument);
     AssertTrue(!emptyCompilation.CanExport && emptyCompilation.Errors.Count > 0,
         "empty Track Project is editable but blocked from Viewer export");
-    AssertEqual(100.0f, trackDocument.Project.Area.Width, "new Track Project uses the documented 100 m width");
-    AssertEqual(40.0f, trackDocument.Project.Area.Length, "new Track Project uses the documented 40 m length");
+    AssertEqual(80.0f, trackDocument.Venue.Definition.Area.Width, "new Track Project derives width from Venue");
+    AssertEqual(120.0f, trackDocument.Venue.Definition.Area.Length, "new Track Project derives length from Venue");
     AssertEqual(5.8f,
         EditorCanvasMath.FitPixelsPerMeter(100, 40, new Vector2(636, 420), 28, 3, 120),
         "Track canvas fit uses the central panel size after side-panel layout");
     AssertEqual(0, trackDocument.Project.Instances.Length, "new Track Project starts with no instances");
-    AssertEqual(2, trackDocument.Project.FormatVersion, "new Track Project uses formatVersion 2");
+    AssertEqual(3, trackDocument.Project.FormatVersion, "new Track Project uses formatVersion 3");
+    AssertEqual(VenuePath, trackDocument.Project.VenuePath, "new Track Project persists the selected venuePath");
     AssertEqual(0, trackDocument.Project.TransitionOverrides.Length,
         "new Track Project starts with an explicit empty transitionOverrides array");
-    trackDocument.Project.Area.Width = 72.0f;
-    trackDocument.Project.Area.Length = 110.0f;
-    string emptyProjectJson = TrackProjectStore.Serialize(trackDocument.Project, exerciseLibrary);
-    TrackProjectLoadResult emptyProjectReload = TrackProjectStore.LoadFromJson(
-        emptyProjectJson, "empty.track.json", exerciseLibrary);
+    string emptyProjectJson = TrackProjectStore.Serialize(
+        trackDocument.Project, exerciseLibrary, venueLibrary);
+    TrackProjectLoadResult emptyProjectReload = LoadProject(emptyProjectJson, "empty.track.json");
     AssertEqual(0, emptyProjectReload.Project.Instances.Length,
         "an empty Track Project saves and reopens without special handling");
-    AssertEqual(72.0f, emptyProjectReload.Project.Area.Width,
-        "edited area dimensions survive an empty-project round trip");
+    AssertTrue(!emptyProjectJson.Contains("\"area\"", StringComparison.Ordinal),
+        "Track Project v3 JSON contains no second area source");
 
     string firstInstance = trackDocument.AddInstance("polyline.json", firstDefinition);
     string secondInstance = trackDocument.AddInstance("polyline.json", firstDefinition);
@@ -608,8 +625,9 @@ try
 
     string projectsFolder = trackLibrary.CreateFolder(string.Empty, "training");
     string projectPath = trackLibrary.ResolveSaveJson(projectsFolder, "iteration-1.json");
-    TrackProjectStore.SaveToFile(trackDocument.Project, projectPath, exerciseLibrary);
-    TrackProjectLoadResult reopened = TrackProjectStore.LoadFromFile(projectPath, exerciseLibrary);
+    TrackProjectStore.SaveToFile(trackDocument.Project, projectPath, exerciseLibrary, venueLibrary);
+    TrackProjectLoadResult reopened = TrackProjectStore.LoadFromFile(
+        projectPath, exerciseLibrary, venueLibrary, temporaryTrackTestRoot, fileProbe);
     AssertEqual(2, reopened.Project.Instances.Length, "saved Track Project reopens with every remaining instance");
     AssertEqual(firstInstance, reopened.Project.Instances[0].InstanceId, "instance order survives save and reload");
     AssertEqual(90.0f, reopened.Project.Instances[0].RotationDeg, "rotation survives save and reload");
@@ -623,43 +641,73 @@ try
 
     string damagedProject = "{ damaged";
     AssertThrows<InvalidDataException>(
-        () => TrackProjectStore.LoadFromJson(damagedProject, "damaged.track.json", exerciseLibrary),
+        () => LoadProject(damagedProject, "damaged.track.json"),
         "damaged Track Project is rejected before replacing a live document");
     AssertEqual(firstInstance, trackDocument.Project.Instances[0].InstanceId,
         "failed candidate loading leaves the current Track document intact");
 
     File.WriteAllText(Path.Combine(exerciseRoot, "broken.json"), "{ broken");
     string unresolvedJson =
-        """{"formatVersion":1,"track":{"id":"unresolved","name":"Unresolved"},"area":{"width":60,"length":100},"instances":[{"instanceId":"exercise-instance-001","exercisePath":"missing.json","position":{"x":0,"y":0},"rotationDeg":0,"scale":{"x":1,"y":1}},{"instanceId":"exercise-instance-002","exercisePath":"broken.json","position":{"x":3,"y":4},"rotationDeg":15,"scale":{"x":1,"y":1}}]}""";
-    TrackProjectLoadResult unresolved = TrackProjectStore.LoadFromJson(
-        unresolvedJson, "unresolved.track.json", exerciseLibrary);
+        """{"formatVersion":3,"track":{"id":"unresolved","name":"Unresolved"},"venuePath":"empty-ground/venue.json","instances":[{"instanceId":"exercise-instance-001","exercisePath":"missing.json","position":{"x":0,"y":0},"rotationDeg":0,"scale":{"x":1,"y":1}},{"instanceId":"exercise-instance-002","exercisePath":"broken.json","position":{"x":3,"y":4},"rotationDeg":15,"scale":{"x":1,"y":1}}],"transitionOverrides":[]}""";
+    TrackProjectLoadResult unresolved = LoadProject(unresolvedJson, "unresolved.track.json");
     AssertEqual(2, unresolved.Project.Instances.Length, "missing and damaged Exercise files do not remove instances");
     AssertEqual(0, unresolved.Definitions.Count, "bad Exercise dependencies remain unresolved caches");
-    AssertEqual(2, unresolved.Project.FormatVersion, "Track Project v1 migrates to v2 in memory");
-    AssertEqual(0, unresolved.Project.TransitionOverrides.Length,
-        "Track Project v1 migration defaults transitionOverrides to empty");
-    AssertEqual(3, unresolved.Warnings.Count,
-        "v1 migration plus each unresolved instance produces a diagnostic warning");
-    string unresolvedSaved = TrackProjectStore.Serialize(unresolved.Project, exerciseLibrary);
+    AssertEqual(3, unresolved.Project.FormatVersion, "Track Project remains formatVersion 3");
+    AssertEqual(2, unresolved.Warnings.Count,
+        "each unresolved Exercise instance produces a diagnostic warning");
+    string unresolvedSaved = TrackProjectStore.Serialize(unresolved.Project, exerciseLibrary, venueLibrary);
     AssertTrue(unresolvedSaved.Contains("missing.json") &&
-        unresolvedSaved.Contains("\"formatVersion\": 2") &&
+        unresolvedSaved.Contains("\"formatVersion\": 3") &&
+        unresolvedSaved.Contains("\"venuePath\": \"empty-ground/venue.json\"") &&
         unresolvedSaved.Contains("\"transitionOverrides\": []"),
-        "explicit Save writes migrated unresolved projects as canonical v2");
+        "explicit Save preserves unresolved instances in canonical v3");
+
+    AssertThrows<InvalidDataException>(
+        () => LoadProject(
+            """{"formatVersion":2,"track":{"id":"old","name":"Old"},"area":{"width":60,"length":100},"instances":[],"transitionOverrides":[]}""",
+            "v2.track.json"),
+        "Track Project v2 is rejected with no migration branch");
+    foreach (string unsafeVenuePath in new[]
+    {
+        "res://venues/empty-ground/venue.json",
+        "../venue.json",
+        "C:/venue.json",
+        "empty-ground\\venue.json",
+    })
+    {
+        AssertThrows<InvalidDataException>(
+            () => LoadProject(
+                $$"""{"formatVersion":3,"track":{"id":"unsafe","name":"Unsafe"},"venuePath":"{{unsafeVenuePath.Replace("\\", "\\\\")}}","instances":[],"transitionOverrides":[]}""",
+                "unsafe-venue.track.json"),
+            $"unsafe venuePath '{unsafeVenuePath}' is rejected");
+    }
+    AssertThrows<InvalidDataException>(
+        () => LoadProject(
+            """{"formatVersion":3,"track":{"id":"missing","name":"Missing"},"venuePath":"missing/venue.json","instances":[],"transitionOverrides":[]}""",
+            "missing-venue.track.json"),
+        "missing Venue is a blocking Track Project open error");
+    string corruptVenueFolder = venueLibrary.CreateFolder(string.Empty, "corrupt-ground");
+    File.WriteAllText(venueLibrary.ResolveSaveJson(corruptVenueFolder, "venue.json"), "{ corrupt");
+    AssertThrows<InvalidDataException>(
+        () => LoadProject(
+            """{"formatVersion":3,"track":{"id":"corrupt","name":"Corrupt"},"venuePath":"corrupt-ground/venue.json","instances":[],"transitionOverrides":[]}""",
+            "corrupt-venue.track.json"),
+        "corrupt Venue is a blocking Track Project open error");
 
     AssertThrows<InvalidDataException>(
         () => TrackProjectStore.LoadFromJson(
-            """{"formatVersion":1,"track":{"id":"escape","name":"Escape"},"area":{"width":60,"length":100},"instances":[{"instanceId":"exercise-instance-001","exercisePath":"../escape.json","position":{"x":0,"y":0},"rotationDeg":0,"scale":{"x":1,"y":1}}]}""",
-            "escape.track.json", exerciseLibrary),
+            """{"formatVersion":3,"track":{"id":"escape","name":"Escape"},"venuePath":"empty-ground/venue.json","instances":[{"instanceId":"exercise-instance-001","exercisePath":"../escape.json","position":{"x":0,"y":0},"rotationDeg":0,"scale":{"x":1,"y":1}}],"transitionOverrides":[]}""",
+            "escape.track.json", exerciseLibrary, venueLibrary, temporaryTrackTestRoot, fileProbe),
         "Track Project exercisePath cannot traverse outside res://exercises/");
-    TrackProjectLoadResult reflected = TrackProjectStore.LoadFromJson(
-        """{"formatVersion":1,"track":{"id":"scale","name":"Scale"},"area":{"width":60,"length":100},"instances":[{"instanceId":"exercise-instance-001","exercisePath":"polyline.json","position":{"x":0,"y":0},"rotationDeg":0,"scale":{"x":-1,"y":1}}]}""",
-        "negative-scale.track.json", exerciseLibrary);
+    TrackProjectLoadResult reflected = LoadProject(
+        """{"formatVersion":3,"track":{"id":"scale","name":"Scale"},"venuePath":"empty-ground/venue.json","instances":[{"instanceId":"exercise-instance-001","exercisePath":"polyline.json","position":{"x":0,"y":0},"rotationDeg":0,"scale":{"x":-1,"y":1}}],"transitionOverrides":[]}""",
+        "negative-scale.track.json");
     AssertEqual(-1.0f, reflected.Project.Instances[0].Scale.X,
         "negative non-zero scale is accepted as explicit mirror state");
     AssertThrows<InvalidDataException>(
         () => TrackProjectStore.LoadFromJson(
-            """{"formatVersion":1,"track":{"id":"scale","name":"Scale"},"area":{"width":60,"length":100},"instances":[{"instanceId":"exercise-instance-001","exercisePath":"polyline.json","position":{"x":0,"y":0},"rotationDeg":0,"scale":{"x":0,"y":1}}]}""",
-            "zero-scale.track.json", exerciseLibrary),
+            """{"formatVersion":3,"track":{"id":"scale","name":"Scale"},"venuePath":"empty-ground/venue.json","instances":[{"instanceId":"exercise-instance-001","exercisePath":"polyline.json","position":{"x":0,"y":0},"rotationDeg":0,"scale":{"x":0,"y":1}}],"transitionOverrides":[]}""",
+            "zero-scale.track.json", exerciseLibrary, venueLibrary, temporaryTrackTestRoot, fileProbe),
         "zero instance scale is rejected");
     AssertThrows<InvalidDataException>(
         () => trackLibrary.CreateFolder(string.Empty, "../escape"),
@@ -693,7 +741,7 @@ try
         },
     ];
     ExerciseDefinitionDto compileSecond = ExerciseDefinitionStore.LoadFromFile(secondExercisePath);
-    var compileDocument = TrackProjectDocument.CreateNew("iteration-2", "Iteration 2", 80, 120);
+    var compileDocument = NewTrack("iteration-2", "Iteration 2");
     string compileA = compileDocument.AddInstance("polyline.json", compileFirst);
     compileDocument.SetTransform(compileA, new Point2Dto { X = 3, Y = -8 }, 90,
         new Point2Dto { X = 2, Y = 0.5f });
@@ -711,6 +759,106 @@ try
         oneInstanceCompilation.Snapshot.Markings[0].Style == "dashed" &&
         oneInstanceCompilation.Snapshot.Markings[1].Style == "dotted",
         "hidden state and dashed/dotted marking styles survive compilation");
+
+    string testAssetFolder = Path.Combine(temporaryTrackTestRoot, "Assets");
+    Directory.CreateDirectory(testAssetFolder);
+    File.WriteAllText(Path.Combine(testAssetFolder, "shed.tscn"), "[gd_scene format=3]");
+    VenueDefinitionDto richDefinition = VenueDocument.CreateNew("rich-ground", "Rich Ground").Definition;
+    richDefinition.Area.Width = 40;
+    richDefinition.Area.Length = 50;
+    richDefinition.Objects =
+    [
+        new VenueObjectInstanceDto
+        {
+            ObjectId = "shed",
+            Name = "Shed",
+            AssetPath = "res://Assets/shed.tscn",
+            Position = new Point2Dto { X = 3, Y = -8 },
+            Elevation = 1.5f,
+            RotationDeg = 20,
+            Scale = new Scale3Dto { X = 2, Y = 3, Z = 4 },
+            Footprint = new FootprintDto { Width = 6, Length = 8 },
+            CollisionEnabled = false,
+            VisibleInViewer = true,
+        },
+    ];
+    richDefinition.Cones =
+    [
+        new ConeDto { Id = "venue-cone", Position = new Point2Dto { X = 1, Y = 2 }, Color = "blue", Type = "standard" },
+    ];
+    richDefinition.Markings =
+    [
+        new MarkingDto
+        {
+            Id = "venue-line", Type = "line",
+            Points = [new Point2Dto { X = -2, Y = -2 }, new Point2Dto { X = 2, Y = -2 }],
+            Color = "#AABBCC", WidthMeters = 0.2f, Style = "dashed", VisibleInViewer = false,
+        },
+    ];
+    string richFolder = venueLibrary.CreateFolder(string.Empty, "rich-ground");
+    VenueStore.SaveToFile(richDefinition, venueLibrary.ResolveSaveJson(richFolder, "venue.json"));
+    ResolvedVenue richVenue = ResolvedVenueLoader.Load(
+        "rich-ground/venue.json", venueLibrary, temporaryTrackTestRoot, fileProbe);
+    var richDocument = NewTrack("rich-track", "Rich Track", richVenue);
+    richDocument.AddInstance("polyline.json", compileFirst);
+    richDocument.SetTransform("exercise-instance-001", new Point2Dto { X = 3, Y = -8 }, 0,
+        new Point2Dto { X = 1, Y = 1 });
+    TrackCompilationResult richCompilation = TrackCompiler.Compile(richDocument);
+    AssertTrue(richCompilation.CanExport, "resolved Venue object allows Track v4 export");
+    AssertEqual("rich-ground", richCompilation.Snapshot!.Venue.Id, "Venue metadata is copied into export");
+    AssertEqual(40.0f, richCompilation.Snapshot.Area.Width, "exported area comes from Venue");
+    AssertEqual("venue--object--shed", richCompilation.Snapshot.VenueObjects[0].Id,
+        "Venue object receives a scoped exported id");
+    AssertEqual(1.5f, richCompilation.Snapshot.VenueObjects[0].Elevation,
+        "Venue object elevation is preserved without Track transform");
+    AssertEqual(3.0f, richCompilation.Snapshot.VenueObjects[0].Scale.Y,
+        "Venue object Y scale is preserved separately from its 2D footprint");
+    AssertEqual("venue--cone--venue-cone", richCompilation.Snapshot.Cones[0].Id,
+        "Venue cones precede transformed Exercise cones in the common array");
+    AssertEqual("venue--marking--venue-line", richCompilation.Snapshot.Markings[0].Id,
+        "Venue markings precede transformed Exercise markings in the common array");
+    AssertTrue(!richCompilation.Snapshot.Markings[0].VisibleInViewer &&
+        richCompilation.Snapshot.Markings[0].Style == "dashed",
+        "Venue marking style and Viewer visibility survive compilation");
+    AssertEqual("polyline.json", richCompilation.Snapshot.Elements[0].ExercisePath,
+        "elements keep diagnostic exercisePath metadata");
+    AssertTrue(richCompilation.Warnings.Any(item => item.Message.Contains("intersect Venue object 'shed'")),
+        "Exercise bounds intersecting a transformed Venue footprint produces a non-blocking warning");
+
+    richDefinition.Objects[0].AssetPath = "res://Assets/missing.tscn";
+    ResolvedVenue missingVisibleVenue = new()
+    {
+        VenuePath = richVenue.VenuePath,
+        SourcePath = richVenue.SourcePath,
+        Definition = richDefinition,
+        ResolvedObjectIds = new HashSet<string>(StringComparer.Ordinal),
+        PanoramaTextureResolved = false,
+        Warnings = [],
+    };
+    var missingVisibleDocument = NewTrack("missing-visible", "Missing Visible", missingVisibleVenue);
+    missingVisibleDocument.AddInstance("polyline.json", compileFirst);
+    TrackCompilationResult missingVisibleCompilation = TrackCompiler.Compile(missingVisibleDocument);
+    AssertTrue(!missingVisibleCompilation.CanExport &&
+        missingVisibleCompilation.Errors.Any(item => item.Message.Contains("shed") && item.Message.Contains("missing.tscn")),
+        "visible unresolved Venue object blocks export with object and asset context");
+    richDefinition.Objects[0].VisibleInViewer = false;
+    var hiddenMissingDocument = NewTrack("hidden-missing", "Hidden Missing", missingVisibleVenue);
+    hiddenMissingDocument.AddInstance("polyline.json", compileFirst);
+    TrackCompilationResult hiddenMissingCompilation = TrackCompiler.Compile(hiddenMissingDocument);
+    AssertTrue(hiddenMissingCompilation.CanExport && hiddenMissingCompilation.Warnings.Any(item =>
+        item.Message.Contains("hidden and unresolved")),
+        "hidden unresolved Venue object is exported with a warning");
+    richDefinition.Panorama.Enabled = true;
+    richDefinition.Panorama.TexturePath = "res://Assets/missing-panorama.png";
+    TrackCompilationResult missingPanoramaCompilation = TrackCompiler.Compile(hiddenMissingDocument);
+    AssertTrue(!missingPanoramaCompilation.CanExport && missingPanoramaCompilation.Errors.Any(item =>
+        item.Message.Contains("panorama") && item.Message.Contains("Texture2D")),
+        "enabled unresolved panorama blocks export");
+
+    string beforeReloadSnapshot = TrackProjectStore.SerializeHistorySnapshot(richDocument.Project);
+    richDocument.ReplaceVenue(richVenue);
+    AssertEqual(beforeReloadSnapshot, TrackProjectStore.SerializeHistorySnapshot(richDocument.Project),
+        "replacing a resolved Venue dependency does not mutate Track Project or dirty history data");
 
     string compileB = compileDocument.AddInstance("multi.json", compileSecond);
     compileDocument.SetTransform(compileB, new Point2Dto { X = 18, Y = 20 }, -20,
@@ -761,10 +909,11 @@ try
     Point2Dto savedOffset1 = new() { X = savedOverride.Control1Offset.X, Y = savedOverride.Control1Offset.Y };
     Point2Dto savedOffset2 = new() { X = savedOverride.Control2Offset.X, Y = savedOverride.Control2Offset.Y };
 
-    string manualProjectJson = TrackProjectStore.Serialize(compileDocument.Project, exerciseLibrary);
-    TrackProjectLoadResult manualReload = TrackProjectStore.LoadFromJson(
-        manualProjectJson, "manual-v2.track.json", exerciseLibrary);
-    var manualReloadDocument = new TrackProjectDocument(manualReload.Project, manualReload.Definitions);
+    string manualProjectJson = TrackProjectStore.Serialize(
+        compileDocument.Project, exerciseLibrary, venueLibrary);
+    TrackProjectLoadResult manualReload = LoadProject(manualProjectJson, "manual-v3.track.json");
+    var manualReloadDocument = new TrackProjectDocument(
+        manualReload.Project, manualReload.Venue, manualReload.Definitions);
     TrackCompilationResult manualReloadCompilation = TrackCompiler.Compile(manualReloadDocument);
     AssertTrue(manualReloadCompilation.Transitions[0].SourceMode == TransitionSourceMode.Override,
         "saved and reopened Track Project restores manual transition mode");
@@ -827,9 +976,9 @@ try
     manualReloadDocument.Project.TransitionOverrides[0].Control1Offset =
         new Point2Dto { X = finiteOffset, Y = finiteOffsetY };
 
-    TrackProjectLoadResult deletionReload = TrackProjectStore.LoadFromJson(
-        manualProjectJson, "manual-delete.track.json", exerciseLibrary);
-    var deletionDocument = new TrackProjectDocument(deletionReload.Project, deletionReload.Definitions);
+    TrackProjectLoadResult deletionReload = LoadProject(manualProjectJson, "manual-delete.track.json");
+    var deletionDocument = new TrackProjectDocument(
+        deletionReload.Project, deletionReload.Venue, deletionReload.Definitions);
     AssertTrue(deletionDocument.DeleteInstance(compileB),
         "an instance related to a manual transition can be deleted");
     AssertEqual(1, deletionDocument.Project.TransitionOverrides.Length,
@@ -849,7 +998,8 @@ try
         () => TrackProjectStore.LoadFromJson(
             manualProjectJson.Replace("\"transitionOverrides\": [", "\"transitionOverrides\": [" +
                 "{\"transitionId\":\"duplicate\",\"fromInstanceId\":\"exercise-instance-001\",\"toInstanceId\":\"exercise-instance-002\",\"control1Offset\":{\"x\":1,\"y\":1},\"control2Offset\":{\"x\":-1,\"y\":-1}},"),
-            "duplicate-override.track.json", exerciseLibrary),
+            "duplicate-override.track.json", exerciseLibrary, venueLibrary,
+            temporaryTrackTestRoot, fileProbe),
         "duplicate override pair is a blocking Track Project validation error");
 
     Point2Dto transformedDirection = ExerciseInstanceGeometry.TransformDirection(
@@ -904,7 +1054,7 @@ try
     string exportedPath = exportLibrary.ResolveSaveJson(string.Empty, "iteration-2.json");
     TrackExportStore.SaveToFile(movedCompilation.Snapshot!, exportedPath);
     TrackSnapshotDto viewerRoundTrip = TrackLoader.LoadFromJson(File.ReadAllText(exportedPath), exportedPath);
-    AssertEqual(3, viewerRoundTrip.FormatVersion, "Viewer loader accepts compiled formatVersion 3 export");
+    AssertEqual(4, viewerRoundTrip.FormatVersion, "Viewer loader accepts compiled formatVersion 4 export");
     AssertEqual(movedCompilation.Snapshot!.Trajectory.Segments.Length,
         viewerRoundTrip.Trajectory.Segments.Length,
         "Viewer receives complete global trajectory including transitions");
@@ -918,7 +1068,8 @@ try
         () => exportLibrary.ResolveUserPath(Path.Combine(exportRoot, "..", "escape.json")),
         "Viewer export path cannot traverse outside res://exports/tracks/");
 
-    var unresolvedDocument = new TrackProjectDocument(unresolved.Project, unresolved.Definitions);
+    var unresolvedDocument = new TrackProjectDocument(
+        unresolved.Project, unresolved.Venue, unresolved.Definitions);
     TrackCompilationResult unresolvedCompilation = TrackCompiler.Compile(unresolvedDocument);
     AssertTrue(!unresolvedCompilation.CanExport && unresolvedCompilation.Errors.Count >= 2,
         "unresolved Exercise Definitions block export without throwing");
@@ -928,7 +1079,7 @@ try
     [new Point2Dto { X = 0, Y = 0 }, new Point2Dto { X = 0, Y = 0 }];
     zeroTangent.EntryPoint = new Point2Dto { X = 0, Y = 0 };
     zeroTangent.ExitPoint = new Point2Dto { X = 0, Y = 0 };
-    var zeroDocument = TrackProjectDocument.CreateNew("zero", "Zero tangent");
+    var zeroDocument = NewTrack("zero", "Zero tangent");
     zeroDocument.AddInstance("polyline.json", zeroTangent);
     TrackCompilationResult zeroCompilation = TrackCompiler.Compile(zeroDocument);
     AssertTrue(!zeroCompilation.CanExport &&
@@ -937,19 +1088,26 @@ try
 
     ExerciseDefinitionDto damagedTrajectory = ExerciseDefinitionStore.LoadFromFile(firstExercisePath);
     damagedTrajectory.Trajectory.Segments[0].Points = [new Point2Dto { X = 0, Y = 0 }];
-    var damagedDocument = TrackProjectDocument.CreateNew("damaged", "Damaged trajectory");
+    var damagedDocument = NewTrack("damaged", "Damaged trajectory");
     damagedDocument.AddInstance("polyline.json", damagedTrajectory);
     AssertTrue(!TrackCompiler.Compile(damagedDocument).CanExport,
         "damaged trajectory blocks export without crashing the compiler");
 
-    var outsideDocument = TrackProjectDocument.CreateNew("outside", "Outside", 10, 10);
+    VenueDefinitionDto smallDefinition = VenueDocument.CreateNew("small-ground", "Small Ground").Definition;
+    smallDefinition.Area.Width = 10;
+    smallDefinition.Area.Length = 10;
+    string smallFolder = venueLibrary.CreateFolder(string.Empty, "small-ground");
+    VenueStore.SaveToFile(smallDefinition, venueLibrary.ResolveSaveJson(smallFolder, "venue.json"));
+    ResolvedVenue smallVenue = ResolvedVenueLoader.Load(
+        "small-ground/venue.json", venueLibrary, temporaryTrackTestRoot, fileProbe);
+    var outsideDocument = NewTrack("outside", "Outside", smallVenue);
     string outsideId = outsideDocument.AddInstance("polyline.json", firstDefinition);
     outsideDocument.MoveInstance(outsideId, new Point2Dto { X = 50, Y = 50 });
     TrackCompilationResult outsideCompilation = TrackCompiler.Compile(outsideDocument);
     AssertTrue(outsideCompilation.CanExport && outsideCompilation.Warnings.Count > 0,
         "geometry outside area is a non-blocking warning");
 
-    var duplicateDocument = TrackProjectDocument.CreateNew("duplicate", "Duplicate");
+    var duplicateDocument = NewTrack("duplicate", "Duplicate");
     string duplicateSource = duplicateDocument.AddInstance("polyline.json", firstDefinition);
     duplicateDocument.SetTransform(duplicateSource, new Point2Dto { X = 4, Y = -2 }, 35,
         new Point2Dto { X = -1.25f, Y = 0.75f });
@@ -977,15 +1135,16 @@ try
         "one completed transform creates one history entry");
     AssertTrue(history.IsDirty && history.CanUndo, "an edit after Save is dirty and undoable");
     TrackProjectLoadResult undoneHistory = TrackProjectStore.RestoreHistorySnapshot(
-        history.Undo()!, exerciseLibrary);
+        history.Undo()!, exerciseLibrary, resolvedVenue);
     AssertEqual(-1.0f, undoneHistory.Project.Instances[1].Position.Y,
         "Undo restores the persisted project snapshot");
     AssertTrue(!history.IsDirty, "Undo back to the saved revision returns the document to clean");
     AssertEqual(9.0f, TrackProjectStore.RestoreHistorySnapshot(
-        history.Redo()!, exerciseLibrary).Project.Instances[1].Position.Y,
+        history.Redo()!, exerciseLibrary, resolvedVenue).Project.Instances[1].Position.Y,
         "Redo restores the later persisted state");
     history.Undo();
-    duplicateDocument = new TrackProjectDocument(undoneHistory.Project, undoneHistory.Definitions);
+    duplicateDocument = new TrackProjectDocument(
+        undoneHistory.Project, undoneHistory.Venue, undoneHistory.Definitions);
     duplicateDocument.Project.Track.Name = "Branched edit";
     history.Commit(TrackProjectStore.SerializeHistorySnapshot(duplicateDocument.Project), "Rename track");
     AssertTrue(!history.CanRedo, "a new edit after Undo clears Redo history");
@@ -996,7 +1155,7 @@ try
         "history snapshots contain no editor-only lock state");
 
     var unresolvedDuplicateDocument = new TrackProjectDocument(
-        unresolved.Project, unresolved.Definitions);
+        unresolved.Project, unresolved.Venue, unresolved.Definitions);
     string unresolvedDuplicate = unresolvedDuplicateDocument.DuplicateInstance(
         "exercise-instance-001", new Point2Dto { X = 1, Y = 1 })!;
     AssertEqual(3, unresolvedDuplicateDocument.Project.Instances.Length,
@@ -1017,7 +1176,7 @@ try
         routingJson, "routing-only.json");
     AssertEqual(0, routingReload.Cones.Length,
         "Exercise Definition with zero cones remains valid when trajectory is valid");
-    var routingDocument = TrackProjectDocument.CreateNew("routing-track", "Routing Track");
+    var routingDocument = NewTrack("routing-track", "Routing Track");
     routingDocument.AddInstance("polyline.json", routingReload);
     routingDocument.AddInstance("polyline.json", routingReload);
     routingDocument.MoveInstance("exercise-instance-002", new Point2Dto { X = 8, Y = 4 });
@@ -1043,6 +1202,29 @@ finally
     }
 }
 
+{
+    var projectExerciseLibrary = new SandboxedJsonLibrary(
+        Path.Combine(ProjectDirectory, "exercises"), "Exercise library", "res://exercises/");
+    var projectVenueLibrary = new SandboxedJsonLibrary(
+        Path.Combine(ProjectDirectory, "venues"), "Venue library", "res://venues/");
+    Func<string, VenueResourceKind, bool> projectFileProbe =
+        ResolvedVenueLoader.CreateFilesystemProbe(ProjectDirectory);
+    foreach (string projectPath in Directory.GetFiles(
+        Path.Combine(ProjectDirectory, "tracks", "Test"), "*.json", SearchOption.TopDirectoryOnly))
+    {
+        TrackProjectLoadResult loadedProject = TrackProjectStore.LoadFromFile(
+            projectPath, projectExerciseLibrary, projectVenueLibrary, ProjectDirectory, projectFileProbe);
+        AssertEqual(3, loadedProject.Project.FormatVersion,
+            $"repository Track Project '{Path.GetFileName(projectPath)}' opens as strict v3");
+        AssertTrue(!File.ReadAllText(projectPath).Contains("\"area\"", StringComparison.Ordinal),
+            $"repository Track Project '{Path.GetFileName(projectPath)}' has no persisted area");
+        TrackCompilationResult compiledProject = TrackCompiler.Compile(new TrackProjectDocument(
+            loadedProject.Project, loadedProject.Venue, loadedProject.Definitions));
+        AssertTrue(compiledProject.CanExport && compiledProject.Snapshot!.FormatVersion == 4,
+            $"repository Track Project '{Path.GetFileName(projectPath)}' compiles to exported Track v4");
+    }
+}
+
 string temporaryVenueRoot = Path.Combine(Path.GetTempPath(), $"venue-editor-tests-{Guid.NewGuid():N}");
 try
 {
@@ -1065,7 +1247,27 @@ try
     AssertEqual(100.0f, venue.Definition.Area.Length, "new Venue length defaults to 100 metres");
     AssertTrue(!venue.Definition.Panorama.Enabled && venue.Definition.Panorama.EnergyMultiplier == 1.0f,
         "new Venue panorama uses documented defaults");
-    VenueObjectInstanceDto barrier = venue.AddObject("res://Assets/barrier.tscn");
+    var measuredVisuals = new VenueAssetVisualBounds[]
+    {
+        new(
+            new Aabb(new Vector3(-1, -0.5f, -2), new Vector3(2, 1, 4)),
+            Transform3D.Identity),
+        new(
+            new Aabb(Vector3.Zero, new Vector3(1, 2, 3)),
+            new Transform3D(Basis.Identity, new Vector3(4, 0, -1))),
+    };
+    FootprintDto measuredFootprint = VenueAssetFootprint.Calculate(
+        measuredVisuals, "res://Assets/barrier.tscn");
+    AssertEqual(6.0f, measuredFootprint.Width,
+        "Venue asset footprint combines transformed visual AABBs on local X");
+    AssertEqual(4.0f, measuredFootprint.Length,
+        "Venue asset footprint combines transformed visual AABBs on local Z");
+    VenueObjectInstanceDto barrier = venue.AddObject(
+        "res://Assets/barrier.tscn", measuredFootprint);
+    AssertEqual(6.0f, barrier.Footprint.Width,
+        "new Venue object persists the measured asset width instead of 1 metre");
+    AssertEqual(4.0f, barrier.Footprint.Length,
+        "new Venue object persists the measured asset length instead of 1 metre");
     barrier.Position = new Point2Dto { X = 3, Y = -2 };
     barrier.RotationDeg = 90;
     barrier.Scale = new Scale3Dto { X = 2, Y = 3, Z = 4 };

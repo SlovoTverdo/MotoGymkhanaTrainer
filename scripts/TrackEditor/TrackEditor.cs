@@ -4,13 +4,14 @@ using MotoGymkhanaTrainer.Tracks;
 
 namespace MotoGymkhanaTrainer.TrackEditor;
 
-/// <summary>Separate application scene for authoring Track Project v2 files.</summary>
+/// <summary>Separate application scene for authoring Venue-bound Track Project v3 files.</summary>
 public partial class TrackEditor : Control
 {
     private enum PendingAction { None, New, OpenDialog, OpenLibrary }
 
-    private TrackProjectDocument _document = TrackProjectDocument.CreateNew();
+    private TrackProjectDocument _document = null!;
     private SandboxedJsonLibrary? _exerciseLibrary;
+    private SandboxedJsonLibrary? _venueLibrary;
     private SandboxedJsonLibrary? _trackLibrary;
     private SandboxedJsonLibrary? _exportLibrary;
     private TrackEditorCanvas? _canvas;
@@ -19,8 +20,7 @@ public partial class TrackEditor : Control
     private ItemList? _routeList;
     private LineEdit? _trackId;
     private LineEdit? _trackName;
-    private SpinBox? _areaWidth;
-    private SpinBox? _areaLength;
+    private Label? _venueSummary;
     private Label? _selectionTitle;
     private Label? _exercisePath;
     private SpinBox? _positionX;
@@ -60,6 +60,11 @@ public partial class TrackEditor : Control
     private ConfirmationDialog? _unsavedDialog;
     private ConfirmationDialog? _newFolderDialog;
     private ConfirmationDialog? _removeOrphanedDialog;
+    private ConfirmationDialog? _newTrackDialog;
+    private AcceptDialog? _noVenuesDialog;
+    private OptionButton? _newTrackVenue;
+    private LineEdit? _newTrackId;
+    private LineEdit? _newTrackName;
     private LineEdit? _newFolderName;
     private string? _currentFilePath;
     private string _selectedExercisePath = string.Empty;
@@ -78,13 +83,15 @@ public partial class TrackEditor : Control
     {
         _exerciseLibrary = new SandboxedJsonLibrary(
             ProjectSettings.GlobalizePath("res://exercises"), "Exercise library", "res://exercises/");
+        _venueLibrary = new SandboxedJsonLibrary(
+            ProjectSettings.GlobalizePath("res://venues"), "Venue library", "res://venues/");
         _trackLibrary = new SandboxedJsonLibrary(
             ProjectSettings.GlobalizePath("res://tracks"), "Track Project library", "res://tracks/");
         _exportLibrary = new SandboxedJsonLibrary(
             ProjectSettings.GlobalizePath("res://exports/tracks"), "Track export library", "res://exports/tracks/");
         BuildUi();
-        ReplaceDocument(TrackProjectDocument.CreateNew(), null, dirty: true);
-        SetStatus("New Track Project created.", false);
+        SetDocumentUiEnabled(false);
+        SetStatus("Create a New Track by selecting a Venue, or open Track Project v3.", false);
     }
 
     public override void _UnhandledKeyInput(InputEvent @event)
@@ -206,6 +213,7 @@ public partial class TrackEditor : Control
         toolbar.AddChild(CreateButton("OpenButton", "Open", () => RequestAction(PendingAction.OpenDialog)));
         toolbar.AddChild(CreateButton("SaveButton", "Save", Save));
         toolbar.AddChild(CreateButton("SaveAsButton", "Save As", ShowSaveAs));
+        toolbar.AddChild(CreateButton("ReloadVenueButton", "Reload Venue", ReloadVenue));
         toolbar.AddChild(new VSeparator());
         _undoButton = CreateButton("UndoButton", "Undo", () => Undo());
         _redoButton = CreateButton("RedoButton", "Redo", () => Redo());
@@ -288,14 +296,8 @@ public partial class TrackEditor : Control
         WireEditTransaction(_trackName, "Edit track name");
         panel.AddChild(Row("Id", _trackId));
         panel.AddChild(Row("Name", _trackName));
-        _areaWidth = Spin("AreaWidth", 1, 10000, 1, " m");
-        _areaLength = Spin("AreaLength", 1, 10000, 1, " m");
-        _areaWidth.ValueChanged += _ => OnAreaEdited();
-        _areaLength.ValueChanged += _ => OnAreaEdited();
-        WireEditTransaction(_areaWidth.GetLineEdit(), "Edit area width");
-        WireEditTransaction(_areaLength.GetLineEdit(), "Edit area length");
-        panel.AddChild(Row("Area width", _areaWidth));
-        panel.AddChild(Row("Area length", _areaLength));
+        _venueSummary = new Label { Name = "VenueSummary", AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        panel.AddChild(Row("Venue", _venueSummary));
 
         panel.AddChild(Section("Selected instance"));
         _selectionTitle = new Label { Name = "SelectionTitle", Text = "None" };
@@ -448,11 +450,40 @@ public partial class TrackEditor : Control
         };
         _removeOrphanedDialog.Confirmed += RemoveOrphanedOverrides;
         AddChild(_removeOrphanedDialog);
+
+        _newTrackVenue = new OptionButton { Name = "NewTrackVenue", SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        _newTrackId = new LineEdit { Name = "NewTrackId", Text = "new-track" };
+        _newTrackName = new LineEdit { Name = "NewTrackName", Text = "New Track" };
+        var newTrackFields = new VBoxContainer { Name = "NewTrackFields" };
+        newTrackFields.AddChild(Row("1. Venue", _newTrackVenue));
+        newTrackFields.AddChild(Row("2. Track ID", _newTrackId));
+        newTrackFields.AddChild(Row("3. Track Name", _newTrackName));
+        _newTrackDialog = new ConfirmationDialog
+        {
+            Name = "NewTrackDialog",
+            Title = "New Track Project v3",
+            DialogText = "Select a Venue before entering Track metadata.",
+            OkButtonText = "Create Track",
+            Size = new Vector2I(620, 270),
+        };
+        _newTrackDialog.AddChild(newTrackFields);
+        _newTrackDialog.Confirmed += CreateNewTrack;
+        AddChild(_newTrackDialog);
+
+        _noVenuesDialog = new AcceptDialog
+        {
+            Name = "NoVenuesDialog",
+            Title = "Venue library is empty",
+            DialogText = "New Track cannot be created without a Venue Definition. Create one in Venue Editor, then try again.",
+            Size = new Vector2I(620, 180),
+        };
+        AddChild(_noVenuesDialog);
     }
 
     private void RefreshExerciseTree()
     {
         FillTree(_exerciseTree!, "exercises", _exerciseLibrary!);
+        if (_document is null) return;
         if (_document.Project.Instances.Length == 0)
         {
             RefreshCompilation();
@@ -463,9 +494,9 @@ public partial class TrackEditor : Control
         {
             // Refresh is also the explicit dependency reload operation. Only the
             // runtime cache changes; project transforms/order and dirty state do not.
-            string json = TrackProjectStore.Serialize(_document.Project, _exerciseLibrary!);
-            TrackProjectLoadResult reloaded = TrackProjectStore.LoadFromJson(
-                json, "current Track Project", _exerciseLibrary!);
+            string json = TrackProjectStore.SerializeHistorySnapshot(_document.Project);
+            TrackProjectLoadResult reloaded = TrackProjectStore.RestoreHistorySnapshot(
+                json, _exerciseLibrary!, _document.Venue);
             _document.ReplaceDefinitions(reloaded.Definitions);
             foreach (string warning in reloaded.Warnings) GD.PushWarning(warning);
             RefreshCompilation();
@@ -517,6 +548,8 @@ public partial class TrackEditor : Control
     {
         try
         {
+            if (_document is null)
+                throw new InvalidOperationException("Create or open a Track before adding Exercises.");
             if (string.IsNullOrWhiteSpace(relativePath))
                 throw new InvalidOperationException("Select an Exercise JSON first.");
             string file = _exerciseLibrary!.ResolveExistingJson(relativePath);
@@ -597,8 +630,7 @@ public partial class TrackEditor : Control
         _pendingAction = PendingAction.None;
         if (action == PendingAction.New)
         {
-            ReplaceDocument(TrackProjectDocument.CreateNew(), null, dirty: true);
-            SetStatus("New Track Project created.", false);
+            ShowNewTrackDialog();
         }
         else if (action == PendingAction.OpenDialog)
         {
@@ -612,13 +644,104 @@ public partial class TrackEditor : Control
         }
     }
 
+    private void ShowNewTrackDialog()
+    {
+        _newTrackVenue!.Clear();
+        foreach (JsonLibraryEntry entry in _venueLibrary!.EnumerateEntries().Where(item => !item.IsDirectory))
+        {
+            _newTrackVenue.AddItem(entry.RelativePath.Replace('\\', '/'));
+            _newTrackVenue.SetItemMetadata(_newTrackVenue.ItemCount - 1, entry.RelativePath.Replace('\\', '/'));
+        }
+
+        if (_newTrackVenue.ItemCount == 0)
+        {
+            _noVenuesDialog!.PopupCentered();
+            SetStatus("New Track blocked: res://venues/ contains no Venue Definition JSON. Use Venue Editor first.", true);
+            return;
+        }
+
+        _newTrackId!.Text = "new-track";
+        _newTrackName!.Text = "New Track";
+        _newTrackDialog!.PopupCentered();
+    }
+
+    private void CreateNewTrack()
+    {
+        try
+        {
+            if (_newTrackVenue!.Selected < 0) throw new InvalidOperationException("Select a Venue Definition first.");
+            string venuePath = _newTrackVenue.GetItemMetadata(_newTrackVenue.Selected).AsString();
+            string id = _newTrackId!.Text.Trim();
+            string name = _newTrackName!.Text.Trim();
+            if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(name))
+                throw new InvalidDataException("Track ID and Track Name must be non-empty.");
+
+            // Resolve the complete candidate before replacing the current document.
+            ResolvedVenue venue = ResolvedVenueLoader.Load(
+                venuePath, _venueLibrary!, ProjectRoot(), ProbeVenueResource);
+            ReplaceDocument(TrackProjectDocument.CreateNew(id, name, venuePath, venue), null, dirty: true);
+            foreach (string warning in venue.Warnings) GD.PushWarning(warning);
+            SetStatus($"New Track Project created for Venue '{venue.Definition.Venue.Name}'.", false);
+        }
+        catch (Exception exception)
+        {
+            SetStatus($"New Track failed: {exception.Message}", true);
+            GD.PushError($"Unable to create Track Project: {exception}");
+        }
+    }
+
+    private void ReloadVenue()
+    {
+        if (_document is null)
+        {
+            SetStatus("Open or create a Track Project before reloading Venue.", true);
+            return;
+        }
+
+        try
+        {
+            bool wasDirty = _dirty;
+            ResolvedVenue candidate = ResolvedVenueLoader.Load(
+                _document.Project.VenuePath, _venueLibrary!, ProjectRoot(), ProbeVenueResource);
+            _document.ReplaceVenue(candidate);
+            _canvas!.SetDocument(_document, resetView: false);
+            RefreshCompilation();
+            SynchronizeAllUi();
+            foreach (string warning in candidate.Warnings) GD.PushWarning(warning);
+            UpdateDirtyIndicator();
+            if (_dirty != wasDirty)
+                GD.PushError("Reload Venue unexpectedly changed Track dirty state.");
+            SetStatus($"Reloaded Venue '{candidate.Definition.Venue.Name}' without changing Track Project.", false);
+        }
+        catch (Exception exception)
+        {
+            // The live dependency is replaced only after a fully successful load.
+            SetStatus($"Reload Venue failed; previous Venue preserved: {exception.Message}", true);
+            GD.PushError($"Unable to reload Venue: {exception}");
+        }
+    }
+
+    private static string ProjectRoot() => ProjectSettings.GlobalizePath("res://");
+
+    private static bool ProbeVenueResource(string resourcePath, VenueResourceKind kind)
+    {
+        return kind switch
+        {
+            VenueResourceKind.PackedScene => ResourceLoader.Load<PackedScene>(resourcePath) is not null,
+            VenueResourceKind.Texture2D => ResourceLoader.Load<Texture2D>(resourcePath) is not null,
+            _ => false,
+        };
+    }
+
     private void Save()
     {
+        if (_document is null) { SetStatus("No Track Project is open.", true); return; }
         if (_currentFilePath is null) ShowSaveAs(); else SaveProject(_currentFilePath);
     }
 
     private void ShowSaveAs()
     {
+        if (_document is null) { SetStatus("No Track Project is open.", true); return; }
         try
         {
             _saveDialog!.CurrentDir = _trackLibrary!.ResolveFolder(_selectedTrackFolder);
@@ -636,7 +759,8 @@ public partial class TrackEditor : Control
             string directory = Path.GetDirectoryName(requested) ?? _trackLibrary!.RootPath;
             string target = _trackLibrary!.ResolveSaveJson(
                 _trackLibrary.ToRelative(directory), Path.GetFileName(requested));
-            TrackProjectStore.SaveToFile(_document.Project, target, _exerciseLibrary!);
+            TrackProjectStore.SaveToFile(
+                _document.Project, target, _exerciseLibrary!, _venueLibrary!);
             _currentFilePath = target;
             _history.MarkSaved();
             UpdateDirtyIndicator();
@@ -657,8 +781,12 @@ public partial class TrackEditor : Control
             string file = _trackLibrary!.ResolveExistingJson(ToFilesystemPath(path));
             // The candidate root and every safe dependency path are processed before
             // replacing the live document. Bad dependencies become placeholders.
-            TrackProjectLoadResult loaded = TrackProjectStore.LoadFromFile(file, _exerciseLibrary!);
-            ReplaceDocument(new TrackProjectDocument(loaded.Project, loaded.Definitions), file, dirty: false);
+            TrackProjectLoadResult loaded = TrackProjectStore.LoadFromFile(
+                file, _exerciseLibrary!, _venueLibrary!, ProjectRoot(), ProbeVenueResource);
+            ReplaceDocument(
+                new TrackProjectDocument(loaded.Project, loaded.Venue, loaded.Definitions),
+                file,
+                dirty: false);
             foreach (string warning in loaded.Warnings) GD.PushWarning(warning);
             SetStatus(loaded.Warnings.Count == 0
                 ? $"Loaded Track Project from '{file}'."
@@ -674,6 +802,7 @@ public partial class TrackEditor : Control
     private void ReplaceDocument(TrackProjectDocument document, string? filePath, bool dirty)
     {
         _document = document;
+        SetDocumentUiEnabled(true);
         _currentFilePath = filePath;
         _activeTransactionDescription = null;
         _keyboardTransformKey = null;
@@ -686,20 +815,19 @@ public partial class TrackEditor : Control
         UpdateDirtyIndicator();
     }
 
+    private void SetDocumentUiEnabled(bool enabled)
+    {
+        if (_trackId is not null) _trackId.Editable = enabled;
+        if (_trackName is not null) _trackName.Editable = enabled;
+        if (_canvas is not null) _canvas.MouseFilter = enabled ? MouseFilterEnum.Stop : MouseFilterEnum.Ignore;
+    }
+
     private void OnMetadataEdited()
     {
         if (_updatingUi) return;
         _document.Project.Track.Id = _trackId!.Text.Trim();
         _document.Project.Track.Name = _trackName!.Text.Trim();
         MarkChanged("Edit track metadata");
-    }
-
-    private void OnAreaEdited()
-    {
-        if (_updatingUi) return;
-        _document.Project.Area.Width = (float)_areaWidth!.Value;
-        _document.Project.Area.Length = (float)_areaLength!.Value;
-        MarkChanged("Edit track area");
     }
 
     private void OnTransformEdited()
@@ -844,6 +972,11 @@ public partial class TrackEditor : Control
 
     private void ShowRemoveOrphanedConfirmation()
     {
+        if (_document is null)
+        {
+            SetStatus("Create or open a Track first.", true);
+            return;
+        }
         int count = _document.GetOrphanedTransitionOverrides().Count;
         if (count == 0)
         {
@@ -902,8 +1035,9 @@ public partial class TrackEditor : Control
         _updatingUi = true;
         _trackId!.Text = _document.Project.Track.Id;
         _trackName!.Text = _document.Project.Track.Name;
-        _areaWidth!.Value = _document.Project.Area.Width;
-        _areaLength!.Value = _document.Project.Area.Length;
+        _venueSummary!.Text =
+            $"{_document.Venue.Definition.Venue.Name}\n{_document.Project.VenuePath}\n" +
+            $"{_document.Venue.Definition.Area.Width:0.###} × {_document.Venue.Definition.Area.Length:0.###} m (read-only)";
         _updatingUi = false;
         SynchronizeRouteList();
         SynchronizeSelectionUi();
@@ -1063,8 +1197,8 @@ public partial class TrackEditor : Control
         string? selectedInstanceId = _canvas?.SelectedInstanceId;
         string? selectedTransitionId = _canvas?.SelectedTransitionId;
         TrackProjectLoadResult restored = TrackProjectStore.RestoreHistorySnapshot(
-            snapshot, _exerciseLibrary!);
-        _document = new TrackProjectDocument(restored.Project, restored.Definitions);
+            snapshot, _exerciseLibrary!, _document.Venue);
+        _document = new TrackProjectDocument(restored.Project, restored.Venue, restored.Definitions);
         _canvas!.SetDocument(_document, resetView: false);
 
         // Locks are editor state. They survive history navigation only while the
@@ -1185,6 +1319,14 @@ public partial class TrackEditor : Control
 
     private void RefreshCompilation()
     {
+        if (_document is null)
+        {
+            _compilation = new TrackCompilationResult();
+            _canvas?.SetTransitionPreview([], visible: false);
+            if (_validationLabel is not null)
+                _validationLabel.Text = "[b]Export validation:[/b] Create or open a Track first.";
+            return;
+        }
         _compilation = TrackCompiler.Compile(_document);
         _canvas?.SetTransitionPreview(
             _compilation.Transitions,
@@ -1202,6 +1344,11 @@ public partial class TrackEditor : Control
 
     private void ShowExportDialog()
     {
+        if (_document is null)
+        {
+            SetStatus("Create or open a Track before export.", true);
+            return;
+        }
         RefreshCompilation();
         if (!_compilation.CanExport)
         {
@@ -1226,6 +1373,8 @@ public partial class TrackEditor : Control
     {
         try
         {
+            if (_document is null)
+                throw new InvalidOperationException("Create or open a Track before export.");
             RefreshCompilation();
             if (!_compilation.CanExport || _compilation.Snapshot is null)
                 throw new InvalidDataException($"Export blocked by {_compilation.Errors.Count} validation error(s).");
@@ -1252,6 +1401,11 @@ public partial class TrackEditor : Control
     {
         try
         {
+            if (_document is null)
+            {
+                SetStatus("Create or open a Track before Viewer preview.", true);
+                return;
+            }
             RefreshCompilation();
             if (!_compilation.CanExport || _compilation.Snapshot is null)
             {

@@ -1,9 +1,14 @@
 {
-  "formatVersion": 3,
+  "formatVersion": 4,
 
   "track": {
     "id": "basic-demo",
     "name": "Basic Demo Track"
+  },
+
+  "venue": {
+    "id": "basic-demo-venue",
+    "name": "Basic Demo Venue"
   },
 
   "area": {
@@ -11,10 +16,20 @@
     "length": 100.0
   },
 
+  "panorama": {
+    "enabled": false,
+    "texturePath": "",
+    "rotationDeg": 0.0,
+    "energyMultiplier": 1.0
+  },
+
+  "venueObjects": [],
+
   "elements": [
     {
       "instanceId": "element-01",
       "definitionId": "demo-slalom",
+      "exercisePath": "demo/slalom.json",
 
       "position": {
         "x": 15.0,

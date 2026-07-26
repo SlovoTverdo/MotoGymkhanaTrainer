@@ -1,5 +1,14 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="PackedScene" uid="uid://do2nooy8yq4ce" path="res://venues/shared_assets/models/Fence_Post.glb" id="1_fence_post"]
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_fence_post"]
+size = Vector3(0.2, 2.44, 0.2)
+
 [node name="FencePost" instance=ExtResource("1_fence_post")]
+
+[node name="FencePostCollision" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="FencePostCollision"]
+position = Vector3(0, 1.22, 0)
+shape = SubResource("BoxShape3D_fence_post")

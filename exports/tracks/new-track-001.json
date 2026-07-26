@@ -1,0 +1,4996 @@
+{
+  "formatVersion": 4,
+  "track": {
+    "id": "new-track-001",
+    "name": "New Track"
+  },
+  "venue": {
+    "id": "default-venue",
+    "name": "\u041F\u043B\u043E\u0449\u0430\u0434\u043A\u0430 \u043D\u0430 \u041B\u0438\u0442\u0435\u0439\u043D\u043E\u0439"
+  },
+  "area": {
+    "width": 100.05,
+    "length": 40.05
+  },
+  "panorama": {
+    "enabled": false,
+    "texturePath": "",
+    "rotationDeg": 0,
+    "energyMultiplier": 1
+  },
+  "venueObjects": [
+    {
+      "id": "venue--object--venue-object-001",
+      "name": "house_reference_model",
+      "assetPath": "res://venues/shared_assets/scenes/house_reference_model.tscn",
+      "position": {
+        "x": 31,
+        "y": 11
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 1.01,
+        "y": 1.01,
+        "z": 1.01
+      },
+      "footprint": {
+        "width": 11.51,
+        "length": 8.01
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--venue-object-002",
+      "name": "overpass_model",
+      "assetPath": "res://venues/shared_assets/scenes/overpass_model.tscn",
+      "position": {
+        "x": 1.5,
+        "y": 17.75
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 11.166206,
+        "length": 2.5
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-001",
+      "name": "Perimeter post south 01",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -49.925,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-002",
+      "name": "Perimeter post north 01",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -49.925,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-003",
+      "name": "Perimeter post south 02",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -46.988235,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-004",
+      "name": "Perimeter post north 02",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -46.988235,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-005",
+      "name": "Perimeter post south 03",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -44.05147,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-006",
+      "name": "Perimeter post north 03",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -44.05147,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-007",
+      "name": "Perimeter post south 04",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -41.114704,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-008",
+      "name": "Perimeter post north 04",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -41.114704,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-009",
+      "name": "Perimeter post south 05",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -38.17794,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-010",
+      "name": "Perimeter post north 05",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -38.17794,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-011",
+      "name": "Perimeter post south 06",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -35.241177,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-012",
+      "name": "Perimeter post north 06",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -35.241177,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-013",
+      "name": "Perimeter post south 07",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -32.304413,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-014",
+      "name": "Perimeter post north 07",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -32.304413,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-015",
+      "name": "Perimeter post south 08",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -29.367647,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-016",
+      "name": "Perimeter post north 08",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -29.367647,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-017",
+      "name": "Perimeter post south 09",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -26.430882,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-018",
+      "name": "Perimeter post north 09",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -26.430882,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-019",
+      "name": "Perimeter post south 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -23.494118,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-020",
+      "name": "Perimeter post north 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -23.494118,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-021",
+      "name": "Perimeter post south 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -20.557352,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-022",
+      "name": "Perimeter post north 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -20.557352,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-023",
+      "name": "Perimeter post south 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -17.620588,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-024",
+      "name": "Perimeter post north 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -17.620588,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-025",
+      "name": "Perimeter post south 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -14.683824,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-026",
+      "name": "Perimeter post north 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -14.683824,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-027",
+      "name": "Perimeter post south 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -11.747059,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-028",
+      "name": "Perimeter post north 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -11.747059,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-029",
+      "name": "Perimeter post south 15",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -8.810294,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-030",
+      "name": "Perimeter post north 15",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -8.810294,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-031",
+      "name": "Perimeter post south 16",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -5.873529,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-032",
+      "name": "Perimeter post north 16",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -5.873529,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-033",
+      "name": "Perimeter post south 17",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -2.936765,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-034",
+      "name": "Perimeter post north 17",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -2.936765,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-035",
+      "name": "Perimeter post south 18",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 0,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-036",
+      "name": "Perimeter post north 18",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 0,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-037",
+      "name": "Perimeter post south 19",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 2.936765,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-038",
+      "name": "Perimeter post north 19",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 2.936765,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-039",
+      "name": "Perimeter post south 20",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 5.873529,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-040",
+      "name": "Perimeter post north 20",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 5.873529,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-041",
+      "name": "Perimeter post south 21",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 8.810294,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-042",
+      "name": "Perimeter post north 21",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 8.810294,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-043",
+      "name": "Perimeter post south 22",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 11.747059,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-044",
+      "name": "Perimeter post north 22",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 11.747059,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-045",
+      "name": "Perimeter post south 23",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 14.683824,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-046",
+      "name": "Perimeter post north 23",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 14.683824,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-047",
+      "name": "Perimeter post south 24",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 17.620588,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-048",
+      "name": "Perimeter post north 24",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 17.620588,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-049",
+      "name": "Perimeter post south 25",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 20.557352,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-050",
+      "name": "Perimeter post north 25",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 20.557352,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-051",
+      "name": "Perimeter post south 26",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 23.494118,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-052",
+      "name": "Perimeter post north 26",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 23.494118,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-053",
+      "name": "Perimeter post south 27",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 26.430882,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-054",
+      "name": "Perimeter post north 27",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 26.430882,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-055",
+      "name": "Perimeter post south 28",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 29.367647,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-056",
+      "name": "Perimeter post north 28",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 29.367647,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-057",
+      "name": "Perimeter post south 29",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 32.304413,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-058",
+      "name": "Perimeter post north 29",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 32.304413,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-059",
+      "name": "Perimeter post south 30",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 35.241177,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-060",
+      "name": "Perimeter post north 30",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 35.241177,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-061",
+      "name": "Perimeter post south 31",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 38.17794,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-062",
+      "name": "Perimeter post north 31",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 38.17794,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-063",
+      "name": "Perimeter post south 32",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 41.114704,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-064",
+      "name": "Perimeter post north 32",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 41.114704,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-065",
+      "name": "Perimeter post south 33",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 44.05147,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-066",
+      "name": "Perimeter post north 33",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 44.05147,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-067",
+      "name": "Perimeter post south 34",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 46.988235,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-068",
+      "name": "Perimeter post north 34",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 46.988235,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-069",
+      "name": "Perimeter post south 35",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 49.925,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-070",
+      "name": "Perimeter post north 35",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 49.925,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-071",
+      "name": "Perimeter post west 02",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -49.925,
+        "y": -17.078571
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-072",
+      "name": "Perimeter post east 02",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 49.925,
+        "y": -17.078571
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-073",
+      "name": "Perimeter post west 03",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -49.925,
+        "y": -14.232143
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-074",
+      "name": "Perimeter post east 03",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 49.925,
+        "y": -14.232143
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-075",
+      "name": "Perimeter post west 04",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -49.925,
+        "y": -11.385714
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-076",
+      "name": "Perimeter post east 04",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 49.925,
+        "y": -11.385714
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-077",
+      "name": "Perimeter post west 05",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -49.925,
+        "y": -8.539286
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-078",
+      "name": "Perimeter post east 05",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 49.925,
+        "y": -8.539286
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-079",
+      "name": "Perimeter post west 06",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -49.925,
+        "y": -5.692857
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-080",
+      "name": "Perimeter post east 06",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 49.925,
+        "y": -5.692857
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-081",
+      "name": "Perimeter post west 07",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -49.925,
+        "y": -2.846429
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-082",
+      "name": "Perimeter post east 07",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 49.925,
+        "y": -2.846429
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-083",
+      "name": "Perimeter post west 08",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -49.925,
+        "y": 0
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-084",
+      "name": "Perimeter post east 08",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 49.925,
+        "y": 0
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-085",
+      "name": "Perimeter post west 09",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -49.925,
+        "y": 2.846429
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-086",
+      "name": "Perimeter post east 09",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 49.925,
+        "y": 2.846429
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-087",
+      "name": "Perimeter post west 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -49.925,
+        "y": 5.692857
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-088",
+      "name": "Perimeter post east 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 49.925,
+        "y": 5.692857
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-089",
+      "name": "Perimeter post west 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -49.925,
+        "y": 8.539286
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-090",
+      "name": "Perimeter post east 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 49.925,
+        "y": 8.539286
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-091",
+      "name": "Perimeter post west 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -49.925,
+        "y": 11.385714
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-092",
+      "name": "Perimeter post east 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 49.925,
+        "y": 11.385714
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-093",
+      "name": "Perimeter post west 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -49.925,
+        "y": 14.232143
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-094",
+      "name": "Perimeter post east 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 49.925,
+        "y": 14.232143
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-095",
+      "name": "Perimeter post west 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -49.925,
+        "y": 17.078571
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-post-096",
+      "name": "Perimeter post east 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 49.925,
+        "y": 17.078571
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.2,
+        "length": 0.2
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-001",
+      "name": "Perimeter section south 01",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -48.45662,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-002",
+      "name": "Perimeter section north 01",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -48.45662,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-003",
+      "name": "Perimeter section south 02",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -45.51985,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-004",
+      "name": "Perimeter section north 02",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -45.51985,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-005",
+      "name": "Perimeter section south 03",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -42.583088,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-006",
+      "name": "Perimeter section north 03",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -42.583088,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-007",
+      "name": "Perimeter section south 04",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -39.646324,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-008",
+      "name": "Perimeter section north 04",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -39.646324,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-009",
+      "name": "Perimeter section south 05",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -36.70956,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-010",
+      "name": "Perimeter section north 05",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -36.70956,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-011",
+      "name": "Perimeter section south 06",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -33.772793,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-012",
+      "name": "Perimeter section north 06",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -33.772793,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-013",
+      "name": "Perimeter section south 07",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -30.83603,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-014",
+      "name": "Perimeter section north 07",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -30.83603,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-015",
+      "name": "Perimeter section south 08",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -27.899265,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-016",
+      "name": "Perimeter section north 08",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -27.899265,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-017",
+      "name": "Perimeter section south 09",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -24.9625,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-018",
+      "name": "Perimeter section north 09",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -24.9625,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-019",
+      "name": "Perimeter section south 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -22.025736,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-020",
+      "name": "Perimeter section north 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -22.025736,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-021",
+      "name": "Perimeter section south 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.08897,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-022",
+      "name": "Perimeter section north 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.08897,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-023",
+      "name": "Perimeter section south 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -16.152206,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-024",
+      "name": "Perimeter section north 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -16.152206,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-025",
+      "name": "Perimeter section south 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -13.215441,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-026",
+      "name": "Perimeter section north 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -13.215441,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-027",
+      "name": "Perimeter section south 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -10.278676,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-028",
+      "name": "Perimeter section north 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -10.278676,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-029",
+      "name": "Perimeter section south 15",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -7.341912,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-030",
+      "name": "Perimeter section north 15",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -7.341912,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-031",
+      "name": "Perimeter section south 16",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -4.405147,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-032",
+      "name": "Perimeter section north 16",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -4.405147,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-033",
+      "name": "Perimeter section south 17",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -1.468382,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-034",
+      "name": "Perimeter section north 17",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -1.468382,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-035",
+      "name": "Perimeter section south 18",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 1.468382,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-036",
+      "name": "Perimeter section north 18",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 1.468382,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-037",
+      "name": "Perimeter section south 19",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 4.405147,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-038",
+      "name": "Perimeter section north 19",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 4.405147,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-039",
+      "name": "Perimeter section south 20",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 7.341912,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-040",
+      "name": "Perimeter section north 20",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 7.341912,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-041",
+      "name": "Perimeter section south 21",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 10.278676,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-042",
+      "name": "Perimeter section north 21",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 10.278676,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-043",
+      "name": "Perimeter section south 22",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 13.215441,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-044",
+      "name": "Perimeter section north 22",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 13.215441,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-045",
+      "name": "Perimeter section south 23",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 16.152206,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-046",
+      "name": "Perimeter section north 23",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 16.152206,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-047",
+      "name": "Perimeter section south 24",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.08897,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-048",
+      "name": "Perimeter section north 24",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.08897,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-049",
+      "name": "Perimeter section south 25",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 22.025736,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-050",
+      "name": "Perimeter section north 25",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 22.025736,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-051",
+      "name": "Perimeter section south 26",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 24.9625,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-052",
+      "name": "Perimeter section north 26",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 24.9625,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-053",
+      "name": "Perimeter section south 27",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 27.899265,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-054",
+      "name": "Perimeter section north 27",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 27.899265,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-055",
+      "name": "Perimeter section south 28",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 30.83603,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-056",
+      "name": "Perimeter section north 28",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 30.83603,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-057",
+      "name": "Perimeter section south 29",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 33.772793,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-058",
+      "name": "Perimeter section north 29",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 33.772793,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-059",
+      "name": "Perimeter section south 30",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 36.70956,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-060",
+      "name": "Perimeter section north 30",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 36.70956,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-061",
+      "name": "Perimeter section south 31",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 39.646324,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-062",
+      "name": "Perimeter section north 31",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 39.646324,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-063",
+      "name": "Perimeter section south 32",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 42.583088,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-064",
+      "name": "Perimeter section north 32",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 42.583088,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-065",
+      "name": "Perimeter section south 33",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 45.51985,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-066",
+      "name": "Perimeter section north 33",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 45.51985,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-067",
+      "name": "Perimeter section south 34",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 48.45662,
+        "y": -19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-068",
+      "name": "Perimeter section north 34",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 48.45662,
+        "y": 19.925
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.979014,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-069",
+      "name": "Perimeter section west 01",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -49.925,
+        "y": -18.501785
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-070",
+      "name": "Perimeter section east 01",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 49.925,
+        "y": -18.501785
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-071",
+      "name": "Perimeter section west 02",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -49.925,
+        "y": -15.655357
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-072",
+      "name": "Perimeter section east 02",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 49.925,
+        "y": -15.655357
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-073",
+      "name": "Perimeter section west 03",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -49.925,
+        "y": -12.808929
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-074",
+      "name": "Perimeter section east 03",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 49.925,
+        "y": -12.808929
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-075",
+      "name": "Perimeter section west 04",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -49.925,
+        "y": -9.9625
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-076",
+      "name": "Perimeter section east 04",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 49.925,
+        "y": -9.9625
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-077",
+      "name": "Perimeter section west 05",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -49.925,
+        "y": -7.116071
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-078",
+      "name": "Perimeter section east 05",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 49.925,
+        "y": -7.116071
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-079",
+      "name": "Perimeter section west 06",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -49.925,
+        "y": -4.269643
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-080",
+      "name": "Perimeter section east 06",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 49.925,
+        "y": -4.269643
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-081",
+      "name": "Perimeter section west 07",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -49.925,
+        "y": -1.423214
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-082",
+      "name": "Perimeter section east 07",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 49.925,
+        "y": -1.423214
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-083",
+      "name": "Perimeter section west 08",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -49.925,
+        "y": 1.423214
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-084",
+      "name": "Perimeter section east 08",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 49.925,
+        "y": 1.423214
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-085",
+      "name": "Perimeter section west 09",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -49.925,
+        "y": 4.269643
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-086",
+      "name": "Perimeter section east 09",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 49.925,
+        "y": 4.269643
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-087",
+      "name": "Perimeter section west 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -49.925,
+        "y": 7.116071
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-088",
+      "name": "Perimeter section east 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 49.925,
+        "y": 7.116071
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-089",
+      "name": "Perimeter section west 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -49.925,
+        "y": 9.9625
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-090",
+      "name": "Perimeter section east 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 49.925,
+        "y": 9.9625
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-091",
+      "name": "Perimeter section west 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -49.925,
+        "y": 12.808929
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-092",
+      "name": "Perimeter section east 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 49.925,
+        "y": 12.808929
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-093",
+      "name": "Perimeter section west 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -49.925,
+        "y": 15.655357
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-094",
+      "name": "Perimeter section east 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 49.925,
+        "y": 15.655357
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-095",
+      "name": "Perimeter section west 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -49.925,
+        "y": 18.501785
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "id": "venue--object--perimeter-section-096",
+      "name": "Perimeter section east 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 49.925,
+        "y": 18.501785
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.946461,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.7750003,
+        "length": 0.075
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    }
+  ],
+  "elements": [
+    {
+      "instanceId": "exercise-instance-001",
+      "definitionId": "exercise-start",
+      "exercisePath": "Common/exercise-start.json",
+      "position": {
+        "x": -15,
+        "y": -13.5
+      },
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-002",
+      "definitionId": "snake-001",
+      "exercisePath": "\u0413\u0418\u0411\u0414\u0414/snake-001.json",
+      "position": {
+        "x": -15,
+        "y": 2.5
+      },
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-003",
+      "definitionId": "snake-001",
+      "exercisePath": "\u0413\u0418\u0411\u0414\u0414/snake-001.json",
+      "position": {
+        "x": 18.5,
+        "y": 2.5
+      },
+      "rotationDeg": -180,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    }
+  ],
+  "cones": [
+    {
+      "id": "exercise-instance-001--cone-001",
+      "position": {
+        "x": -16,
+        "y": -14.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-001--cone-003",
+      "position": {
+        "x": -14,
+        "y": -12.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-001--cone-004",
+      "position": {
+        "x": -16,
+        "y": -12.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-001--cone-002",
+      "position": {
+        "x": -14,
+        "y": -14.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-001",
+      "position": {
+        "x": -17.5,
+        "y": -5.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-002",
+      "position": {
+        "x": -12.5,
+        "y": -5.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-003",
+      "position": {
+        "x": -12.5,
+        "y": 10.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-004",
+      "position": {
+        "x": -17.5,
+        "y": 10.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-005",
+      "position": {
+        "x": -14.5,
+        "y": 10.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-006",
+      "position": {
+        "x": -14.5,
+        "y": -5.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-007",
+      "position": {
+        "x": -14.5,
+        "y": 2.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-008",
+      "position": {
+        "x": -15.5,
+        "y": -1.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-009",
+      "position": {
+        "x": -15.5,
+        "y": 6.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-001",
+      "position": {
+        "x": 21,
+        "y": 10.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-002",
+      "position": {
+        "x": 16,
+        "y": 10.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-003",
+      "position": {
+        "x": 15.999999,
+        "y": -5.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-004",
+      "position": {
+        "x": 21,
+        "y": -5.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-005",
+      "position": {
+        "x": 18,
+        "y": -5.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-006",
+      "position": {
+        "x": 18,
+        "y": 10.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-007",
+      "position": {
+        "x": 18,
+        "y": 2.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-008",
+      "position": {
+        "x": 19,
+        "y": 6.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-003--cone-009",
+      "position": {
+        "x": 19,
+        "y": -1.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    }
+  ],
+  "markings": [
+    {
+      "id": "exercise-instance-002--marking-001",
+      "type": "polyline",
+      "points": [
+        {
+          "x": -14.5,
+          "y": 10.5
+        },
+        {
+          "x": -17.5,
+          "y": 10.5
+        },
+        {
+          "x": -17.5,
+          "y": -5.5
+        },
+        {
+          "x": -14.5,
+          "y": -5.5
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "solid",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-002--marking-002",
+      "type": "line",
+      "points": [
+        {
+          "x": -12.5,
+          "y": 10.5
+        },
+        {
+          "x": -12.5,
+          "y": -5.5
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "solid",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-002--marking-003",
+      "type": "line",
+      "points": [
+        {
+          "x": -14.5,
+          "y": 10.5
+        },
+        {
+          "x": -12.5,
+          "y": 10.5
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "dashed",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-002--marking-004",
+      "type": "line",
+      "points": [
+        {
+          "x": -12.5,
+          "y": -5.5
+        },
+        {
+          "x": -14.5,
+          "y": -5.5
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "dashed",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-003--marking-001",
+      "type": "polyline",
+      "points": [
+        {
+          "x": 18,
+          "y": -5.5
+        },
+        {
+          "x": 21,
+          "y": -5.5
+        },
+        {
+          "x": 21,
+          "y": 10.5
+        },
+        {
+          "x": 18,
+          "y": 10.5
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "solid",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-003--marking-002",
+      "type": "line",
+      "points": [
+        {
+          "x": 15.999999,
+          "y": -5.5
+        },
+        {
+          "x": 16,
+          "y": 10.5
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "solid",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-003--marking-003",
+      "type": "line",
+      "points": [
+        {
+          "x": 18,
+          "y": -5.5
+        },
+        {
+          "x": 15.999999,
+          "y": -5.5
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "dashed",
+      "visibleInViewer": true
+    },
+    {
+      "id": "exercise-instance-003--marking-004",
+      "type": "line",
+      "points": [
+        {
+          "x": 16,
+          "y": 10.5
+        },
+        {
+          "x": 18,
+          "y": 10.5
+        }
+      ],
+      "color": "#FFD10D",
+      "widthMeters": 0.201,
+      "style": "dashed",
+      "visibleInViewer": true
+    }
+  ],
+  "trajectory": {
+    "segments": [
+      {
+        "id": "exercise-instance-001--trajectory-segment-001",
+        "type": "polyline",
+        "points": [
+          {
+            "x": -15,
+            "y": -13.5
+          },
+          {
+            "x": -15,
+            "y": -11.5
+          }
+        ]
+      },
+      {
+        "id": "transition--exercise-instance-001--exercise-instance-002",
+        "type": "cubicBezier",
+        "start": {
+          "x": -15,
+          "y": -11.5
+        },
+        "control1": {
+          "x": -15,
+          "y": -9.438447
+        },
+        "control2": {
+          "x": -13.5,
+          "y": -7.561553
+        },
+        "end": {
+          "x": -13.5,
+          "y": -5.5
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-002",
+        "type": "cubicBezier",
+        "start": {
+          "x": -13.5,
+          "y": -5.5
+        },
+        "control1": {
+          "x": -13.5,
+          "y": -5
+        },
+        "control2": {
+          "x": -13.5,
+          "y": -4.75
+        },
+        "end": {
+          "x": -14,
+          "y": -4.25
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-001",
+        "type": "cubicBezier",
+        "start": {
+          "x": -14,
+          "y": -4.25
+        },
+        "control1": {
+          "x": -14.833333,
+          "y": -3.4166665
+        },
+        "control2": {
+          "x": -16.5,
+          "y": -2.75
+        },
+        "end": {
+          "x": -16.5,
+          "y": -1.5
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-003",
+        "type": "cubicBezier",
+        "start": {
+          "x": -16.5,
+          "y": -1.5
+        },
+        "control1": {
+          "x": -16.5,
+          "y": 0
+        },
+        "control2": {
+          "x": -13.5,
+          "y": 1
+        },
+        "end": {
+          "x": -13.5,
+          "y": 2.5
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-004",
+        "type": "cubicBezier",
+        "start": {
+          "x": -13.5,
+          "y": 2.5
+        },
+        "control1": {
+          "x": -13.5,
+          "y": 4
+        },
+        "control2": {
+          "x": -16.5,
+          "y": 5
+        },
+        "end": {
+          "x": -16.5,
+          "y": 6.5
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-005",
+        "type": "cubicBezier",
+        "start": {
+          "x": -16.5,
+          "y": 6.5
+        },
+        "control1": {
+          "x": -16.5,
+          "y": 8
+        },
+        "control2": {
+          "x": -14.75,
+          "y": 8.75
+        },
+        "end": {
+          "x": -14,
+          "y": 9.25
+        }
+      },
+      {
+        "id": "exercise-instance-002--trajectory-segment-006",
+        "type": "cubicBezier",
+        "start": {
+          "x": -14,
+          "y": 9.25
+        },
+        "control1": {
+          "x": -13.5,
+          "y": 9.5
+        },
+        "control2": {
+          "x": -13.5,
+          "y": 10.166666
+        },
+        "end": {
+          "x": -13.5,
+          "y": 10.5
+        }
+      },
+      {
+        "id": "transition--exercise-instance-002--exercise-instance-003",
+        "type": "cubicBezier",
+        "start": {
+          "x": -13.5,
+          "y": 10.5
+        },
+        "control1": {
+          "x": -13.5,
+          "y": 20.666668
+        },
+        "control2": {
+          "x": 17,
+          "y": 20.666668
+        },
+        "end": {
+          "x": 17,
+          "y": 10.5
+        }
+      },
+      {
+        "id": "exercise-instance-003--trajectory-segment-002",
+        "type": "cubicBezier",
+        "start": {
+          "x": 17,
+          "y": 10.5
+        },
+        "control1": {
+          "x": 17,
+          "y": 10
+        },
+        "control2": {
+          "x": 17,
+          "y": 9.75
+        },
+        "end": {
+          "x": 17.5,
+          "y": 9.25
+        }
+      },
+      {
+        "id": "exercise-instance-003--trajectory-segment-001",
+        "type": "cubicBezier",
+        "start": {
+          "x": 17.5,
+          "y": 9.25
+        },
+        "control1": {
+          "x": 18.333334,
+          "y": 8.416666
+        },
+        "control2": {
+          "x": 20,
+          "y": 7.75
+        },
+        "end": {
+          "x": 20,
+          "y": 6.5
+        }
+      },
+      {
+        "id": "exercise-instance-003--trajectory-segment-003",
+        "type": "cubicBezier",
+        "start": {
+          "x": 20,
+          "y": 6.5
+        },
+        "control1": {
+          "x": 20,
+          "y": 5
+        },
+        "control2": {
+          "x": 17,
+          "y": 4
+        },
+        "end": {
+          "x": 17,
+          "y": 2.5000002
+        }
+      },
+      {
+        "id": "exercise-instance-003--trajectory-segment-004",
+        "type": "cubicBezier",
+        "start": {
+          "x": 17,
+          "y": 2.5000002
+        },
+        "control1": {
+          "x": 17,
+          "y": 1.0000001
+        },
+        "control2": {
+          "x": 20,
+          "y": -2.3841858E-07
+        },
+        "end": {
+          "x": 20,
+          "y": -1.5
+        }
+      },
+      {
+        "id": "exercise-instance-003--trajectory-segment-005",
+        "type": "cubicBezier",
+        "start": {
+          "x": 20,
+          "y": -1.5
+        },
+        "control1": {
+          "x": 20,
+          "y": -3
+        },
+        "control2": {
+          "x": 18.25,
+          "y": -3.75
+        },
+        "end": {
+          "x": 17.5,
+          "y": -4.25
+        }
+      },
+      {
+        "id": "exercise-instance-003--trajectory-segment-006",
+        "type": "cubicBezier",
+        "start": {
+          "x": 17.5,
+          "y": -4.25
+        },
+        "control1": {
+          "x": 17,
+          "y": -4.5
+        },
+        "control2": {
+          "x": 17,
+          "y": -5.1666665
+        },
+        "end": {
+          "x": 17,
+          "y": -5.5
+        }
+      }
+    ]
+  },
+  "checkpoints": []
+}

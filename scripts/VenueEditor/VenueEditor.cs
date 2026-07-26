@@ -405,9 +405,18 @@ public partial class VenueEditor : Control
         try
         {
             string resource = CanonicalResource(path); if (!resource.EndsWith(".tscn", StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("Object must be a .tscn resource.");
-            if (!ResourceLoader.Exists(resource, "PackedScene") || GD.Load<PackedScene>(resource) is null)
+            if (!ResourceLoader.Exists(resource, "PackedScene") ||
+                GD.Load<PackedScene>(resource) is not PackedScene packedScene)
                 throw new InvalidDataException($"Godot could not load PackedScene '{resource}'.");
-            VenueObjectInstanceDto item = _document.AddObject(resource); _canvas!.SelectObject(item.ObjectId); Commit("Add Venue object"); SynchronizeAll();
+            FootprintDto footprint = VenueAssetFootprint.Measure(packedScene, resource);
+            VenueObjectInstanceDto item = _document.AddObject(resource, footprint);
+            _canvas!.SelectObject(item.ObjectId);
+            Commit("Add Venue object");
+            SynchronizeAll();
+            SetStatus(
+                $"Added '{item.Name}' with measured footprint " +
+                $"{footprint.Width:0.###} × {footprint.Length:0.###} m.",
+                false);
         }
         catch (Exception exception) { SetStatus($"Add Object failed: {exception.Message}", true); }
     }
