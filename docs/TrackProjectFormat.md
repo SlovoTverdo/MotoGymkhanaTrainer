@@ -71,11 +71,11 @@ Viewer не должен загружать Track Project.
 
 ```json
 {
-  "formatVersion": 1,
+  "formatVersion": 2,
 
   "track": {
-    "id": "training-2026-07-26",
-    "name": "Тренировка 26 июля 2026"
+    "id": "training-2026-07-27",
+    "name": "Training 27 July 2026"
   },
 
   "area": {
@@ -83,7 +83,60 @@ Viewer не должен загружать Track Project.
     "length": 100.0
   },
 
-  "instances": []
+  "instances": [
+    {
+      "instanceId": "exercise-instance-001",
+      "exercisePath": "gates/start-gate.json",
+
+      "position": {
+        "x": 0.0,
+        "y": -35.0
+      },
+
+      "rotationDeg": 0.0,
+
+      "scale": {
+        "x": 1.0,
+        "y": 1.0
+      }
+    },
+
+    {
+      "instanceId": "exercise-instance-002",
+      "exercisePath": "slaloms/slalom-5.json",
+
+      "position": {
+        "x": 8.0,
+        "y": -10.0
+      },
+
+      "rotationDeg": 20.0,
+
+      "scale": {
+        "x": 1.0,
+        "y": 1.0
+      }
+    }
+  ],
+
+  "transitionOverrides": [
+    {
+      "transitionId": "transition--exercise-instance-001--exercise-instance-002",
+
+      "fromInstanceId": "exercise-instance-001",
+      "toInstanceId": "exercise-instance-002",
+
+      "control1Offset": {
+        "x": 4.5,
+        "y": 3.0
+      },
+
+      "control2Offset": {
+        "x": -3.0,
+        "y": -2.0
+      }
+    }
+  ]
 }
 ```
 
