@@ -1282,3 +1282,21 @@ cubicBezier
 * специализированные сегменты.
 
 Неизвестный тип segment должен быть локальной проблемой конкретного сегмента, а не причиной отказа загрузки всей трассы.
+
+# Venue domain
+
+## VenueDefinition
+
+`VenueDefinition` описывает постоянную переиспользуемую площадку.
+
+Концептуальная структура:
+
+```text
+VenueDefinition
+├─ FormatVersion
+├─ VenueMetadata
+├─ Area
+├─ Panorama
+├─ Objects[]
+├─ Cones[]
+└─ Markings[]
