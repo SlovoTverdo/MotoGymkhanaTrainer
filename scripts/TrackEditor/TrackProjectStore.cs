@@ -108,6 +108,30 @@ public static class TrackProjectStore
         return JsonSerializer.Serialize(project, WriteOptions);
     }
 
+    /// <summary>
+    /// Captures domain state for Undo without requiring the temporarily edited
+    /// metadata to pass file-save validation. DTO serialization inherently omits
+    /// resolved definitions and all editor UI state.
+    /// </summary>
+    public static string SerializeHistorySnapshot(TrackProjectDto project) =>
+        JsonSerializer.Serialize(project, WriteOptions);
+
+    /// <summary>Restores a trusted in-process history snapshot and resolves dependencies anew.</summary>
+    public static TrackProjectLoadResult RestoreHistorySnapshot(
+        string snapshot,
+        SandboxedJsonLibrary exerciseLibrary)
+    {
+        TrackProjectDto project = JsonSerializer.Deserialize<TrackProjectDto>(snapshot, ReadOptions)
+            ?? throw new InvalidDataException("Undo history snapshot contains no Track Project object.");
+        if (project.FormatVersion != SupportedFormatVersion || project.Instances is null ||
+            project.TransitionOverrides is null)
+        {
+            throw new InvalidDataException("Undo history snapshot has an incompatible Track Project shape.");
+        }
+
+        return ResolveDefinitions(project, exerciseLibrary);
+    }
+
     private static void Validate(
         TrackProjectDto project,
         string sourceName,

@@ -947,6 +947,92 @@ try
     TrackCompilationResult outsideCompilation = TrackCompiler.Compile(outsideDocument);
     AssertTrue(outsideCompilation.CanExport && outsideCompilation.Warnings.Count > 0,
         "geometry outside area is a non-blocking warning");
+
+    var duplicateDocument = TrackProjectDocument.CreateNew("duplicate", "Duplicate");
+    string duplicateSource = duplicateDocument.AddInstance("polyline.json", firstDefinition);
+    duplicateDocument.SetTransform(duplicateSource, new Point2Dto { X = 4, Y = -2 }, 35,
+        new Point2Dto { X = -1.25f, Y = 0.75f });
+    string duplicateCopy = duplicateDocument.DuplicateInstance(
+        duplicateSource, new Point2Dto { X = 1, Y = 1 })!;
+    AssertEqual("exercise-instance-002", duplicateCopy,
+        "Duplicate creates a predictable unique instance id");
+    AssertEqual(duplicateCopy, duplicateDocument.Project.Instances[1].InstanceId,
+        "Duplicate is inserted immediately after its source in Route Order");
+    AssertEqual(5.0f, duplicateDocument.FindInstance(duplicateCopy)!.Position.X,
+        "Duplicate applies the documented +1 m X offset");
+    AssertEqual(-1.0f, duplicateDocument.FindInstance(duplicateCopy)!.Position.Y,
+        "Duplicate applies the documented +1 m Y offset");
+    AssertEqual(-1.25f, duplicateDocument.FindInstance(duplicateCopy)!.Scale.X,
+        "Duplicate preserves reflection, scale and rotation");
+    AssertEqual(0, duplicateDocument.Project.TransitionOverrides.Length,
+        "Duplicate does not synthesize or copy TransitionOverride data");
+
+    string historyInitial = TrackProjectStore.SerializeHistorySnapshot(duplicateDocument.Project);
+    var history = new TrackProjectHistory(100);
+    history.Reset(historyInitial, saved: true);
+    duplicateDocument.MoveInstance(duplicateCopy, new Point2Dto { X = 8, Y = 9 });
+    string historyMoved = TrackProjectStore.SerializeHistorySnapshot(duplicateDocument.Project);
+    AssertTrue(history.Commit(historyMoved, "Move instance"),
+        "one completed transform creates one history entry");
+    AssertTrue(history.IsDirty && history.CanUndo, "an edit after Save is dirty and undoable");
+    TrackProjectLoadResult undoneHistory = TrackProjectStore.RestoreHistorySnapshot(
+        history.Undo()!, exerciseLibrary);
+    AssertEqual(-1.0f, undoneHistory.Project.Instances[1].Position.Y,
+        "Undo restores the persisted project snapshot");
+    AssertTrue(!history.IsDirty, "Undo back to the saved revision returns the document to clean");
+    AssertEqual(9.0f, TrackProjectStore.RestoreHistorySnapshot(
+        history.Redo()!, exerciseLibrary).Project.Instances[1].Position.Y,
+        "Redo restores the later persisted state");
+    history.Undo();
+    duplicateDocument = new TrackProjectDocument(undoneHistory.Project, undoneHistory.Definitions);
+    duplicateDocument.Project.Track.Name = "Branched edit";
+    history.Commit(TrackProjectStore.SerializeHistorySnapshot(duplicateDocument.Project), "Rename track");
+    AssertTrue(!history.CanRedo, "a new edit after Undo clears Redo history");
+    history.MarkSaved();
+    AssertTrue(!history.IsDirty, "successful Save marks the current revision clean");
+    AssertTrue(!TrackProjectStore.SerializeHistorySnapshot(duplicateDocument.Project)
+            .Contains("locked", StringComparison.OrdinalIgnoreCase),
+        "history snapshots contain no editor-only lock state");
+
+    var unresolvedDuplicateDocument = new TrackProjectDocument(
+        unresolved.Project, unresolved.Definitions);
+    string unresolvedDuplicate = unresolvedDuplicateDocument.DuplicateInstance(
+        "exercise-instance-001", new Point2Dto { X = 1, Y = 1 })!;
+    AssertEqual(3, unresolvedDuplicateDocument.Project.Instances.Length,
+        "an unresolved instance can be duplicated without a resolved definition cache");
+    AssertEqual("missing.json", unresolvedDuplicateDocument.FindInstance(unresolvedDuplicate)!.ExercisePath,
+        "an unresolved duplicate preserves its safe exercisePath");
+
+    ExerciseDefinitionDto routingOnly = ExerciseDefinitionStore.LoadFromFile(firstExercisePath);
+    routingOnly.Exercise = new ExerciseMetadataDto
+    {
+        Id = "routing-only",
+        Name = "Routing Only",
+        Version = 1,
+    };
+    routingOnly.Cones = [];
+    string routingJson = ExerciseDefinitionStore.Serialize(routingOnly);
+    ExerciseDefinitionDto routingReload = ExerciseDefinitionStore.LoadFromJson(
+        routingJson, "routing-only.json");
+    AssertEqual(0, routingReload.Cones.Length,
+        "Exercise Definition with zero cones remains valid when trajectory is valid");
+    var routingDocument = TrackProjectDocument.CreateNew("routing-track", "Routing Track");
+    routingDocument.AddInstance("polyline.json", routingReload);
+    routingDocument.AddInstance("polyline.json", routingReload);
+    routingDocument.MoveInstance("exercise-instance-002", new Point2Dto { X = 8, Y = 4 });
+    TrackCompilationResult routingCompilation = TrackCompiler.Compile(routingDocument);
+    AssertTrue(routingCompilation.CanExport && routingCompilation.Transitions.Count == 1,
+        "routing-only instances participate in route transitions and export");
+    AssertEqual(0, routingCompilation.Snapshot!.Cones.Length,
+        "routing-only export emits no artificial cones");
+
+    string[] previewArguments = ViewerPreviewLauncher.BuildArguments(
+        ProjectDirectory, Path.Combine(exportRoot, "_preview", "current-track-preview.json"));
+    AssertEqual("--track", previewArguments[^2],
+        "Viewer preview launch uses a path-only exported Track argument");
+    AssertEqual(previewArguments[^1],
+        MotoGymkhanaTrainer.Viewer.TrackViewer.FindStartupTrackPath(previewArguments)!,
+        "Viewer startup extracts exactly the exported Track path");
 }
 finally
 {
@@ -956,7 +1042,7 @@ finally
     }
 }
 
-Console.WriteLine("All Viewer, Exercise Editor Iteration 4 and Track Editor Iteration 3 checks passed.");
+Console.WriteLine("All Viewer, Exercise Editor Iteration 4 and Track Editor Iteration 4 checks passed.");
 
 static void AssertEqual<T>(T expected, T actual, string description)
     where T : IEquatable<T>

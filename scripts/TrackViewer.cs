@@ -55,7 +55,31 @@ public partial class TrackViewer : Node3D
             return;
         }
 
-        SetStatus("Select an exported Track JSON file.", new Color(0.85f, 0.85f, 0.85f));
+        string? startupTrack = FindStartupTrackPath(OS.GetCmdlineUserArgs());
+        if (startupTrack is null)
+        {
+            SetStatus("Select an exported Track JSON file.", new Color(0.85f, 0.85f, 0.85f));
+        }
+        else
+        {
+            // Viewer receives only a self-contained exported Track path. The
+            // regular sandbox validation below still applies to process arguments.
+            OnTrackFileSelected(startupTrack);
+        }
+    }
+
+    /// <summary>Extracts the path-only preview contract from arguments after "--".</summary>
+    public static string? FindStartupTrackPath(IReadOnlyList<string> arguments)
+    {
+        for (int index = 0; index + 1 < arguments.Count; index++)
+        {
+            if (arguments[index] == "--track" && !string.IsNullOrWhiteSpace(arguments[index + 1]))
+            {
+                return arguments[index + 1];
+            }
+        }
+
+        return null;
     }
 
     /// <inheritdoc />

@@ -49,6 +49,8 @@ public partial class TrackEditorCanvas : Control
     private float _rotationAccumulator;
     private IReadOnlyList<CompiledTransition> _transitionPreview = [];
     private bool _showTransitions = true;
+    private readonly HashSet<string> _lockedInstanceIds = new(StringComparer.Ordinal);
+    private PopupMenu? _instanceContextMenu;
 
     [Signal]
     public delegate void SelectionChangedEventHandler();
@@ -64,6 +66,16 @@ public partial class TrackEditorCanvas : Control
     /// it to a persisted offset; the canvas never owns transition geometry.
     /// </summary>
     public event Action<string, int, Point2Dto>? TransitionControlPointDragged;
+
+    /// <summary>Bounds one mouse gesture into one history transaction.</summary>
+    public event Action<string>? EditTransactionStarted;
+
+    /// <summary>Completes the active mouse gesture, including a no-op drag.</summary>
+    public event Action? EditTransactionFinished;
+
+    public event Action<string>? DuplicateRequested;
+
+    public event Action<string>? LockedTransformAttempted;
 
     /// <summary>Selected instance id is UI state and is never serialized.</summary>
     public string? SelectedInstanceId => _selectedInstanceId;
@@ -85,6 +97,14 @@ public partial class TrackEditorCanvas : Control
         {
             Input.SetCustomMouseCursor(rotateCursor, Input.CursorShape.Cross, new Vector2(16.0f, 16.0f));
         }
+
+        _instanceContextMenu = new PopupMenu { Name = "InstanceContextMenu" };
+        _instanceContextMenu.AddItem("Duplicate Instance", 1);
+        _instanceContextMenu.IdPressed += _ =>
+        {
+            if (_selectedInstanceId is not null) DuplicateRequested?.Invoke(_selectedInstanceId);
+        };
+        AddChild(_instanceContextMenu);
     }
 
     /// <summary>Replaces the rendered document and optionally fits the area in view.</summary>
@@ -155,6 +175,14 @@ public partial class TrackEditorCanvas : Control
                 EmitSignal(SignalName.SelectionChanged);
             }
         }
+        QueueRedraw();
+    }
+
+    /// <summary>Copies editor-only lock identity; it is never written to the document.</summary>
+    public void SetLockedInstances(IEnumerable<string> instanceIds)
+    {
+        _lockedInstanceIds.Clear();
+        _lockedInstanceIds.UnionWith(instanceIds);
         QueueRedraw();
     }
 
@@ -273,6 +301,21 @@ public partial class TrackEditorCanvas : Control
             return;
         }
 
+        if (button.ButtonIndex == MouseButton.Right && button.Pressed)
+        {
+            string? contextInstanceId = HitTestInstance(button.Position);
+            if (contextInstanceId is not null)
+            {
+                SelectInstance(contextInstanceId);
+                _instanceContextMenu!.Position = (Vector2I)GetGlobalMousePosition();
+                // Opening during the same right-button event can make Godot treat
+                // that event as an outside click and immediately close the popup.
+                Callable.From(() => _instanceContextMenu.Popup()).CallDeferred();
+                AcceptEvent();
+            }
+            return;
+        }
+
         if (button.ButtonIndex != MouseButton.Left)
         {
             return;
@@ -280,10 +323,12 @@ public partial class TrackEditorCanvas : Control
 
         if (!button.Pressed)
         {
+            bool hadManipulation = _manipulationMode != ManipulationMode.None;
             _manipulationMode = ManipulationMode.None;
             _manipulatedInstanceId = null;
             _manipulatedTransitionId = null;
             UpdateHoverCursor(button.Position);
+            if (hadManipulation) EditTransactionFinished?.Invoke();
             return;
         }
 
@@ -296,6 +341,7 @@ public partial class TrackEditorCanvas : Control
                 ? ManipulationMode.TransitionControl1
                 : ManipulationMode.TransitionControl2;
             _manipulatedTransitionId = controlHit.TransitionId;
+            EditTransactionStarted?.Invoke("Edit transition handle");
             GrabFocus();
             AcceptEvent();
             return;
@@ -314,7 +360,16 @@ public partial class TrackEditorCanvas : Control
         if (handle is HandleHit hit)
         {
             SelectInstance(hit.InstanceId);
+            if (_lockedInstanceIds.Contains(hit.InstanceId))
+            {
+                LockedTransformAttempted?.Invoke(hit.InstanceId);
+                AcceptEvent();
+                return;
+            }
             BeginManipulation(hit, button.Position);
+            EditTransactionStarted?.Invoke(hit.Mode == ManipulationMode.Rotate
+                ? "Rotate instance"
+                : "Resize instance");
             GrabFocus();
             AcceptEvent();
             return;
@@ -324,11 +379,19 @@ public partial class TrackEditorCanvas : Control
         SelectInstance(hitInstanceId);
         if (hitInstanceId is not null)
         {
+            if (_lockedInstanceIds.Contains(hitInstanceId))
+            {
+                LockedTransformAttempted?.Invoke(hitInstanceId);
+                GrabFocus();
+                AcceptEvent();
+                return;
+            }
             TrackProjectInstanceDto instance = _document.FindInstance(hitInstanceId)!;
             _dragPointerStart = ToDomain(button.Position);
             _dragInstanceStart = CopyPoint(instance.Position);
             _manipulationMode = ManipulationMode.Move;
             _manipulatedInstanceId = hitInstanceId;
+            EditTransactionStarted?.Invoke("Move instance");
         }
 
         GrabFocus();
@@ -712,6 +775,10 @@ public partial class TrackEditorCanvas : Control
         }
 
         DrawRouteNumber(instance.Position, routeIndex, outside ? Colors.OrangeRed : Colors.White);
+        if (_lockedInstanceIds.Contains(instance.InstanceId))
+        {
+            DrawLockOverlay(instance.Position);
+        }
         if (selected)
         {
             DrawManipulationHandles(bounds.Select(ToScreen).ToArray());
@@ -739,6 +806,7 @@ public partial class TrackEditorCanvas : Control
         DrawLine(center + new Vector2(-radius, -radius), center + new Vector2(radius, radius), color, 3.0f);
         DrawLine(center + new Vector2(-radius, radius), center + new Vector2(radius, -radius), color, 3.0f);
         DrawRouteNumber(instance.Position, routeIndex, color);
+        if (_lockedInstanceIds.Contains(instance.InstanceId)) DrawLockOverlay(instance.Position);
     }
 
     private void DrawRouteNumber(Point2Dto position, int routeIndex, Color color)
@@ -746,6 +814,15 @@ public partial class TrackEditorCanvas : Control
         Vector2 label = ToScreen(position) + new Vector2(10.0f, -10.0f);
         DrawString(ThemeDB.FallbackFont, label, (routeIndex + 1).ToString(),
             HorizontalAlignment.Left, -1.0f, 18, color);
+    }
+
+    private void DrawLockOverlay(Point2Dto position)
+    {
+        Vector2 label = ToScreen(position) + new Vector2(-22.0f, -16.0f);
+        Color color = new(1.0f, 0.72f, 0.18f);
+        DrawRect(new Rect2(label, new Vector2(42.0f, 21.0f)), new Color(0.08f, 0.08f, 0.08f, 0.86f));
+        DrawString(ThemeDB.FallbackFont, label + new Vector2(4.0f, 16.0f), "LOCK",
+            HorizontalAlignment.Left, -1.0f, 12, color);
     }
 
     private void DrawClosedPolyline(IReadOnlyList<Vector2> points, Color color, float width)

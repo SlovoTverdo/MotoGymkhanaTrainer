@@ -1,0 +1,246 @@
+{
+  "formatVersion": 3,
+  "track": {
+    "id": "new-track",
+    "name": "New Track"
+  },
+  "area": {
+    "width": 100,
+    "length": 40
+  },
+  "elements": [
+    {
+      "instanceId": "exercise-instance-001",
+      "definitionId": "exercise-circle-right",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    }
+  ],
+  "cones": [
+    {
+      "id": "exercise-instance-001--cone-001",
+      "position": {
+        "x": 0,
+        "y": -5.75
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-001--cone-002",
+      "position": {
+        "x": -6,
+        "y": -0.25
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-001--cone-003",
+      "position": {
+        "x": 0,
+        "y": 6.25
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-001--cone-004",
+      "position": {
+        "x": 6,
+        "y": 0
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-001--cone-005",
+      "position": {
+        "x": 4.25,
+        "y": -4.25
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-001--cone-006",
+      "position": {
+        "x": -4,
+        "y": -3.75
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-001--cone-007",
+      "position": {
+        "x": -4.75,
+        "y": 4.25
+      },
+      "color": "red",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-001--cone-008",
+      "position": {
+        "x": 4.5,
+        "y": 4
+      },
+      "color": "red",
+      "type": "standard"
+    }
+  ],
+  "markings": [],
+  "trajectory": {
+    "segments": [
+      {
+        "id": "exercise-instance-001--trajectory-segment-001",
+        "type": "cubicBezier",
+        "start": {
+          "x": 4.25,
+          "y": -9.25
+        },
+        "control1": {
+          "x": 1.75,
+          "y": -9
+        },
+        "control2": {
+          "x": -0.75,
+          "y": -8.5
+        },
+        "end": {
+          "x": -2.75,
+          "y": -7.5
+        }
+      },
+      {
+        "id": "exercise-instance-001--trajectory-segment-002",
+        "type": "cubicBezier",
+        "start": {
+          "x": -2.75,
+          "y": -7.5
+        },
+        "control1": {
+          "x": -5,
+          "y": -6.75
+        },
+        "control2": {
+          "x": -8,
+          "y": -4
+        },
+        "end": {
+          "x": -8.5,
+          "y": -1.5
+        }
+      },
+      {
+        "id": "exercise-instance-001--trajectory-segment-003",
+        "type": "cubicBezier",
+        "start": {
+          "x": -8.5,
+          "y": -1.5
+        },
+        "control1": {
+          "x": -9,
+          "y": 1.5
+        },
+        "control2": {
+          "x": -8,
+          "y": 4.75
+        },
+        "end": {
+          "x": -6.25,
+          "y": 6.5
+        }
+      },
+      {
+        "id": "exercise-instance-001--trajectory-segment-004",
+        "type": "cubicBezier",
+        "start": {
+          "x": -6.25,
+          "y": 6.5
+        },
+        "control1": {
+          "x": -4,
+          "y": 8.75
+        },
+        "control2": {
+          "x": -0.5,
+          "y": 8.5
+        },
+        "end": {
+          "x": 0,
+          "y": 8.5
+        }
+      },
+      {
+        "id": "exercise-instance-001--trajectory-segment-005",
+        "type": "cubicBezier",
+        "start": {
+          "x": 0,
+          "y": 8.5
+        },
+        "control1": {
+          "x": 3.25,
+          "y": 8
+        },
+        "control2": {
+          "x": 8,
+          "y": 7.25
+        },
+        "end": {
+          "x": 8.25,
+          "y": 3.5
+        }
+      },
+      {
+        "id": "exercise-instance-001--trajectory-segment-006",
+        "type": "cubicBezier",
+        "start": {
+          "x": 8.25,
+          "y": 3.5
+        },
+        "control1": {
+          "x": 8.75,
+          "y": 0
+        },
+        "control2": {
+          "x": 8.5,
+          "y": -2.5
+        },
+        "end": {
+          "x": 7.5,
+          "y": -4.5
+        }
+      },
+      {
+        "id": "exercise-instance-001--trajectory-segment-007",
+        "type": "cubicBezier",
+        "start": {
+          "x": 7.5,
+          "y": -4.5
+        },
+        "control1": {
+          "x": 6.25,
+          "y": -6.25
+        },
+        "control2": {
+          "x": 0.5,
+          "y": -7.75
+        },
+        "end": {
+          "x": -3,
+          "y": -9.25
+        }
+      }
+    ]
+  },
+  "checkpoints": []
+}

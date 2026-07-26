@@ -30,6 +30,10 @@ public partial class TrackEditor : Control
     private SpinBox? _scaleY;
     private Button? _mirrorVerticalButton;
     private Button? _mirrorHorizontalButton;
+    private Button? _duplicateButton;
+    private CheckButton? _lockInstanceToggle;
+    private Button? _undoButton;
+    private Button? _redoButton;
     private Label? _transitionTitle;
     private Label? _transitionPair;
     private Label? _transitionMode;
@@ -65,6 +69,10 @@ public partial class TrackEditor : Control
     private bool _dirty;
     private bool _updatingUi;
     private TrackCompilationResult _compilation = new();
+    private readonly TrackProjectHistory _history = new(100);
+    private readonly HashSet<string> _lockedInstanceIds = new(StringComparer.Ordinal);
+    private string? _activeTransactionDescription;
+    private Key? _keyboardTransformKey;
 
     public override void _Ready()
     {
@@ -81,7 +89,47 @@ public partial class TrackEditor : Control
 
     public override void _UnhandledKeyInput(InputEvent @event)
     {
-        if (@event is InputEventKey { Pressed: true, Echo: false, Keycode: Key.Delete } && DeleteSelected())
+        if (@event is not InputEventKey key)
+        {
+            return;
+        }
+
+        if (!key.Pressed && _keyboardTransformKey == key.Keycode)
+        {
+            _keyboardTransformKey = null;
+            EndEditTransaction();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        if (!key.Pressed || IsEditingText())
+        {
+            return;
+        }
+
+        bool handled = false;
+        if (key.CtrlPressed && key.Keycode == Key.Z)
+        {
+            if (!key.Echo) handled = key.ShiftPressed ? Redo() : Undo();
+        }
+        else if (key.CtrlPressed && key.Keycode == Key.Y)
+        {
+            if (!key.Echo) handled = Redo();
+        }
+        else if (key.CtrlPressed && key.Keycode == Key.D)
+        {
+            if (!key.Echo) handled = DuplicateSelected();
+        }
+        else if (key.Keycode == Key.Delete)
+        {
+            if (!key.Echo) handled = DeleteSelected();
+        }
+        else if (IsTransformKey(key.Keycode))
+        {
+            handled = ApplyKeyboardTransform(key);
+        }
+
+        if (handled)
         {
             GetViewport().SetInputAsHandled();
         }
@@ -117,6 +165,11 @@ public partial class TrackEditor : Control
         _canvas.DocumentChanged += OnCanvasChanged;
         _canvas.ExerciseDropped += AddExerciseAt;
         _canvas.TransitionControlPointDragged += OnTransitionControlPointDragged;
+        _canvas.EditTransactionStarted += BeginEditTransaction;
+        _canvas.EditTransactionFinished += EndEditTransaction;
+        _canvas.DuplicateRequested += _ => DuplicateSelected();
+        _canvas.LockedTransformAttempted += id =>
+            SetStatus($"Instance '{id}' is locked. Unlock it before transforming.", true);
         center.AddChild(_canvas);
         center.AddChild(BuildRouteOrder());
         body.AddChild(center);
@@ -154,7 +207,13 @@ public partial class TrackEditor : Control
         toolbar.AddChild(CreateButton("SaveButton", "Save", Save));
         toolbar.AddChild(CreateButton("SaveAsButton", "Save As", ShowSaveAs));
         toolbar.AddChild(new VSeparator());
+        _undoButton = CreateButton("UndoButton", "Undo", () => Undo());
+        _redoButton = CreateButton("RedoButton", "Redo", () => Redo());
+        toolbar.AddChild(_undoButton);
+        toolbar.AddChild(_redoButton);
+        toolbar.AddChild(new VSeparator());
         toolbar.AddChild(CreateButton("ExportViewerButton", "Export for Viewer", ShowExportDialog));
+        toolbar.AddChild(CreateButton("ExportOpenViewerButton", "Export and Open in Viewer", ExportAndOpenInViewer));
         _showTransitions = new CheckButton
         {
             Name = "ShowTransitions",
@@ -168,6 +227,7 @@ public partial class TrackEditor : Control
             "RemoveOrphanedOverrides", "Remove Orphaned Overrides", ShowRemoveOrphanedConfirmation);
         toolbar.AddChild(_removeOrphanedButton);
         toolbar.AddChild(new VSeparator());
+        toolbar.AddChild(CreateButton("DuplicateButtonToolbar", "Duplicate Instance", () => DuplicateSelected()));
         toolbar.AddChild(CreateButton("DeleteButton", "Delete Instance", () => DeleteSelected()));
         return toolbar;
     }
@@ -224,12 +284,16 @@ public partial class TrackEditor : Control
         _trackName = new LineEdit { Name = "TrackName" };
         _trackId.TextChanged += _ => OnMetadataEdited();
         _trackName.TextChanged += _ => OnMetadataEdited();
+        WireEditTransaction(_trackId, "Edit track id");
+        WireEditTransaction(_trackName, "Edit track name");
         panel.AddChild(Row("Id", _trackId));
         panel.AddChild(Row("Name", _trackName));
         _areaWidth = Spin("AreaWidth", 1, 10000, 1, " m");
         _areaLength = Spin("AreaLength", 1, 10000, 1, " m");
         _areaWidth.ValueChanged += _ => OnAreaEdited();
         _areaLength.ValueChanged += _ => OnAreaEdited();
+        WireEditTransaction(_areaWidth.GetLineEdit(), "Edit area width");
+        WireEditTransaction(_areaLength.GetLineEdit(), "Edit area length");
         panel.AddChild(Row("Area width", _areaWidth));
         panel.AddChild(Row("Area length", _areaLength));
 
@@ -246,6 +310,7 @@ public partial class TrackEditor : Control
         foreach (SpinBox spin in new[] { _positionX, _positionY, _rotation, _scaleX, _scaleY })
         {
             spin.ValueChanged += _ => OnTransformEdited();
+            WireEditTransaction(spin.GetLineEdit(), "Edit instance transform");
         }
         panel.AddChild(Row("Position X", _positionX));
         panel.AddChild(Row("Position Y", _positionY));
@@ -264,6 +329,11 @@ public partial class TrackEditor : Control
         mirrorButtons.AddChild(_mirrorHorizontalButton);
         mirrorButtons.AddChild(_mirrorVerticalButton);
         panel.AddChild(mirrorButtons);
+        _duplicateButton = CreateButton("DuplicateInstance", "Duplicate Instance", () => DuplicateSelected());
+        panel.AddChild(_duplicateButton);
+        _lockInstanceToggle = new CheckButton { Name = "LockInstance", Text = "Lock Instance" };
+        _lockInstanceToggle.Toggled += OnLockToggled;
+        panel.AddChild(_lockInstanceToggle);
 
         panel.AddChild(Section("Selected transition"));
         _transitionTitle = new Label { Name = "TransitionId", Text = "None" };
@@ -291,6 +361,10 @@ public partial class TrackEditor : Control
         _control1OffsetY.ValueChanged += _ => OnTransitionCoordinatesEdited(1, absolute: false);
         _control2OffsetX.ValueChanged += _ => OnTransitionCoordinatesEdited(2, absolute: false);
         _control2OffsetY.ValueChanged += _ => OnTransitionCoordinatesEdited(2, absolute: false);
+        foreach (SpinBox spin in TransitionSpins())
+        {
+            WireEditTransaction(spin.GetLineEdit(), "Edit transition control point");
+        }
         panel.AddChild(Row("Control 1 X", _control1X));
         panel.AddChild(Row("Control 1 Y", _control1Y));
         panel.AddChild(Row("Control 2 X", _control2X));
@@ -450,7 +524,7 @@ public partial class TrackEditor : Control
             string id = _document.AddInstance(relativePath, load.Definition);
             _document.MoveInstance(id, position);
             _canvas!.SelectInstance(id);
-            MarkChanged();
+            MarkChanged("Add instance");
             foreach (string warning in load.Warnings) GD.PushWarning(warning);
             SetStatus(
                 $"Added '{load.Definition.Exercise.Name}' as {id} at ({position.X:0.##}, {position.Y:0.##}) m.",
@@ -564,7 +638,8 @@ public partial class TrackEditor : Control
                 _trackLibrary.ToRelative(directory), Path.GetFileName(requested));
             TrackProjectStore.SaveToFile(_document.Project, target, _exerciseLibrary!);
             _currentFilePath = target;
-            SetDirty(false);
+            _history.MarkSaved();
+            UpdateDirtyIndicator();
             RefreshTrackTree();
             SetStatus($"Saved Track Project to '{target}'.", false);
         }
@@ -600,10 +675,15 @@ public partial class TrackEditor : Control
     {
         _document = document;
         _currentFilePath = filePath;
+        _activeTransactionDescription = null;
+        _keyboardTransformKey = null;
+        _lockedInstanceIds.Clear();
+        _history.Reset(CaptureSnapshot(), saved: !dirty);
         _canvas!.SetDocument(document);
+        _canvas.SetLockedInstances(_lockedInstanceIds);
         RefreshCompilation();
         SynchronizeAllUi();
-        SetDirty(dirty);
+        UpdateDirtyIndicator();
     }
 
     private void OnMetadataEdited()
@@ -611,7 +691,7 @@ public partial class TrackEditor : Control
         if (_updatingUi) return;
         _document.Project.Track.Id = _trackId!.Text.Trim();
         _document.Project.Track.Name = _trackName!.Text.Trim();
-        MarkChanged();
+        MarkChanged("Edit track metadata");
     }
 
     private void OnAreaEdited()
@@ -619,12 +699,18 @@ public partial class TrackEditor : Control
         if (_updatingUi) return;
         _document.Project.Area.Width = (float)_areaWidth!.Value;
         _document.Project.Area.Length = (float)_areaLength!.Value;
-        MarkChanged();
+        MarkChanged("Edit track area");
     }
 
     private void OnTransformEdited()
     {
         if (_updatingUi || _canvas!.SelectedInstanceId is not string id) return;
+        if (IsLocked(id))
+        {
+            SynchronizeSelectionUi();
+            SetStatus($"Instance '{id}' is locked. Unlock it before editing its transform.", true);
+            return;
+        }
         TrackProjectInstanceDto? instance = _document.FindInstance(id);
         if (instance is null) return;
 
@@ -648,7 +734,7 @@ public partial class TrackEditor : Control
             (float)_rotation!.Value,
             new Point2Dto { X = scaleX, Y = scaleY }))
         {
-            MarkChanged();
+            MarkChanged("Edit instance transform");
         }
     }
 
@@ -659,13 +745,18 @@ public partial class TrackEditor : Control
             SetStatus("Select an instance before mirroring.", true);
             return;
         }
+        if (IsLocked(id))
+        {
+            SetStatus($"Instance '{id}' is locked. Unlock it before mirroring.", true);
+            return;
+        }
 
         // Horizontal means left/right (X sign); vertical means top/bottom (Y sign).
         bool changed = vertical
             ? _document.ToggleVerticalMirror(id)
             : _document.ToggleHorizontalMirror(id);
         if (!changed) return;
-        MarkChanged();
+        MarkChanged("Mirror instance");
         SetStatus(vertical
             ? $"Instance '{id}' mirrored vertically (Y)."
             : $"Instance '{id}' mirrored horizontally (X).", false);
@@ -673,15 +764,18 @@ public partial class TrackEditor : Control
 
     private void RotateBy(float degrees)
     {
-        if (_canvas!.SelectedInstanceId is null) return;
+        if (_canvas!.SelectedInstanceId is not string id) return;
+        if (IsLocked(id))
+        {
+            SetStatus($"Instance '{id}' is locked. Unlock it before rotating.", true);
+            return;
+        }
         _rotation!.Value += degrees;
     }
 
     private void OnCanvasChanged()
     {
-        SetDirty(true);
-        RefreshCompilation();
-        SynchronizeSelectionUi();
+        RefreshAfterMutation();
     }
 
     private void OnTransitionControlPointDragged(
@@ -697,7 +791,7 @@ public partial class TrackEditor : Control
             return;
         }
 
-        MarkChanged();
+        MarkChanged("Edit transition handle");
     }
 
     private void OnTransitionCoordinatesEdited(int controlIndex, bool absolute)
@@ -732,7 +826,7 @@ public partial class TrackEditor : Control
 
         if (_document.SetTransitionControlPoint(transition, controlIndex, point))
         {
-            MarkChanged();
+            MarkChanged("Edit transition control point");
         }
     }
 
@@ -744,7 +838,7 @@ public partial class TrackEditor : Control
             return;
         }
 
-        MarkChanged();
+        MarkChanged("Reset transition to automatic");
         SetStatus($"Transition '{transition.TransitionId}' reset to automatic.", false);
     }
 
@@ -770,7 +864,7 @@ public partial class TrackEditor : Control
             return;
         }
 
-        MarkChanged();
+        MarkChanged("Remove orphaned transition overrides");
         SetStatus($"Removed {removed} orphaned transition override(s).", false);
     }
 
@@ -778,7 +872,7 @@ public partial class TrackEditor : Control
     {
         if (_canvas!.SelectedInstanceId is not string id) return;
         bool changed = up ? _document.MoveUp(id) : _document.MoveDown(id);
-        if (changed) MarkChanged();
+        if (changed) MarkChanged("Reorder instances");
     }
 
     private bool DeleteSelected()
@@ -787,7 +881,9 @@ public partial class TrackEditor : Control
         int relatedOverrides = _document.CountRelatedTransitionOverrides(id);
         if (!_document.DeleteInstance(id)) return false;
         _canvas.SelectInstance(null);
-        MarkChanged();
+        _lockedInstanceIds.Remove(id);
+        _canvas.SetLockedInstances(_lockedInstanceIds);
+        MarkChanged("Delete instance");
         SetStatus(relatedOverrides == 0
             ? $"Deleted instance '{id}'. Exercise Definition file was not changed."
             : $"Deleted instance '{id}'; {relatedOverrides} related override(s) were kept orphaned.",
@@ -834,11 +930,17 @@ public partial class TrackEditor : Control
             ? _document.FindInstance(id)
             : null;
         bool enabled = instance is not null;
+        bool locked = enabled && IsLocked(instance!.InstanceId);
         _selectionTitle!.Text = enabled ? instance!.InstanceId : "None";
         _exercisePath!.Text = enabled ? $"exercisePath: {instance!.ExercisePath}" : string.Empty;
-        foreach (SpinBox spin in new[] { _positionX!, _positionY!, _rotation!, _scaleX!, _scaleY! }) spin.Editable = enabled;
-        _mirrorVerticalButton!.Disabled = !enabled;
-        _mirrorHorizontalButton!.Disabled = !enabled;
+        foreach (SpinBox spin in new[] { _positionX!, _positionY!, _rotation!, _scaleX!, _scaleY! })
+            spin.Editable = enabled && !locked;
+        _mirrorVerticalButton!.Disabled = !enabled || locked;
+        _mirrorHorizontalButton!.Disabled = !enabled || locked;
+        _duplicateButton!.Disabled = !enabled;
+        _lockInstanceToggle!.Disabled = !enabled;
+        _lockInstanceToggle.SetPressedNoSignal(locked);
+        _lockInstanceToggle.Text = locked ? "Unlock Instance" : "Lock Instance";
         if (enabled)
         {
             _positionX!.Value = instance!.Position.X;
@@ -897,14 +999,189 @@ public partial class TrackEditor : Control
             ? _compilation.Transitions.FirstOrDefault(item => item.TransitionId == id)
             : null;
 
-    private void MarkChanged()
+    private string CaptureSnapshot() => TrackProjectStore.SerializeHistorySnapshot(_document.Project);
+
+    /// <summary>
+    /// All persisted mutations converge here. During a mouse/key/property gesture
+    /// the working DTO is redrawn immediately, but history is committed only once
+    /// when that transaction ends.
+    /// </summary>
+    private void MarkChanged(string description)
     {
-        SetDirty(true);
+        if (_activeTransactionDescription is null)
+        {
+            _history.Commit(CaptureSnapshot(), description);
+        }
+
+        RefreshAfterMutation();
+    }
+
+    private void RefreshAfterMutation()
+    {
         RefreshCompilation();
         SynchronizeRouteList();
         SynchronizeSelectionUi();
         _canvas!.QueueRedraw();
+        UpdateDirtyIndicator();
     }
+
+    private void BeginEditTransaction(string description)
+    {
+        _activeTransactionDescription ??= description;
+        UpdateDirtyIndicator();
+    }
+
+    private void EndEditTransaction()
+    {
+        if (_activeTransactionDescription is null) return;
+        string description = _activeTransactionDescription;
+        _activeTransactionDescription = null;
+        _history.Commit(CaptureSnapshot(), description);
+        RefreshAfterMutation();
+    }
+
+    private bool Undo()
+    {
+        EndEditTransaction();
+        string? snapshot = _history.Undo();
+        if (snapshot is null) return false;
+        RestoreHistorySnapshot(snapshot, "Undo");
+        return true;
+    }
+
+    private bool Redo()
+    {
+        EndEditTransaction();
+        string? snapshot = _history.Redo();
+        if (snapshot is null) return false;
+        RestoreHistorySnapshot(snapshot, "Redo");
+        return true;
+    }
+
+    private void RestoreHistorySnapshot(string snapshot, string action)
+    {
+        string? selectedInstanceId = _canvas?.SelectedInstanceId;
+        string? selectedTransitionId = _canvas?.SelectedTransitionId;
+        TrackProjectLoadResult restored = TrackProjectStore.RestoreHistorySnapshot(
+            snapshot, _exerciseLibrary!);
+        _document = new TrackProjectDocument(restored.Project, restored.Definitions);
+        _canvas!.SetDocument(_document, resetView: false);
+
+        // Locks are editor state. They survive history navigation only while the
+        // corresponding stable instance id still exists.
+        _lockedInstanceIds.RemoveWhere(id => _document.FindInstance(id) is null);
+        _canvas.SetLockedInstances(_lockedInstanceIds);
+        RefreshCompilation();
+        if (selectedInstanceId is not null && _document.FindInstance(selectedInstanceId) is not null)
+            _canvas.SelectInstance(selectedInstanceId);
+        else if (selectedTransitionId is not null &&
+            _compilation.Transitions.Any(item => item.TransitionId == selectedTransitionId))
+            _canvas.SelectTransition(selectedTransitionId);
+        SynchronizeAllUi();
+        UpdateDirtyIndicator();
+        foreach (string warning in restored.Warnings) GD.PushWarning(warning);
+        SetStatus($"{action} completed.", false);
+    }
+
+    private void UpdateDirtyIndicator()
+    {
+        bool workingDiffers = _activeTransactionDescription is not null &&
+            !string.Equals(CaptureSnapshot(), _history.CurrentSnapshot, StringComparison.Ordinal);
+        SetDirty(_history.IsDirty || workingDiffers);
+        if (_undoButton is not null) _undoButton.Disabled = !_history.CanUndo;
+        if (_redoButton is not null) _redoButton.Disabled = !_history.CanRedo;
+    }
+
+    private void WireEditTransaction(Control editor, string description)
+    {
+        editor.FocusEntered += () => BeginEditTransaction(description);
+        editor.FocusExited += EndEditTransaction;
+    }
+
+    private bool DuplicateSelected()
+    {
+        if (_canvas?.SelectedInstanceId is not string sourceId) return false;
+        string? duplicateId = _document.DuplicateInstance(sourceId,
+            new Point2Dto { X = 1.0f, Y = 1.0f });
+        if (duplicateId is null) return false;
+        _lockedInstanceIds.Remove(duplicateId);
+        _canvas.SetLockedInstances(_lockedInstanceIds);
+        _canvas.SelectInstance(duplicateId);
+        MarkChanged("Duplicate instance");
+        SetStatus($"Duplicated '{sourceId}' as '{duplicateId}' at +1 m X / +1 m Y.", false);
+        return true;
+    }
+
+    private void OnLockToggled(bool locked)
+    {
+        if (_updatingUi || _canvas?.SelectedInstanceId is not string id) return;
+        if (locked) _lockedInstanceIds.Add(id); else _lockedInstanceIds.Remove(id);
+        _canvas.SetLockedInstances(_lockedInstanceIds);
+        SynchronizeSelectionUi();
+        UpdateDirtyIndicator();
+        SetStatus($"Instance '{id}' {(locked ? "locked" : "unlocked")}; this editor state is not saved.", false);
+    }
+
+    private bool IsLocked(string instanceId) => _lockedInstanceIds.Contains(instanceId);
+
+    private bool ApplyKeyboardTransform(InputEventKey key)
+    {
+        if (_canvas?.SelectedInstanceId is not string id ||
+            _document.FindInstance(id) is not TrackProjectInstanceDto instance)
+            return false;
+        if (IsLocked(id))
+        {
+            SetStatus($"Instance '{id}' is locked. Keyboard transform was ignored.", true);
+            return true;
+        }
+
+        if (!key.Echo || _keyboardTransformKey != key.Keycode)
+        {
+            if (_keyboardTransformKey is not null) EndEditTransaction();
+            _keyboardTransformKey = key.Keycode;
+            BeginEditTransaction(key.Keycode is Key.Q or Key.E
+                ? "Rotate instance with keyboard"
+                : "Nudge instance with keyboard");
+        }
+
+        bool changed;
+        if (key.Keycode is Key.Q or Key.E)
+        {
+            float amount = key.ShiftPressed ? 90.0f : 15.0f;
+            if (key.Keycode == Key.Q) amount = -amount;
+            changed = _document.SetTransform(id, instance.Position,
+                instance.RotationDeg + amount, instance.Scale);
+        }
+        else
+        {
+            float step = key.AltPressed ? 0.05f : key.ShiftPressed ? 1.0f : 0.25f;
+            Point2Dto delta = key.Keycode switch
+            {
+                Key.Left => new Point2Dto { X = -step },
+                Key.Right => new Point2Dto { X = step },
+                Key.Up => new Point2Dto { Y = step },
+                Key.Down => new Point2Dto { Y = -step },
+                _ => new Point2Dto(),
+            };
+            changed = _document.MoveInstance(id, new Point2Dto
+            {
+                X = instance.Position.X + delta.X,
+                Y = instance.Position.Y + delta.Y,
+            });
+        }
+
+        if (changed) RefreshAfterMutation();
+        return true;
+    }
+
+    private bool IsEditingText()
+    {
+        Control? focused = GetViewport().GuiGetFocusOwner();
+        return focused is LineEdit { Editable: true } or TextEdit { Editable: true };
+    }
+
+    private static bool IsTransformKey(Key key) =>
+        key is Key.Left or Key.Right or Key.Up or Key.Down or Key.Q or Key.E;
 
     private void RefreshCompilation()
     {
@@ -968,6 +1245,42 @@ public partial class TrackEditor : Control
         {
             SetStatus($"Export failed: {exception.Message}", true);
             GD.PushError($"Unable to export Viewer Track '{path}': {exception}");
+        }
+    }
+
+    private void ExportAndOpenInViewer()
+    {
+        try
+        {
+            RefreshCompilation();
+            if (!_compilation.CanExport || _compilation.Snapshot is null)
+            {
+                SetStatus($"Viewer preview blocked: {_compilation.Errors.Count} validation error(s).", true);
+                return;
+            }
+
+            // This derived snapshot lives under a dedicated sandboxed folder. It
+            // neither changes the production export target nor marks the project saved.
+            string previewFolder = _exportLibrary!.ResolveUserPath("_preview");
+            Directory.CreateDirectory(previewFolder);
+            string previewPath = _exportLibrary.ResolveSaveJson(
+                "_preview", Path.GetFileName(ViewerPreviewLauncher.PreviewRelativePath));
+            TrackExportStore.SaveToFile(_compilation.Snapshot, previewPath);
+            int processId = ViewerPreviewLauncher.Launch(previewPath);
+            SetStatus(
+                $"Viewer preview started (PID {processId}); {_compilation.Warnings.Count} warning(s).",
+                false);
+        }
+        catch (Exception exception)
+        {
+            SetStatus($"Viewer preview launch failed: {exception.Message}", true);
+            GD.PushError($"Unable to export or launch Viewer preview: {exception}");
+        }
+        finally
+        {
+            // Preview/export is not a Track Project edit and must preserve both
+            // history position and saved revision.
+            UpdateDirtyIndicator();
         }
     }
 

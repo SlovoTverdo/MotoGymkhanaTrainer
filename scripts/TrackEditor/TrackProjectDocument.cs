@@ -56,6 +56,44 @@ public sealed class TrackProjectDocument
         return instanceId;
     }
 
+    /// <summary>
+    /// Inserts a copy immediately after the source. Only persisted instance data
+    /// is duplicated; transition overrides belong to route pairs and are not copied.
+    /// </summary>
+    public string? DuplicateInstance(string sourceInstanceId, Point2Dto offset)
+    {
+        int sourceIndex = Array.FindIndex(Project.Instances,
+            instance => instance.InstanceId == sourceInstanceId);
+        if (sourceIndex < 0 || !float.IsFinite(offset.X) || !float.IsFinite(offset.Y))
+        {
+            return null;
+        }
+
+        TrackProjectInstanceDto source = Project.Instances[sourceIndex];
+        string instanceId = CreateUniqueInstanceId();
+        var duplicate = new TrackProjectInstanceDto
+        {
+            InstanceId = instanceId,
+            ExercisePath = source.ExercisePath,
+            Position = new Point2Dto
+            {
+                X = source.Position.X + offset.X,
+                Y = source.Position.Y + offset.Y,
+            },
+            RotationDeg = source.RotationDeg,
+            Scale = CopyPoint(source.Scale),
+        };
+        var instances = Project.Instances.ToList();
+        instances.Insert(sourceIndex + 1, duplicate);
+        Project.Instances = [.. instances];
+        if (_definitions.TryGetValue(sourceInstanceId, out ExerciseDefinitionDto? definition))
+        {
+            _definitions[instanceId] = definition;
+        }
+
+        return instanceId;
+    }
+
     public TrackProjectInstanceDto? FindInstance(string instanceId) =>
         Project.Instances.FirstOrDefault(instance => instance.InstanceId == instanceId);
 
