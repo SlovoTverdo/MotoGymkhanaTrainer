@@ -1,0 +1,52 @@
+{
+  "formatVersion": 4,
+  "track": {
+    "id": "viewer-venue-collision-disabled",
+    "name": "Viewer Venue Collision Disabled"
+  },
+  "venue": {
+    "id": "physics-test-venue",
+    "name": "Physics Test Venue"
+  },
+  "area": {
+    "width": 20,
+    "length": 20
+  },
+  "panorama": {
+    "enabled": false,
+    "texturePath": "",
+    "rotationDeg": 0,
+    "energyMultiplier": 1
+  },
+  "venueObjects": [
+    {
+      "id": "venue--object--overpass-disabled",
+      "name": "Visible Overpass Without Collision",
+      "assetPath": "res://venues/shared_assets/scenes/overpass_model.tscn",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 11.166206,
+        "length": 2.5
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    }
+  ],
+  "elements": [],
+  "cones": [],
+  "markings": [],
+  "trajectory": {
+    "segments": []
+  },
+  "checkpoints": []
+}

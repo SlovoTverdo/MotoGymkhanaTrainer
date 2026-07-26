@@ -8,6 +8,8 @@ size = Vector3(2.775, 2.4, 0.12)
 [node name="FenceSection" instance=ExtResource("1_fence_section")]
 
 [node name="FenceCollision" type="StaticBody3D" parent="."]
+collision_layer = 2
+collision_mask = 0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="FenceCollision"]
 position = Vector3(0, 1.2, 0)

@@ -14,9 +14,11 @@ public partial class TrackViewer : Node3D
     private const float ConeModelTopHeight = 0.79f;
     private const float BaseGridLineThickness = 0.015f;
     private const float GridLineHeight = 0.006f;
-    private const float MarkingElevation = 0.012f;
-    private const float TrajectoryElevation = 0.024f;
     private const float PathSegmentHeight = 0.008f;
+    private const float MarkingSurfaceOffset = 0.025f;
+    private const float TrajectorySurfaceOffset = 0.04f;
+    private const float DirectionMarkerSurfaceOffset = 0.015f;
+    private const float MaximumProjectionSpacingMeters = 0.35f;
     private const float TrajectoryWidth = 0.08f;
     private const float TrajectoryDirectionMarkerIntervalMeters = 5.0f;
     private const float DirectionMarkerLength = 0.5f;
@@ -31,12 +33,16 @@ public partial class TrackViewer : Node3D
     private Node3D? _trajectoryOverlay;
     private Label? _trackNameLabel;
     private Label? _statusLabel;
+    private Label? _movementModeLabel;
     private CheckBox? _trajectoryToggle;
     private FileDialog? _trackFileDialog;
     private SandboxedJsonLibrary? _trackExportLibrary;
     private WorldEnvironment? _worldEnvironment;
     private Godot.Environment? _fallbackEnvironment;
+    private SurfaceProjectionService? _surfaceProjection;
     private bool _trajectoryVisible = true;
+    private bool _loading;
+    private bool _debugCollisions;
 
     /// <inheritdoc />
     public override void _Ready()
@@ -49,6 +55,8 @@ public partial class TrackViewer : Node3D
             "Viewer track export library",
             $"{TrackExportRoot}/");
         CreateViewerUi();
+        FirstPersonCamera controller = GetNode<FirstPersonCamera>("../ViewerCharacter");
+        controller.MovementStatusChanged += OnMovementStatusChanged;
 
         try
         {
@@ -101,6 +109,16 @@ public partial class TrackViewer : Node3D
         if (_trajectoryOverlay is not null && @event.IsActionPressed(ToggleTrajectoryAction))
         {
             SetTrajectoryVisible(!_trajectoryVisible);
+            handled = true;
+        }
+
+        if (@event is InputEventKey key && key.Pressed && !key.Echo && key.Keycode == Key.F10)
+        {
+            _debugCollisions = !_debugCollisions;
+            GetTree().DebugCollisionsHint = _debugCollisions;
+            SetStatus(
+                $"Physics debug collision shapes: {(_debugCollisions ? "ON" : "OFF")}.",
+                new Color(0.7f, 0.85f, 1.0f));
             handled = true;
         }
 
@@ -158,9 +176,16 @@ public partial class TrackViewer : Node3D
             CustomMinimumSize = new Vector2(300.0f, 42.0f),
         };
 
+        _movementModeLabel = new Label
+        {
+            Name = "MovementMode",
+            Text = "Mode: Walk · F toggles Fly · F10 collision debug",
+        };
+
         layout.AddChild(_trackNameLabel);
         layout.AddChild(openTrackButton);
         layout.AddChild(_trajectoryToggle);
+        layout.AddChild(_movementModeLabel);
         layout.AddChild(_statusLabel);
         margin.AddChild(layout);
         panel.AddChild(margin);
@@ -195,7 +220,7 @@ public partial class TrackViewer : Node3D
         _trackFileDialog?.PopupCenteredRatio(0.8f);
     }
 
-    private void OnTrackFileSelected(string path)
+    private async void OnTrackFileSelected(string path)
     {
         try
         {
@@ -203,7 +228,7 @@ public partial class TrackViewer : Node3D
                 ? ProjectSettings.GlobalizePath(path)
                 : path;
             string safePath = _trackExportLibrary!.ResolveExistingJson(filesystemPath);
-            TryReplaceTrack(safePath);
+            await TryReplaceTrackAsync(safePath);
         }
         catch (Exception exception)
         {
@@ -233,37 +258,60 @@ public partial class TrackViewer : Node3D
         _trajectoryToggle?.SetPressedNoSignal(visible);
     }
 
-    private bool TryReplaceTrack(string path)
+    private async Task<bool> TryReplaceTrackAsync(string path)
     {
+        if (_loading)
+        {
+            SetStatus("A Track load is already in progress.", new Color(1.0f, 0.75f, 0.35f));
+            return false;
+        }
+
+        _loading = true;
+        Node3D? candidate = null;
         try
         {
-            /*
-             * Loading and contract validation happen before any live node changes.
-             * Building the candidate off-tree also ensures an asset/render failure
-             * cannot partially dismantle the currently visible valid track.
-             */
             TrackSnapshotDto track = LoadTrack(path);
-            if (!TrajectoryGeometry.TryGetEntryPose(
-                    track.Trajectory,
-                    out Point2Dto trajectoryStart,
-                    out Point2Dto trajectoryDirection))
+            bool hasEntryPose = TrajectoryGeometry.TryGetEntryPose(
+                track.Trajectory,
+                out Point2Dto trajectoryStart,
+                out Point2Dto trajectoryDirection);
+            if (!hasEntryPose)
             {
-                throw new InvalidDataException(
-                    "The first renderable trajectory segment has no valid entry direction for camera placement.");
+                trajectoryStart = new Point2Dto();
+                trajectoryDirection = new Point2Dto { X = 0.0f, Y = 1.0f };
             }
 
             PackedScene coneModel = _coneModel ?? throw new InvalidOperationException(
                 "The traffic cone model is not available.");
-            Node3D candidate = CreateRuntimeTrack(track, coneModel);
+            candidate = CreateRuntimeVenue(track);
             Godot.Environment nextEnvironment = CreatePanoramaEnvironment(track.Panorama) ??
                 _fallbackEnvironment ?? throw new InvalidOperationException(
                     "Viewer fallback environment is unavailable.");
 
-            ReplaceRuntimeTrack(candidate);
-            _worldEnvironment!.Environment = nextEnvironment;
-            GetNode<FirstPersonCamera>("../CameraRig").PlaceAtTrajectoryStart(
-                trajectoryStart,
-                trajectoryDirection);
+            FirstPersonCamera controller = GetNode<FirstPersonCamera>("../ViewerCharacter");
+            controller.SuspendForReload();
+            _worldEnvironment!.Environment = _fallbackEnvironment;
+            ReplaceRuntimeVenue(candidate);
+
+            /*
+             * Venue collision bodies must enter the active physics space before
+             * any downward query. PhysicsFrame is deterministic synchronization;
+             * no arbitrary timer delay is used.
+             */
+            await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+
+            _surfaceProjection = new SurfaceProjectionService(GetWorld3D());
+            Node3D trackRoot = CreateProjectedTrack(track, coneModel, _surfaceProjection);
+            candidate.AddChild(trackRoot);
+            _trajectoryOverlay = trackRoot.GetNode<Node3D>("TrackGeometry/Trajectory");
+            SetTrajectoryVisible(_trajectoryVisible);
+
+            controller.SetProjectionService(_surfaceProjection);
+            if (!controller.TryPlaceAtDomainStart(trajectoryStart, trajectoryDirection))
+                throw new InvalidOperationException(
+                    "Viewer character could not find a safe walkable spawn near the trajectory start or Venue centre.");
+
+            _worldEnvironment.Environment = nextEnvironment;
             string displayName = string.IsNullOrWhiteSpace(track.Track.Name)
                 ? track.Track.Id
                 : track.Track.Name;
@@ -274,51 +322,73 @@ public partial class TrackViewer : Node3D
 
             GD.Print(
                 $"Loaded track '{displayName}' with {track.Cones.Length} cones, " +
-                $"{track.Markings.Length} markings and {track.Trajectory.Segments.Length} trajectory segments.");
+                $"{track.Markings.Length} markings, {track.Trajectory.Segments.Length} trajectory segments and " +
+                $"{_surfaceProjection.Diagnostics.Count} grouped projection warning(s).");
             return true;
         }
         catch (Exception exception)
         {
+            if (candidate is not null)
+            {
+                if (candidate == _runtimeTrackRoot)
+                {
+                    RemoveChild(candidate);
+                    _runtimeTrackRoot = null;
+                    _gridOverlay = null;
+                    _trajectoryOverlay = null;
+                    _surfaceProjection = null;
+                }
+                candidate.Free();
+            }
             ReportLoadFailure(path, exception);
             return false;
         }
+        finally
+        {
+            _loading = false;
+        }
     }
 
-    private static Node3D CreateRuntimeTrack(TrackSnapshotDto track, PackedScene coneModel)
+    private static Node3D CreateRuntimeVenue(TrackSnapshotDto track)
     {
         var root = new Node3D { Name = "RuntimeTrackCandidate" };
-
         var venueRoot = new Node3D { Name = "VenueRoot" };
-        var surfaceRoot = new Node3D { Name = "Surface" };
-        surfaceRoot.AddChild(CreateGround(track.Area));
-        venueRoot.AddChild(surfaceRoot);
+        venueRoot.AddChild(CreateSurface(track.Area));
         venueRoot.AddChild(CreateGridOverlay(track.Area));
         venueRoot.AddChild(CreateVenueObjects(track.VenueObjects));
-        venueRoot.AddChild(CreateConeCollection(
-            "Cones", track.Cones.Where(IsVenueCone), coneModel));
-        venueRoot.AddChild(CreateMarkings(
-            track.Markings.Where(IsVenueMarking), "Markings"));
         root.AddChild(venueRoot);
-
-        var trackRoot = new Node3D { Name = "TrackRoot" };
-        trackRoot.AddChild(CreateConeCollection(
-            "ExerciseCones", track.Cones.Where(cone => !IsVenueCone(cone)), coneModel));
-        trackRoot.AddChild(CreateMarkings(
-            track.Markings.Where(marking => !IsVenueMarking(marking)), "ExerciseMarkings"));
-        trackRoot.AddChild(CreateTrajectory(track.Trajectory));
-        root.AddChild(trackRoot);
-
         return root;
     }
 
-    private void ReplaceRuntimeTrack(Node3D candidate)
+    private static Node3D CreateProjectedTrack(
+        TrackSnapshotDto track,
+        PackedScene coneModel,
+        SurfaceProjectionService projection)
+    {
+        Node3D venueRoot = new() { Name = "VenueGeometry" };
+        venueRoot.AddChild(CreateConeCollection(
+            "Cones", track.Cones.Where(IsVenueCone), coneModel, projection));
+        venueRoot.AddChild(CreateMarkings(
+            track.Markings.Where(IsVenueMarking), "Markings", projection));
+
+        var trackRoot = new Node3D { Name = "TrackGeometry" };
+        trackRoot.AddChild(CreateConeCollection(
+            "ExerciseCones", track.Cones.Where(cone => !IsVenueCone(cone)), coneModel, projection));
+        trackRoot.AddChild(CreateMarkings(
+            track.Markings.Where(marking => !IsVenueMarking(marking)),
+            "ExerciseMarkings",
+            projection));
+        trackRoot.AddChild(CreateTrajectory(track.Trajectory, projection));
+
+        var result = new Node3D { Name = "ProjectedGeometry" };
+        result.AddChild(venueRoot);
+        result.AddChild(trackRoot);
+        return result;
+    }
+
+    private void ReplaceRuntimeVenue(Node3D candidate)
     {
         Node3D newGridOverlay = candidate.GetNode<Node3D>("VenueRoot/GridOverlay");
-        Node3D newTrajectoryOverlay = candidate.GetNode<Node3D>("TrackRoot/Trajectory");
-
-        // Attach the complete candidate before removing the old root. No frame is
-        // rendered between these synchronous operations, so replacement is atomic.
-        AddChild(candidate);
         Node3D? previousRoot = _runtimeTrackRoot;
         if (previousRoot is not null)
         {
@@ -326,11 +396,20 @@ public partial class TrackViewer : Node3D
             previousRoot.Free();
         }
 
+        AddChild(candidate);
         candidate.Name = "RuntimeTrack";
         _runtimeTrackRoot = candidate;
         _gridOverlay = newGridOverlay;
-        _trajectoryOverlay = newTrajectoryOverlay;
-        SetTrajectoryVisible(_trajectoryVisible);
+        _trajectoryOverlay = null;
+        _surfaceProjection = null;
+    }
+
+    private void OnMovementStatusChanged(ViewerMovementMode mode, string message)
+    {
+        if (_movementModeLabel is not null)
+            _movementModeLabel.Text =
+                $"Mode: {mode} · F toggles · Fly vertical Space/Ctrl · F10 collision debug";
+        SetStatus(message, new Color(0.7f, 0.85f, 1.0f));
     }
 
     private void ReportLoadFailure(string path, Exception exception)
@@ -403,6 +482,7 @@ public partial class TrackViewer : Node3D
     private static Node3D CreateVenueObjects(IEnumerable<VenueObjectSnapshotDto> objects)
     {
         var root = new Node3D { Name = "Objects" };
+        var missingCollisionByAsset = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         foreach (VenueObjectSnapshotDto item in objects)
         {
             if (!item.VisibleInViewer) continue;
@@ -427,7 +507,19 @@ public partial class TrackViewer : Node3D
                 spatial.Position = DomainCoordinateMapper.ToGodot(item.Position, item.Elevation);
                 spatial.Rotation = new Vector3(0.0f, Mathf.DegToRad(item.RotationDeg), 0.0f);
                 spatial.Scale = new Vector3(item.Scale.X, item.Scale.Y, item.Scale.Z);
-                if (!item.CollisionEnabled) DisableCollisionRecursively(spatial);
+                if (!item.CollisionEnabled)
+                {
+                    DisableCollisionRecursively(spatial);
+                }
+                else if (!ContainsEnabledCollision(spatial))
+                {
+                    if (!missingCollisionByAsset.TryGetValue(item.AssetPath, out List<string>? ids))
+                    {
+                        ids = [];
+                        missingCollisionByAsset.Add(item.AssetPath, ids);
+                    }
+                    ids.Add(item.Id);
+                }
                 root.AddChild(spatial);
             }
             catch (Exception exception)
@@ -437,11 +529,30 @@ public partial class TrackViewer : Node3D
             }
         }
 
+        foreach ((string assetPath, List<string> ids) in missingCollisionByAsset)
+        {
+            string sample = string.Join(", ", ids.Take(4));
+            string remainder = ids.Count > 4 ? $" and {ids.Count - 4} more" : string.Empty;
+            GD.PushWarning(
+                $"Venue asset '{assetPath}' is collisionEnabled=true but contains no enabled " +
+                $"CollisionShape3D/CollisionPolygon3D. Instances: {sample}{remainder}.");
+        }
+
         return root;
     }
 
+    private static bool ContainsEnabledCollision(Node node)
+    {
+        if (node is CollisionShape3D { Disabled: false } ||
+            node is CollisionPolygon3D { Disabled: false })
+            return true;
+        foreach (Node child in node.GetChildren())
+            if (ContainsEnabledCollision(child)) return true;
+        return false;
+    }
+
     /// <summary>Disables authored collision without creating or deleting collision geometry.</summary>
-    internal static void DisableCollisionRecursively(Node node)
+    public static void DisableCollisionRecursively(Node node)
     {
         if (node is CollisionShape3D shape) shape.Disabled = true;
         if (node is CollisionPolygon3D polygon) polygon.Disabled = true;
@@ -458,10 +569,11 @@ public partial class TrackViewer : Node3D
     private static Node3D CreateConeCollection(
         string name,
         IEnumerable<ConeDto> cones,
-        PackedScene coneModel)
+        PackedScene coneModel,
+        SurfaceProjectionService projection)
     {
         var root = new Node3D { Name = name };
-        foreach (ConeDto cone in cones) root.AddChild(CreateCone(cone, coneModel));
+        foreach (ConeDto cone in cones) root.AddChild(CreateCone(cone, coneModel, projection));
         return root;
     }
 
@@ -471,7 +583,7 @@ public partial class TrackViewer : Node3D
     private static bool IsVenueMarking(MarkingDto marking) =>
         marking.Id.StartsWith("venue--marking--", StringComparison.Ordinal);
 
-    private static MeshInstance3D CreateGround(AreaDto area)
+    private static Node3D CreateSurface(AreaDto area)
     {
         var groundMaterial = new StandardMaterial3D
         {
@@ -479,6 +591,7 @@ public partial class TrackViewer : Node3D
             Roughness = 0.95f,
         };
 
+        var root = new Node3D { Name = "Surface" };
         var ground = new MeshInstance3D
         {
             Name = "TrainingArea",
@@ -494,8 +607,26 @@ public partial class TrackViewer : Node3D
             // applied here; domain X/Y still maps directly to Godot X/Z.
             Position = Vector3.Zero,
         };
+        root.AddChild(ground);
 
-        return ground;
+        const float collisionThickness = 0.2f;
+        var surfaceBody = new StaticBody3D
+        {
+            Name = "WalkableSurfaceBody",
+            CollisionLayer = ViewerPhysicsLayers.WalkableSurface,
+            CollisionMask = 0,
+        };
+        surfaceBody.AddChild(new CollisionShape3D
+        {
+            Name = "CollisionShape3D",
+            Position = new Vector3(0.0f, -collisionThickness / 2.0f, 0.0f),
+            Shape = new BoxShape3D
+            {
+                Size = new Vector3(area.Width, collisionThickness, area.Length),
+            },
+        });
+        root.AddChild(surfaceBody);
+        return root;
     }
 
     private static Node3D CreateGridOverlay(AreaDto area)
@@ -614,7 +745,10 @@ public partial class TrackViewer : Node3D
         return BaseGridLineThickness;
     }
 
-    private static Node3D CreateMarkings(IEnumerable<MarkingDto> markings, string rootName)
+    private static Node3D CreateMarkings(
+        IEnumerable<MarkingDto> markings,
+        string rootName,
+        SurfaceProjectionService projection)
     {
         var root = new Node3D { Name = rootName };
 
@@ -658,17 +792,19 @@ public partial class TrackViewer : Node3D
             int strokeIndex = 0;
             foreach (MarkingStroke stroke in MarkingGeometry.CreateStrokes(marking.Points, style))
             {
-                MeshInstance3D? visual = CreatePathSegment(
-                    $"Stroke_{strokeIndex++}",
-                    stroke.Start,
-                    stroke.End,
+                ProjectedSurfacePoint[] projected = projection.ProjectPolyline(
+                    [stroke.Start, stroke.End],
+                    "Marking",
+                    marking.Id,
+                    MaximumProjectionSpacingMeters,
+                    MarkingSurfaceOffset);
+                var strokeRoot = new Node3D { Name = $"Stroke_{strokeIndex++}" };
+                AddProjectedPathSegments(
+                    strokeRoot,
+                    projected,
                     marking.WidthMeters,
-                    MarkingElevation,
                     material);
-                if (visual is not null)
-                {
-                    markingRoot.AddChild(visual);
-                }
+                markingRoot.AddChild(strokeRoot);
             }
 
             root.AddChild(markingRoot);
@@ -677,7 +813,9 @@ public partial class TrackViewer : Node3D
         return root;
     }
 
-    private static Node3D CreateTrajectory(TrajectoryDto trajectory)
+    private static Node3D CreateTrajectory(
+        TrajectoryDto trajectory,
+        SurfaceProjectionService projection)
     {
         var root = new Node3D { Name = "Trajectory" };
         var material = new StandardMaterial3D
@@ -726,13 +864,18 @@ public partial class TrackViewer : Node3D
                 renderPoints[0]);
 
             var segmentRoot = new Node3D { Name = segmentId };
-            AddPathSegments(
-                segmentRoot,
+            ProjectedSurfacePoint[] projected = projection.ProjectPolyline(
                 renderPoints,
+                "TrajectorySegment",
+                segmentId,
+                MaximumProjectionSpacingMeters,
+                TrajectorySurfaceOffset);
+            AddProjectedPathSegments(
+                segmentRoot,
+                projected,
                 TrajectoryWidth,
-                TrajectoryElevation,
                 material);
-            AddDirectionMarkers(segmentRoot, renderPoints, material);
+            AddDirectionMarkers(segmentRoot, projected, material);
             root.AddChild(segmentRoot);
 
             previousEnd = renderPoints[^1];
@@ -744,7 +887,7 @@ public partial class TrackViewer : Node3D
 
     private static void AddDirectionMarkers(
         Node3D parent,
-        IReadOnlyList<Point2Dto> points,
+        IReadOnlyList<ProjectedSurfacePoint> points,
         Material material)
     {
         var markersRoot = new Node3D { Name = "DirectionMarkers" };
@@ -758,11 +901,9 @@ public partial class TrackViewer : Node3D
          */
         for (int pointIndex = 0; pointIndex < points.Count - 1; pointIndex++)
         {
-            Point2Dto startPoint = points[pointIndex];
-            Point2Dto endPoint = points[pointIndex + 1];
-            var start = new Vector2(startPoint.X, startPoint.Y);
-            var end = new Vector2(endPoint.X, endPoint.Y);
-            Vector2 delta = end - start;
+            Vector3 start = points[pointIndex].Position;
+            Vector3 end = points[pointIndex + 1].Position;
+            Vector3 delta = end - start;
             float segmentLength = delta.Length();
 
             if (segmentLength <= Mathf.Epsilon)
@@ -770,16 +911,21 @@ public partial class TrackViewer : Node3D
                 continue;
             }
 
-            Vector2 direction = delta / segmentLength;
+            Vector3 direction = delta / segmentLength;
             float distanceAlongSegment = distanceToNextMarker;
 
             while (distanceAlongSegment <= segmentLength)
             {
-                Vector2 markerPosition = start + direction * distanceAlongSegment;
+                float amount = distanceAlongSegment / segmentLength;
+                Vector3 markerPosition = start + direction * distanceAlongSegment;
+                Vector3 surfaceNormal = points[pointIndex].Normal.Lerp(
+                    points[pointIndex + 1].Normal,
+                    amount).Normalized();
                 markersRoot.AddChild(CreateDirectionMarker(
                     markerIndex++,
                     markerPosition,
                     direction,
+                    surfaceNormal,
                     material));
                 distanceAlongSegment += TrajectoryDirectionMarkerIntervalMeters;
             }
@@ -792,33 +938,38 @@ public partial class TrackViewer : Node3D
 
     private static Node3D CreateDirectionMarker(
         int index,
-        Vector2 center,
-        Vector2 direction,
+        Vector3 center,
+        Vector3 direction,
+        Vector3 surfaceNormal,
         Material material)
     {
         var marker = new Node3D { Name = $"Direction_{index}" };
-        Vector2 perpendicular = new(-direction.Y, direction.X);
-        Vector2 tip = center + direction * (DirectionMarkerLength / 2.0f);
-        Vector2 tailCenter = center - direction * (DirectionMarkerLength / 2.0f);
-        Vector2 leftTail = tailCenter + perpendicular * DirectionMarkerHalfWidth;
-        Vector2 rightTail = tailCenter - perpendicular * DirectionMarkerHalfWidth;
-        float elevation = TrajectoryElevation + PathSegmentHeight;
+        Vector3 tangent = direction.Normalized();
+        Vector3 normal = surfaceNormal.Normalized();
+        Vector3 perpendicular = normal.Cross(tangent).Normalized();
+        Vector3 offset = normal * DirectionMarkerSurfaceOffset;
+        Vector3 tip = center + tangent * (DirectionMarkerLength / 2.0f) + offset;
+        Vector3 tailCenter = center - tangent * (DirectionMarkerLength / 2.0f) + offset;
+        Vector3 leftTail = tailCenter + perpendicular * DirectionMarkerHalfWidth;
+        Vector3 rightTail = tailCenter - perpendicular * DirectionMarkerHalfWidth;
 
-        // A shallow two-stroke chevron remains readable from both overhead and
-        // low camera angles while preserving the physical trajectory underneath.
-        MeshInstance3D? leftStroke = CreatePathSegment(
+        // The chevron uses the projected 3D tangent and surface normal, so both
+        // position and pitch follow ramps rather than remaining horizontal.
+        MeshInstance3D? leftStroke = CreateProjectedPathSegment(
             "LeftStroke",
-            ToDomainPoint(leftTail),
-            ToDomainPoint(tip),
+            leftTail,
+            tip,
+            normal,
+            normal,
             DirectionMarkerLineWidth,
-            elevation,
             material);
-        MeshInstance3D? rightStroke = CreatePathSegment(
+        MeshInstance3D? rightStroke = CreateProjectedPathSegment(
             "RightStroke",
-            ToDomainPoint(rightTail),
-            ToDomainPoint(tip),
+            rightTail,
+            tip,
+            normal,
+            normal,
             DirectionMarkerLineWidth,
-            elevation,
             material);
 
         if (leftStroke is not null)
@@ -832,11 +983,6 @@ public partial class TrackViewer : Node3D
         }
 
         return marker;
-    }
-
-    private static Point2Dto ToDomainPoint(Vector2 point)
-    {
-        return new Point2Dto { X = point.X, Y = point.Y };
     }
 
     private static Point2Dto[] DiscretizeCubicBezier(TrajectorySegmentDto segment)
@@ -868,21 +1014,21 @@ public partial class TrackViewer : Node3D
         }
     }
 
-    private static void AddPathSegments(
+    private static void AddProjectedPathSegments(
         Node3D parent,
-        IReadOnlyList<Point2Dto> points,
+        IReadOnlyList<ProjectedSurfacePoint> points,
         float width,
-        float elevation,
         Material material)
     {
         for (int index = 0; index < points.Count - 1; index++)
         {
-            MeshInstance3D? segment = CreatePathSegment(
+            MeshInstance3D? segment = CreateProjectedPathSegment(
                 $"Segment_{index}",
-                points[index],
-                points[index + 1],
+                points[index].Position,
+                points[index + 1].Position,
+                points[index].Normal,
+                points[index + 1].Normal,
                 width,
-                elevation,
                 material);
 
             if (segment is not null)
@@ -892,17 +1038,16 @@ public partial class TrackViewer : Node3D
         }
     }
 
-    private static MeshInstance3D? CreatePathSegment(
+    private static MeshInstance3D? CreateProjectedPathSegment(
         string name,
-        Point2Dto start,
-        Point2Dto end,
+        Vector3 start,
+        Vector3 end,
+        Vector3 startNormal,
+        Vector3 endNormal,
         float width,
-        float elevation,
         Material material)
     {
-        Vector3 startPosition = DomainCoordinateMapper.ToGodot(start, elevation);
-        Vector3 endPosition = DomainCoordinateMapper.ToGodot(end, elevation);
-        Vector3 direction = endPosition - startPosition;
+        Vector3 direction = end - start;
         float length = direction.Length();
 
         if (length <= Mathf.Epsilon)
@@ -910,9 +1055,13 @@ public partial class TrackViewer : Node3D
             return null;
         }
 
-        // BoxMesh extends along local Z. This yaw aligns that axis with the
-        // resolved world-space segment while keeping the strip flat on the area.
-        float yaw = Mathf.Atan2(direction.X, direction.Z);
+        Vector3 forward = direction / length;
+        Vector3 normal = (startNormal + endNormal).Normalized();
+        if (normal.LengthSquared() <= 0.00001f ||
+            MathF.Abs(normal.Dot(forward)) > 0.98f)
+            normal = Vector3.Up;
+        Vector3 right = normal.Cross(forward).Normalized();
+        Vector3 adjustedNormal = forward.Cross(right).Normalized();
         return new MeshInstance3D
         {
             Name = name,
@@ -921,22 +1070,27 @@ public partial class TrackViewer : Node3D
                 Size = new Vector3(width, PathSegmentHeight, length),
                 Material = material,
             },
-            Position = (startPosition + endPosition) / 2.0f,
-            Rotation = new Vector3(0.0f, yaw, 0.0f),
+            Position = (start + end) / 2.0f,
+            Basis = new Basis(right, adjustedNormal, forward),
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
         };
     }
 
-    private static Node3D CreateCone(ConeDto cone, PackedScene coneModel)
+    private static Node3D CreateCone(
+        ConeDto cone,
+        PackedScene coneModel,
+        SurfaceProjectionService projection)
     {
         var root = new Node3D
         {
             Name = string.IsNullOrWhiteSpace(cone.Id) ? "Cone" : cone.Id,
-            Position = DomainCoordinateMapper.ToGodot(cone.Position),
+            Position = projection.ProjectConePosition(cone.Position, cone.Id),
         };
 
         Node3D model = coneModel.Instantiate<Node3D>();
         model.Name = "TrafficConeModel";
+        // Cone visuals are intentionally non-blocking in this iteration.
+        DisableCollisionRecursively(model);
         root.AddChild(model);
 
         // "none" deliberately means the authored traffic-cone model stands on

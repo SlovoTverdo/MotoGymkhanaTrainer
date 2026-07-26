@@ -4,6 +4,7 @@ using MotoGymkhanaTrainer.ExerciseEditor;
 using MotoGymkhanaTrainer.TrackEditor;
 using MotoGymkhanaTrainer.Tracks;
 using MotoGymkhanaTrainer.VenueEditor;
+using MotoGymkhanaTrainer.Viewer;
 
 const string ProjectDirectory = "E:\\Projects\\Games\\MotoGymkhanaTrainer";
 string samplePath = Path.Combine(ProjectDirectory, "examples", "courses", "basic.json");
@@ -1339,6 +1340,70 @@ finally
 {
     if (Directory.Exists(temporaryVenueRoot)) Directory.Delete(temporaryVenueRoot, recursive: true);
 }
+
+// Viewer/Venue Physics Iteration 1 keeps the layer policy and projection sampling
+// executable as small regression checks, rather than relying on scene defaults.
+AssertEqual(1u, ViewerPhysicsLayers.WalkableSurface, "walkable surfaces use the semantic layer 1");
+AssertEqual(2u, ViewerPhysicsLayers.WorldObstacle, "world obstacles use the semantic layer 2");
+AssertEqual(3u, ViewerPhysicsLayers.CharacterMask,
+    "Viewer character sees walkable surfaces and world obstacles only");
+AssertEqual(1u, ViewerPhysicsLayers.ProjectionMask,
+    "surface projection sees walkable surfaces only");
+AssertTrue(typeof(CharacterBody3D).IsAssignableFrom(typeof(FirstPersonCamera)),
+    "Viewer walk controller is a CharacterBody3D");
+
+Point2Dto[] subdividedProjectionLine = SurfaceProjectionService.SubdividePolyline(
+[
+    new Point2Dto { X = 0, Y = 0 },
+    new Point2Dto { X = 1, Y = 0 },
+], 0.35f);
+AssertEqual(4, subdividedProjectionLine.Length,
+    "one metre projection interval is subdivided into three intervals");
+AssertTrue(subdividedProjectionLine.Zip(subdividedProjectionLine.Skip(1))
+        .All(pair => MathF.Sqrt(
+            MathF.Pow(pair.Second.X - pair.First.X, 2) +
+            MathF.Pow(pair.Second.Y - pair.First.Y, 2)) <= 0.3501f),
+    "projection subdivision respects the maximum sample spacing");
+AssertTrue(subdividedProjectionLine[0].X == 0 && subdividedProjectionLine[0].Y == 0,
+    "projection subdivision preserves the first source point");
+AssertTrue(subdividedProjectionLine[^1].X == 1 && subdividedProjectionLine[^1].Y == 0,
+    "projection subdivision preserves the last source point");
+
+string viewerPhysicsFixturePath = Path.Combine(
+    ProjectDirectory, "exports", "tracks", "_tests", "viewer-venue-physics.json");
+TrackSnapshotDto viewerPhysicsFixture = TrackLoader.LoadFromJson(
+    File.ReadAllText(viewerPhysicsFixturePath), viewerPhysicsFixturePath);
+AssertEqual(4, viewerPhysicsFixture.FormatVersion, "Viewer physics fixture remains exported Track v4");
+AssertEqual("dashed", viewerPhysicsFixture.Markings[0].Style,
+    "Viewer physics fixture covers projected dashed Venue markings");
+AssertEqual("dotted", viewerPhysicsFixture.Markings[1].Style,
+    "Viewer physics fixture covers projected dotted Exercise markings");
+AssertEqual(3, viewerPhysicsFixture.Cones.Length,
+    "Viewer physics fixture covers cones on the ramp, platform and exit ramp");
+string collisionDisabledFixturePath = Path.Combine(
+    ProjectDirectory, "exports", "tracks", "_tests", "viewer-venue-collision-disabled.json");
+TrackSnapshotDto collisionDisabledFixture = TrackLoader.LoadFromJson(
+    File.ReadAllText(collisionDisabledFixturePath), collisionDisabledFixturePath);
+AssertTrue(collisionDisabledFixture.VenueObjects[0].VisibleInViewer &&
+           !collisionDisabledFixture.VenueObjects[0].CollisionEnabled,
+    "collision-disabled fixture keeps the Venue object visible");
+
+string mainSceneText = File.ReadAllText(Path.Combine(ProjectDirectory, "scenes", "Main.tscn"));
+AssertTrue(mainSceneText.Contains("type=\"CharacterBody3D\"", StringComparison.Ordinal),
+    "Viewer scene persists a CharacterBody3D root");
+AssertTrue(mainSceneText.Contains("type=\"CapsuleShape3D\"", StringComparison.Ordinal),
+    "Viewer scene persists a capsule collision shape");
+string viewerSourceText = File.ReadAllText(Path.Combine(ProjectDirectory, "scripts", "TrackViewer.cs"));
+AssertTrue(viewerSourceText.Contains("node is CollisionShape3D", StringComparison.Ordinal) &&
+           viewerSourceText.Contains("node is CollisionPolygon3D", StringComparison.Ordinal),
+    "collision disabling covers both supported collision descendant types");
+string overpassSceneText = File.ReadAllText(Path.Combine(
+    ProjectDirectory, "venues", "shared_assets", "scenes", "overpass_model.tscn"));
+AssertTrue(overpassSceneText.Contains("ConvexPolygonShape3D_left_ramp", StringComparison.Ordinal) &&
+           overpassSceneText.Contains("ConvexPolygonShape3D_right_ramp", StringComparison.Ordinal),
+    "overpass uses separate continuous ramp collision profiles");
+AssertTrue(!overpassSceneText.Contains("BoxShape3D_ramp", StringComparison.Ordinal),
+    "overpass has no single box collision blocking ramp entry");
 
 Console.WriteLine("All Viewer, Exercise Editor, Track Editor and Venue Editor Iteration 1 checks passed.");
 
