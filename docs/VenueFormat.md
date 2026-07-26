@@ -30,6 +30,31 @@ Venue Definition содержит:
 * постоянные конусы;
 * постоянную разметку.
 
+```markdown
+# Track integration
+
+Track Project ссылается на Venue Definition через `venuePath`.
+
+Venue Definition не хранит список Track Project и не знает, какие трассы её используют.
+
+Во время Track compilation:
+
+- metadata Venue копируется в export;
+- area копируется в export;
+- panorama копируется в export;
+- Venue objects получают namespace IDs;
+- Venue cones получают namespace IDs;
+- Venue markings получают namespace IDs.
+
+Исходная Venue Definition не изменяется.
+
+Visible Venue object с unresolved `assetPath` блокирует export трассы.
+
+Hidden Venue object с unresolved asset создаёт warning, но может не блокировать export.
+
+Enabled panorama с отсутствующей texture блокирует export.
+```
+
 Venue Definition не содержит:
 
 * ExerciseInstance;
