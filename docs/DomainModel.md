@@ -1300,3 +1300,125 @@ VenueDefinition
 ├─ Objects[]
 ├─ Cones[]
 └─ Markings[]
+```
+
+# Viewer physical runtime
+
+## ViewerCharacter
+
+Концептуальная runtime-модель:
+
+```text
+ViewerCharacter
+├─ Mode
+├─ CharacterBody3D
+├─ CollisionShape
+├─ Head
+├─ Camera
+├─ MovementSettings
+└─ PhysicsState
+```
+
+Режимы:
+
+```text
+Walk
+Fly
+```
+
+## Walk mode
+
+Walk mode принадлежит Viewer runtime и не сериализуется.
+
+Он использует:
+
+* CharacterBody3D;
+* gravity;
+* MoveAndSlide;
+* floor detection;
+* floor snap;
+* Venue collision.
+
+## Fly mode
+
+Fly mode предназначен для свободного осмотра.
+
+Он не изменяет Track или Venue domain state.
+
+## Walkable surface
+
+Walkable surface — физическая поверхность, подходящая для:
+
+* character floor;
+* projection trajectory;
+* projection markings;
+* placement cones.
+
+Примеры:
+
+* asphalt surface;
+* ramp;
+* raised platform.
+
+## World obstacle
+
+World obstacle блокирует ViewerCharacter, но не обязательно используется для projection.
+
+Примеры:
+
+* wall;
+* fence;
+* post;
+* closed object volume.
+
+## SurfaceProjectionService
+
+Концептуальная runtime-модель:
+
+```text
+SurfaceProjectionService
+├─ PhysicsSpace
+├─ ProjectionMask
+├─ TopHeight
+├─ BottomHeight
+├─ VisualOffset
+└─ FallbackPolicy
+```
+
+Операции:
+
+```text
+TryProjectPoint
+ProjectPolyline
+ProjectCone
+```
+
+SurfaceProjectionService является единственным источником runtime surface queries для Track visuals.
+
+## Projected geometry
+
+Projected geometry является производной runtime geometry.
+
+```text
+ExportedTrackV4 2D geometry
+        +
+Venue physics surfaces
+        ↓
+ProjectedViewerGeometry
+```
+
+Она не сериализуется и пересоздаётся при Viewer reload.
+
+## Collision asset ownership
+
+VenueObjectInstance ссылается на `.tscn`.
+
+Collision shapes принадлежат asset scene.
+
+Viewer только:
+
+* инстанцирует asset;
+* применяет transform;
+* включает или отключает существующую collision.
+
+Viewer не является генератором collision geometry.
