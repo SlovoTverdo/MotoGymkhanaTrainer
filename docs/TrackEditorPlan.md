@@ -1914,4 +1914,822 @@ Invalid transition
 * Track Editor Iteration 1–2 не сломан.
 * Нет compile/runtime errors.
 
+# Track Editor Iteration 4 — Productivity and Editing Safety
+
+## 1. Цель
+
+Iteration 4 улучшает повседневную работу с Track Editor после завершения основного workflow:
+
+```text
+Exercise Definition
+        ↓
+Track Project
+        ↓
+Automatic transitions
+        ↓
+Manual transition overrides
+        ↓
+Exported Track
+        ↓
+Viewer
+```
+
+Основные цели:
+
+* безопасно отменять ошибочные изменения;
+* быстро повторять одинаковые ExerciseInstance;
+* точно изменять transform клавиатурой;
+* временно защищать готовые instances от случайного изменения;
+* быстро экспортировать и открыть текущую трассу во Viewer.
+
+Iteration 4 не изменяет Track Project JSON contract и Exported Track JSON contract.
+
+---
+
+# 2. Undo and Redo
+
+Track Editor должен поддерживать историю изменений текущего Track Project.
+
+Команды:
+
+```text
+Undo
+Redo
+```
+
+Рекомендуемые shortcuts:
+
+```text
+Ctrl+Z        Undo
+Ctrl+Y        Redo
+Ctrl+Shift+Z  Redo
+```
+
+Если операционная система или текущий input mapping требуют других сочетаний, поведение должно оставаться стандартным и понятным.
+
+---
+
+## 2.1. Операции, поддерживающие Undo/Redo
+
+История должна включать:
+
+* создание нового ExerciseInstance;
+* удаление ExerciseInstance;
+* Duplicate;
+* изменение position;
+* изменение rotation;
+* изменение scale;
+* reorder Route Order;
+* изменение Track metadata;
+* изменение area;
+* создание TransitionOverride;
+* изменение control handles TransitionOverride;
+* числовое изменение TransitionOverride;
+* Reset Transition to Automatic;
+* удаление orphaned overrides;
+* удаление instance, приводящее к orphaned overrides;
+* изменение других persisted полей Track Project.
+
+Не требуется добавлять в историю:
+
+* selection;
+* pan;
+* zoom;
+* active tool;
+* expanded tree nodes;
+* transition preview visibility;
+* временную блокировку instance;
+* clipboard;
+* status messages;
+* результаты validation;
+* последний экспортный путь.
+
+---
+
+## 2.2. Единица Undo
+
+Одна логическая пользовательская операция должна создавать одну запись истории.
+
+Пример drag:
+
+```text
+mouse press
+    ↓
+begin edit transaction
+    ↓
+mouse move
+mouse move
+mouse move
+    ↓
+mouse release
+    ↓
+commit one undo entry
+```
+
+Не допускается создание отдельной Undo-записи для каждого события движения мыши.
+
+То же правило применяется к:
+
+* drag ExerciseInstance;
+* drag transition control handle;
+* длительному изменению числового поля;
+* повторяющемуся изменению slider или spin box.
+
+---
+
+## 2.3. Cancelled operation
+
+Если пользователь начал drag, но итоговое значение не изменилось, Undo-запись не создаётся.
+
+Если операция отменена:
+
+* клавишей Escape;
+* потерей допустимого target;
+* внутренней validation;
+* другим штатным механизмом отмены;
+
+документ должен вернуться к состоянию до начала операции.
+
+---
+
+## 2.4. Redo invalidation
+
+После Undo, если пользователь выполняет новое persisted изменение:
+
+```text
+Redo history
+```
+
+очищается.
+
+Это стандартная линейная модель истории.
+
+Branching history не требуется.
+
+---
+
+## 2.5. История и Save
+
+Undo/Redo history не сериализуется.
+
+После Save:
+
+* история может сохраняться в текущем сеансе;
+* Track Project становится clean в сохранённой позиции истории.
+
+Редактор должен различать:
+
+```text
+current history position
+saved history position
+```
+
+Dirty state определяется не просто наличием Undo-записей, а отличием текущей позиции от последнего успешно сохранённого состояния.
+
+Пример:
+
+```text
+Save
+→ Move instance
+→ Undo
+```
+
+После Undo документ снова должен стать:
+
+```text
+clean
+```
+
+если его состояние совпадает с последним Save.
+
+---
+
+## 2.6. История и Open/New
+
+При успешном:
+
+* Open;
+* New Track;
+
+история предыдущего документа очищается.
+
+Нельзя Undo вернуться в ранее открытый Track Project.
+
+---
+
+## 2.7. History capacity
+
+Допускается ограниченная история.
+
+Рекомендуемый первоначальный предел:
+
+```text
+100 logical operations
+```
+
+Точное значение может быть изменено после проверки потребления памяти.
+
+При превышении лимита удаляются самые старые записи.
+
+---
+
+# 3. Рекомендуемая стратегия истории
+
+Для текущего размера Track Project допустим snapshot-based подход.
+
+Концептуально:
+
+```text
+TrackEditorHistoryEntry
+├─ Description
+├─ BeforeSnapshot
+└─ AfterSnapshot
+```
+
+Snapshot должен содержать persisted-состояние Track Project:
+
+* metadata;
+* area;
+* instances;
+* transitionOverrides.
+
+Snapshot не должен содержать:
+
+* resolved Exercise Definition cache;
+* transformed preview geometry;
+* selected instance;
+* selected transition;
+* viewport state;
+* lock state;
+* validation state.
+
+Допустима command-based реализация, если она существенно лучше соответствует текущей архитектуре.
+
+Не следует создавать сложный event-sourcing framework.
+
+---
+
+# 4. Editor state after Undo/Redo
+
+После восстановления Track Project необходимо:
+
+1. повторно разрешить или переиспользовать Exercise Definition;
+2. пересобрать transformed preview;
+3. пересчитать automatic transitions;
+4. применить TransitionOverride;
+5. обновить Route Order;
+6. выполнить validation;
+7. обновить canvas;
+8. восстановить selection, если соответствующий объект ещё существует.
+
+Selection не обязана быть частью snapshot.
+
+Рекомендуемое поведение:
+
+* попытаться сохранить selection по `instanceId` или `transitionId`;
+* очистить selection, если объект больше не существует.
+
+---
+
+# 5. Duplicate ExerciseInstance
+
+Добавить команду:
+
+```text
+Duplicate Instance
+```
+
+Рекомендуемый shortcut:
+
+```text
+Ctrl+D
+```
+
+Команда работает для выбранного ExerciseInstance.
+
+---
+
+## 5.1. Результат Duplicate
+
+Новый instance получает:
+
+* новый уникальный `instanceId`;
+* тот же `exercisePath`;
+* ту же position с небольшим offset;
+* тот же `rotationDeg`;
+* тот же `scale`;
+* место непосредственно после исходного instance в Route Order.
+
+Рекомендуемый positional offset:
+
+```text
++1 meter по Track X
++1 meter по Track Y
+```
+
+Допускается использование текущего snap step.
+
+Новый instance становится выбранным.
+
+---
+
+## 5.2. Identity
+
+Duplicate не копирует `instanceId`.
+
+Пример:
+
+```text
+source:
+exercise-instance-007
+
+duplicate:
+exercise-instance-008
+```
+
+ID должен создаваться существующим централизованным генератором.
+
+Нельзя определять новый ID только по текущему количеству instances, если это может привести к повторному использованию ранее удалённого ID.
+
+---
+
+## 5.3. TransitionOverride
+
+При Duplicate не копируются TransitionOverride исходного instance.
+
+Причины:
+
+* новый instance имеет другую identity;
+* у него другие соседние пары;
+* control offsets исходных переходов могут быть неприменимы.
+
+После вставки нового instance:
+
+* соседние automatic transitions пересчитываются;
+* существующие overrides повторно сопоставляются;
+* потерявшие соседство overrides становятся orphaned согласно Iteration 3.
+
+Duplicate вместе с последствиями для Route Order и overrides является одной Undo-операцией.
+
+---
+
+## 5.4. Unresolved instance
+
+Разрешается Duplicate unresolved instance.
+
+Копия сохраняет:
+
+* `exercisePath`;
+* transform;
+* unresolved state после повторного разрешения.
+
+Она получает новый `instanceId`.
+
+---
+
+# 6. Keyboard transforms
+
+Track Editor должен поддерживать точное изменение transform выбранного ExerciseInstance с клавиатуры.
+
+Keyboard transforms применяются только:
+
+* когда фокус не находится в текстовом или числовом поле;
+* когда выбран ExerciseInstance;
+* когда instance не заблокирован.
+
+---
+
+## 6.1. Position nudging
+
+Рекомендуемое управление:
+
+```text
+Arrow keys
+    move by current snap step
+
+Shift + Arrow
+    move by 1 meter
+
+Alt + Arrow
+    move by fine step
+```
+
+Рекомендуемый fine step:
+
+```text
+0.05 meter
+```
+
+Если текущий snap step равен или меньше fine step, реализация должна оставаться предсказуемой.
+
+Направления соответствуют доменной Track X/Y, а не произвольной ориентации экрана после transform.
+
+---
+
+## 6.2. Repeated key input
+
+Удержание клавиши может повторять перемещение.
+
+Последовательность автоповтора одной удерживаемой клавиши желательно объединять в одну Undo-операцию.
+
+Минимально допустимый вариант:
+
+* одно нажатие — одна Undo-запись;
+* системный key repeat — несколько Undo-записей.
+
+Однако предпочтительнее транзакция:
+
+```text
+first key press
+    ↓
+begin nudge transaction
+
+key repeat
+    ↓
+update transform
+
+key release
+    ↓
+commit one undo entry
+```
+
+---
+
+## 6.3. Rotation shortcuts
+
+Добавить поворот выбранного instance:
+
+```text
+Q  rotate -15 degrees
+E  rotate +15 degrees
+```
+
+Дополнительно:
+
+```text
+Shift+Q  rotate -90 degrees
+Shift+E  rotate +90 degrees
+```
+
+Если Q/E конфликтуют с текущими инструментами, выбрать другие свободные клавиши и явно отразить их в UI.
+
+Rotation:
+
+* изменяет persisted `rotationDeg`;
+* пересчитывает geometry;
+* пересчитывает transitions;
+* применяет TransitionOverride к новым endpoints;
+* создаёт Undo-запись.
+
+---
+
+## 6.4. Exact properties remain available
+
+Keyboard transforms не заменяют Properties panel.
+
+Пользователь по-прежнему может численно редактировать:
+
+* Position X;
+* Position Y;
+* Rotation;
+* Scale X;
+* Scale Y.
+
+---
+
+# 7. Temporary instance locking
+
+Добавить временную editor-only блокировку ExerciseInstance.
+
+Назначение:
+
+* защитить уже размещённый instance от случайного drag;
+* защитить от keyboard transform;
+* защитить от случайного изменения transform в Properties.
+
+---
+
+## 7.1. Persisted contract
+
+Lock state не сохраняется в Track Project formatVersion 2.
+
+Он является editor UI state.
+
+После повторного открытия Track Project все instances могут считаться разблокированными.
+
+Track Project version повышать не требуется.
+
+---
+
+## 7.2. Lock identity
+
+Editor хранит lock state по:
+
+```text
+instanceId
+```
+
+Концептуально:
+
+```text
+LockedInstanceIds
+```
+
+Эта коллекция не является частью Track Project DTO.
+
+---
+
+## 7.3. UI
+
+Для выбранного ExerciseInstance добавить:
+
+```text
+Lock Instance
+Unlock Instance
+```
+
+Допустимые представления:
+
+* checkbox в Properties;
+* кнопка с иконкой замка;
+* контекстное действие.
+
+На canvas заблокированный instance должен иметь ненавязчивый editor overlay:
+
+* значок замка;
+* изменённый outline;
+* иной понятный визуальный признак.
+
+---
+
+## 7.4. Поведение locked instance
+
+Locked instance нельзя:
+
+* перемещать drag-and-drop;
+* двигать Arrow keys;
+* поворачивать keyboard shortcuts;
+* изменять Position/Rotation/Scale через Properties.
+
+Locked instance можно:
+
+* выбрать;
+* просматривать;
+* использовать в Route Order;
+* экспортировать;
+* включать в transitions;
+* разблокировать;
+* удалить после обычного подтверждения;
+* дублировать, если это сознательно разрешено.
+
+Рекомендуемое поведение Duplicate:
+
+* разрешить Duplicate locked instance;
+* новый instance создаётся разблокированным.
+
+---
+
+## 7.5. Lock и Undo
+
+Lock/unlock не входит в Undo/Redo history, потому что не меняет Track Project.
+
+Lock state не влияет на dirty state.
+
+После Undo/Redo lock state сохраняется для instanceId, которые продолжают существовать.
+
+Для удалённых instances устаревшие lock entries должны очищаться.
+
+---
+
+# 8. Export and Open in Viewer
+
+Добавить команду:
+
+```text
+Export and Open in Viewer
+```
+
+Она использует существующий pipeline Iteration 2–3.
+
+---
+
+## 8.1. Последовательность
+
+Команда:
+
+1. компилирует Track Project;
+2. выполняет export validation;
+3. блокирует запуск при blocking errors;
+4. отображает warnings;
+5. экспортирует snapshot;
+6. передаёт Viewer путь экспортированного файла;
+7. запускает Viewer scene.
+
+Viewer по-прежнему загружает только:
+
+```text
+Exported Track JSON
+```
+
+Он не должен получать:
+
+* Track Project DTO;
+* Exercise Definition;
+* TransitionOverride;
+* Track Editor runtime state.
+
+---
+
+## 8.2. Export path
+
+Для быстрого теста допустимо использовать:
+
+```text
+res://exports/tracks/_preview/
+```
+
+Пример:
+
+```text
+res://exports/tracks/_preview/current-track-preview.json
+```
+
+Или существующий последний export path.
+
+Рекомендуется отдельный preview-файл, чтобы:
+
+* не перезаписывать пользовательский production export;
+* не открывать дополнительный Save As dialog при каждом тесте;
+* быстро повторять цикл редактирования.
+
+Preview path является editor state и не сериализуется.
+
+---
+
+## 8.3. Dirty project
+
+Track Project может быть dirty.
+
+Команда использует текущее состояние в памяти.
+
+Она не должна автоматически выполнять Save Track Project.
+
+Допустимо показать ненавязчивое сообщение:
+
+```text
+Viewer preview uses the current unsaved editor state.
+```
+
+---
+
+## 8.4. Viewer launch strategy
+
+Способ запуска зависит от существующей архитектуры проекта.
+
+Допустимы:
+
+* переход на Viewer scene внутри текущего приложения;
+* запуск отдельной сцены через SceneTree;
+* передача startup path через singleton;
+* запуск отдельного процесса Godot;
+* debug launch configuration.
+
+Предпочтительная стратегия должна:
+
+* не создавать прямую зависимость Viewer от Track Editor DTO;
+* позволять вернуться в Track Editor без потери несохранённого состояния;
+* не завершать редакторский сеанс неожиданно.
+
+Если сохранение текущего Editor runtime state при переключении сцены сложно, допустимо запускать отдельный процесс Viewer.
+
+---
+
+## 8.5. Failure handling
+
+Если:
+
+* validation содержит errors;
+* export завершился ошибкой;
+* Viewer не удалось запустить;
+* export-файл невозможно прочитать;
+
+Track Editor должен:
+
+* не падать;
+* показать понятное сообщение;
+* сохранить текущий документ и историю без изменений;
+* записать технические подробности в лог.
+
+---
+
+# 9. Optional copy/paste boundary
+
+Полноценные:
+
+```text
+Ctrl+C
+Ctrl+V
+```
+
+не являются обязательной частью Iteration 4.
+
+Основной быстрый workflow обеспечивается командой Duplicate.
+
+Не создавать clipboard architecture, если Duplicate решает текущую практическую задачу.
+
+---
+
+# 10. Custom routing exercises
+
+Для нестандартного участка между основными упражнениями пользователь может создать отдельный Exercise Definition:
+
+* без cones;
+* без обязательных markings;
+* с собственной trajectory;
+* с близко расположенными entryPoint и exitPoint;
+* с любой необходимой формой polyline/cubicBezier.
+
+Track Editor обрабатывает такой объект как обычный ExerciseInstance.
+
+Это позволяет создавать:
+
+* дополнительные петли;
+* объезды;
+* сложные связующие участки;
+* развороты за пределами стандартного упражнения;
+* произвольные изменения направления.
+
+Отдельная доменная сущность checkpoint или waypoint для этой задачи в текущем scope не требуется.
+
+Такой Exercise Definition должен по-прежнему иметь:
+
+* валидную trajectory;
+* минимум один валидный trajectory segment;
+* определимые entry/exit tangents;
+* валидные entryPoint и exitPoint.
+
+Пустой массив cones является допустимым.
+
+---
+
+# 11. Не реализовывать в Iteration 4
+
+Не добавлять:
+
+* multi-selection;
+* group transform;
+* group duplicate;
+* copy/paste framework;
+* persistent instance lock;
+* lock layers;
+* alignment tools;
+* distribution tools;
+* snapping instances друг к другу;
+* environment objects;
+* Venue Definition;
+* checkpoints gameplay;
+* timing;
+* automatic route optimization;
+* motorcycle physics;
+* minimum turn radius validation;
+* event-sourcing framework;
+* branching Undo history;
+* persistent Undo history;
+* autosave recovery system.
+
+---
+
+# 12. Definition of Done
+
+Iteration 4 завершена, если:
+
+* Undo работает для persisted изменений Track Project;
+* Redo работает;
+* новое изменение после Undo очищает Redo;
+* drag создаёт одну Undo-запись;
+* transition handle drag создаёт одну Undo-запись;
+* dirty state связан с saved history position;
+* Undo к сохранённому состоянию возвращает clean state;
+* New/Open очищают старую историю;
+* Duplicate создаёт новый instanceId;
+* Duplicate вставляет копию после source instance;
+* Duplicate не копирует TransitionOverride;
+* keyboard position nudging работает;
+* rotation shortcuts работают;
+* keyboard input не срабатывает внутри числовых и текстовых полей;
+* instance можно временно заблокировать;
+* locked instance нельзя случайно трансформировать;
+* lock не сериализуется;
+* lock не меняет dirty state;
+* Export and Open in Viewer использует текущий in-memory Track Project;
+* Viewer получает только Exported Track JSON;
+* ошибка запуска Viewer не повреждает редактор;
+* custom routing Exercise Definition без конусов корректно используется;
+* Track Project formatVersion остаётся 2;
+* Exported Track formatVersion остаётся 3;
+* Exercise Editor продолжает работать;
+* Track Editor Iteration 1–3 продолжает работать;
+* Viewer продолжает работать;
+* проект собирается без compile errors;
+* runtime logs не содержат необработанных ошибок.
 
