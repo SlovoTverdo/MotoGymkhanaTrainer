@@ -2738,22 +2738,17 @@ Iteration 4 завершена, если:
 
 Venue Editor Iteration 1
 
-```markdown
-# Future Venue integration
+# Track/Venue Integration Iteration 1
 
-Track Editor в будущей итерации будет создавать Track Project только на основе существующей Venue Definition.
+Track Editor работает только с Track Project formatVersion 3.
 
-Планируемая схема:
+Новый Track создаётся через:
 
 ```text
-Venue Definition
-        ↓
-Track Project with venuePath
-        ↓
-Track compilation
-        ↓
-Exported Track snapshot
-        ↓
-Viewer
+Select Venue
+    ↓
+Track metadata
+    ↓
+Create Track
 ```
 
