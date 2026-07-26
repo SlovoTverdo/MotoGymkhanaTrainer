@@ -370,6 +370,38 @@ Viewer не обязан определять, является segment:
 * автоматически созданным переходом;
 * в будущем вручную исправленным переходом.
 
+
+# Transition source transparency
+
+Exported Track JSON не различает источник переходного cubicBezier.
+
+Переход может быть:
+
+* автоматически рассчитан Track Editor;
+* скорректирован пользователем через TransitionOverride.
+
+В обоих случаях он экспортируется как обычный:
+
+```text
+trajectory.segments[].type = cubicBezier
+```
+
+Viewer использует только итоговые:
+
+* start;
+* control1;
+* control2;
+* end.
+
+Viewer не должен:
+
+* искать TransitionOverride;
+* пересчитывать control points;
+* определять, был ли переход изменён вручную;
+* зависеть от Track Project.
+
+Таким образом, ручная коррекция перехода не требует повышения `TrackFormat formatVersion`.
+
 ---
 
 ## 7. Automatic transition representation
