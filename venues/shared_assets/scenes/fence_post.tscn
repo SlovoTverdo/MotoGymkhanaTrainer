@@ -1,0 +1,5 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" uid="uid://do2nooy8yq4ce" path="res://venues/shared_assets/models/Fence_Post.glb" id="1_fence_post"]
+
+[node name="FencePost" instance=ExtResource("1_fence_post")]

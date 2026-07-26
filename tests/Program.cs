@@ -3,6 +3,7 @@ using MotoGymkhanaTrainer;
 using MotoGymkhanaTrainer.ExerciseEditor;
 using MotoGymkhanaTrainer.TrackEditor;
 using MotoGymkhanaTrainer.Tracks;
+using MotoGymkhanaTrainer.VenueEditor;
 
 const string ProjectDirectory = "E:\\Projects\\Games\\MotoGymkhanaTrainer";
 string samplePath = Path.Combine(ProjectDirectory, "examples", "courses", "basic.json");
@@ -1042,7 +1043,102 @@ finally
     }
 }
 
-Console.WriteLine("All Viewer, Exercise Editor Iteration 4 and Track Editor Iteration 4 checks passed.");
+string temporaryVenueRoot = Path.Combine(Path.GetTempPath(), $"venue-editor-tests-{Guid.NewGuid():N}");
+try
+{
+    string venueLibraryRoot = Path.Combine(temporaryVenueRoot, "venues");
+    string assetsRoot = Path.Combine(temporaryVenueRoot, "Assets");
+    Directory.CreateDirectory(assetsRoot);
+    File.WriteAllText(Path.Combine(assetsRoot, "barrier.tscn"), "[gd_scene format=3]");
+    var venueLibrary = new SandboxedJsonLibrary(venueLibraryRoot, "Venue library", "res://venues/");
+    AssertEqual(0, venueLibrary.EnumerateEntries().Count, "empty Venue library is created and enumerated");
+    string folder = venueLibrary.CreateFolder(string.Empty, "training");
+    string nested = venueLibrary.CreateFolder(folder, "indoor");
+    AssertEqual(Path.Combine("training", "indoor"), nested, "Venue library supports nested folders");
+    AssertThrows<InvalidDataException>(() => venueLibrary.ResolveFolder(".."),
+        "Venue library rejects path traversal");
+    AssertThrows<InvalidDataException>(() => venueLibrary.CreateFolder(string.Empty, "../escape"),
+        "Venue library rejects invalid folder names");
+
+    VenueDocument venue = VenueDocument.CreateNew("training-hall", "Training Hall");
+    AssertEqual(60.0f, venue.Definition.Area.Width, "new Venue width defaults to 60 metres");
+    AssertEqual(100.0f, venue.Definition.Area.Length, "new Venue length defaults to 100 metres");
+    AssertTrue(!venue.Definition.Panorama.Enabled && venue.Definition.Panorama.EnergyMultiplier == 1.0f,
+        "new Venue panorama uses documented defaults");
+    VenueObjectInstanceDto barrier = venue.AddObject("res://Assets/barrier.tscn");
+    barrier.Position = new Point2Dto { X = 3, Y = -2 };
+    barrier.RotationDeg = 90;
+    barrier.Scale = new Scale3Dto { X = 2, Y = 3, Z = 4 };
+    barrier.Footprint = new FootprintDto { Width = 2, Length = 1 };
+    Point2Dto[] footprint = VenueGeometry.TransformFootprint(barrier);
+    AssertTrue(footprint.All(point => float.IsFinite(point.X) && float.IsFinite(point.Y)),
+        "Venue footprint applies finite scale/rotation/translation geometry");
+    VenueObjectInstanceDto barrierCopy = venue.DuplicateObject(barrier.ObjectId);
+    AssertTrue(barrierCopy.ObjectId != barrier.ObjectId, "duplicated Venue object receives a unique id");
+    AssertEqual(4.0f, barrierCopy.Position.X, "duplicated Venue object receives the +1 m X offset");
+    AssertEqual(-1.0f, barrierCopy.Position.Y, "duplicated Venue object receives the +1 m Y offset");
+
+    ConeDto venueCone = venue.AddCone(new Point2Dto { X = 1, Y = 2 });
+    venue.SetConeColor(venueCone.Id, "none");
+    MarkingDto venueLine = venue.AddMarking("line",
+    [
+        new Point2Dto { X = -2, Y = 0 },
+        new Point2Dto { X = 2, Y = 0 },
+    ]);
+    venueLine.Color = "#12ABEF";
+    venueLine.WidthMeters = 0.2f;
+    venueLine.Style = "dashed";
+    venueLine.VisibleInViewer = false;
+    MarkingDto venuePolyline = venue.AddMarking("polyline",
+    [
+        new Point2Dto { X = 0, Y = 0 }, new Point2Dto { X = 1, Y = 1 }, new Point2Dto { X = 2, Y = 0 },
+    ]);
+    venue.InsertMarkingPointAfter(venuePolyline.Id, 1);
+    AssertEqual(4, venuePolyline.Points.Length, "Venue polyline supports internal point insertion");
+    venue.DeleteMarkingPoint(venuePolyline.Id, 2);
+    AssertEqual(3, venuePolyline.Points.Length, "Venue polyline supports safe internal point deletion");
+
+    string savePath = venueLibrary.ResolveSaveJson(nested, "training-hall.json");
+    VenueStore.SaveToFile(venue.Definition, savePath);
+    VenueLoadResult venueReload = VenueStore.LoadFromFile(savePath, temporaryVenueRoot);
+    AssertEqual(1, venueReload.Definition.FormatVersion, "Venue Definition saves formatVersion 1");
+    AssertEqual(2, venueReload.Definition.Objects.Length, "Venue object instances survive Save/Open");
+    AssertEqual("none", venueReload.Definition.Cones[0].Color, "Venue cone color survives Save/Open");
+    AssertEqual("dashed", venueReload.Definition.Markings[0].Style, "Venue marking style survives Save/Open");
+    AssertTrue(!venueReload.Definition.Markings[0].VisibleInViewer,
+        "Venue hidden marking remains persisted rather than removed");
+    AssertTrue(venueReload.Warnings.Any(value => value.Contains("overlap", StringComparison.OrdinalIgnoreCase)),
+        "overlapping Venue footprints produce a non-blocking warning");
+
+    var venueHistory = new EditorSnapshotHistory(100);
+    venueHistory.Reset(VenueStore.Serialize(venue.Definition), saved: true);
+    venue.Definition.Venue.Name = "Changed Hall";
+    venueHistory.Commit(VenueStore.Serialize(venue.Definition), "Rename Venue");
+    AssertTrue(venueHistory.IsDirty && venueHistory.CanUndo, "Venue persisted edit enters snapshot history");
+    venueHistory.Undo();
+    AssertTrue(!venueHistory.IsDirty, "Venue Undo to saved revision restores clean state");
+    venueHistory.Redo();
+    AssertTrue(venueHistory.IsDirty, "Venue Redo restores dirty revision");
+
+    AssertThrows<InvalidDataException>(() => VenueStore.LoadFromJson("{broken", "broken.json", temporaryVenueRoot),
+        "corrupt Venue JSON is rejected before document replacement");
+    string unsupported = VenueStore.Serialize(venue.Definition).Replace("\"formatVersion\": 1", "\"formatVersion\": 2");
+    AssertThrows<InvalidDataException>(() => VenueStore.LoadFromJson(unsupported, "future.json", temporaryVenueRoot),
+        "unsupported Venue version is rejected without migration");
+    string unresolved = VenueStore.Serialize(venue.Definition).Replace("res://Assets/barrier.tscn", "res://Assets/missing.tscn");
+    VenueLoadResult unresolvedVenue = VenueStore.LoadFromJson(unresolved, "unresolved.json", temporaryVenueRoot);
+    AssertTrue(unresolvedVenue.Warnings.Any(value => value.Contains("unresolved", StringComparison.OrdinalIgnoreCase)),
+        "missing .tscn is retained as an unresolved non-blocking Venue object");
+    string absoluteAsset = VenueStore.Serialize(venue.Definition).Replace("res://Assets/barrier.tscn", "C:/outside.tscn");
+    AssertThrows<InvalidDataException>(() => VenueStore.LoadFromJson(absoluteAsset, "absolute.json", temporaryVenueRoot),
+        "Venue object rejects absolute asset paths");
+}
+finally
+{
+    if (Directory.Exists(temporaryVenueRoot)) Directory.Delete(temporaryVenueRoot, recursive: true);
+}
+
+Console.WriteLine("All Viewer, Exercise Editor, Track Editor and Venue Editor Iteration 1 checks passed.");
 
 static void AssertEqual<T>(T expected, T actual, string description)
     where T : IEquatable<T>

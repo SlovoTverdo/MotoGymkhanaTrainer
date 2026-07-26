@@ -1,0 +1,4641 @@
+{
+  "formatVersion": 1,
+  "venue": {
+    "id": "created-assets-smoke-40x100",
+    "name": "Created Assets Smoke 40 x 100"
+  },
+  "area": {
+    "width": 40,
+    "length": 100
+  },
+  "panorama": {
+    "enabled": false,
+    "texturePath": "",
+    "rotationDeg": 0,
+    "energyMultiplier": 1
+  },
+  "objects": [
+    {
+      "objectId": "venue-object-001",
+      "name": "House",
+      "assetPath": "res://venues/shared_assets/scenes/house_reference_model.tscn",
+      "position": {
+        "x": -10,
+        "y": 0
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 9,
+        "length": 6.7
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-002",
+      "name": "Overpass",
+      "assetPath": "res://venues/shared_assets/scenes/overpass_model.tscn",
+      "position": {
+        "x": 6,
+        "y": 0
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 11,
+        "length": 2.4
+      },
+      "collisionEnabled": true,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-003",
+      "name": "Fence Section South 1",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -18.573333,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-004",
+      "name": "Fence Section South 2",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -15.92,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-005",
+      "name": "Fence Section South 3",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -13.266667,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-006",
+      "name": "Fence Section South 4",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -10.613333,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-007",
+      "name": "Fence Section South 5",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -7.96,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-008",
+      "name": "Fence Section South 6",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -5.306667,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-009",
+      "name": "Fence Section South 7",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -2.653333,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-010",
+      "name": "Fence Section South 8",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 0,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-011",
+      "name": "Fence Section South 9",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 2.653333,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-012",
+      "name": "Fence Section South 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 5.306667,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-013",
+      "name": "Fence Section South 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 7.96,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-014",
+      "name": "Fence Section South 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 10.613333,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-015",
+      "name": "Fence Section South 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 13.266667,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-016",
+      "name": "Fence Section South 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 15.92,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-017",
+      "name": "Fence Section South 15",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 18.573333,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-018",
+      "name": "Fence Section North 1",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -18.573333,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-019",
+      "name": "Fence Section North 2",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -15.92,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-020",
+      "name": "Fence Section North 3",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -13.266667,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-021",
+      "name": "Fence Section North 4",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -10.613333,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-022",
+      "name": "Fence Section North 5",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -7.96,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-023",
+      "name": "Fence Section North 6",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -5.306667,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-024",
+      "name": "Fence Section North 7",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -2.653333,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-025",
+      "name": "Fence Section North 8",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 0,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-026",
+      "name": "Fence Section North 9",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 2.653333,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-027",
+      "name": "Fence Section North 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 5.306667,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-028",
+      "name": "Fence Section North 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 7.96,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-029",
+      "name": "Fence Section North 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 10.613333,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-030",
+      "name": "Fence Section North 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 13.266667,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-031",
+      "name": "Fence Section North 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 15.92,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-032",
+      "name": "Fence Section North 15",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 18.573333,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 0.982716,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.516834,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-033",
+      "name": "Fence Section West 1",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -48.551351
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-034",
+      "name": "Fence Section West 2",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -45.854054
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-035",
+      "name": "Fence Section West 3",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -43.156757
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-036",
+      "name": "Fence Section West 4",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -40.459459
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-037",
+      "name": "Fence Section West 5",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -37.762162
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-038",
+      "name": "Fence Section West 6",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -35.064865
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-039",
+      "name": "Fence Section West 7",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -32.367568
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-040",
+      "name": "Fence Section West 8",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -29.67027
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-041",
+      "name": "Fence Section West 9",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -26.972973
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-042",
+      "name": "Fence Section West 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -24.275676
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-043",
+      "name": "Fence Section West 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -21.578378
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-044",
+      "name": "Fence Section West 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -18.881081
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-045",
+      "name": "Fence Section West 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -16.183784
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-046",
+      "name": "Fence Section West 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -13.486486
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-047",
+      "name": "Fence Section West 15",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -10.789189
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-048",
+      "name": "Fence Section West 16",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -8.091892
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-049",
+      "name": "Fence Section West 17",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -5.394595
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-050",
+      "name": "Fence Section West 18",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -2.697297
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-051",
+      "name": "Fence Section West 19",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 0
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-052",
+      "name": "Fence Section West 20",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 2.697297
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-053",
+      "name": "Fence Section West 21",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 5.394595
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-054",
+      "name": "Fence Section West 22",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 8.091892
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-055",
+      "name": "Fence Section West 23",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 10.789189
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-056",
+      "name": "Fence Section West 24",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 13.486486
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-057",
+      "name": "Fence Section West 25",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 16.183784
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-058",
+      "name": "Fence Section West 26",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 18.881081
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-059",
+      "name": "Fence Section West 27",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 21.578378
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-060",
+      "name": "Fence Section West 28",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 24.275676
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-061",
+      "name": "Fence Section West 29",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 26.972973
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-062",
+      "name": "Fence Section West 30",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 29.67027
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-063",
+      "name": "Fence Section West 31",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 32.367568
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-064",
+      "name": "Fence Section West 32",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 35.064865
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-065",
+      "name": "Fence Section West 33",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 37.762162
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-066",
+      "name": "Fence Section West 34",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 40.459459
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-067",
+      "name": "Fence Section West 35",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 43.156757
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-068",
+      "name": "Fence Section West 36",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 45.854054
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-069",
+      "name": "Fence Section West 37",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 48.551351
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-070",
+      "name": "Fence Section East 1",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -48.551351
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-071",
+      "name": "Fence Section East 2",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -45.854054
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-072",
+      "name": "Fence Section East 3",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -43.156757
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-073",
+      "name": "Fence Section East 4",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -40.459459
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-074",
+      "name": "Fence Section East 5",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -37.762162
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-075",
+      "name": "Fence Section East 6",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -35.064865
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-076",
+      "name": "Fence Section East 7",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -32.367568
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-077",
+      "name": "Fence Section East 8",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -29.67027
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-078",
+      "name": "Fence Section East 9",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -26.972973
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-079",
+      "name": "Fence Section East 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -24.275676
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-080",
+      "name": "Fence Section East 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -21.578378
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-081",
+      "name": "Fence Section East 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -18.881081
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-082",
+      "name": "Fence Section East 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -16.183784
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-083",
+      "name": "Fence Section East 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -13.486486
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-084",
+      "name": "Fence Section East 15",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -10.789189
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-085",
+      "name": "Fence Section East 16",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -8.091892
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-086",
+      "name": "Fence Section East 17",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -5.394595
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-087",
+      "name": "Fence Section East 18",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -2.697297
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-088",
+      "name": "Fence Section East 19",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 0
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-089",
+      "name": "Fence Section East 20",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 2.697297
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-090",
+      "name": "Fence Section East 21",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 5.394595
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-091",
+      "name": "Fence Section East 22",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 8.091892
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-092",
+      "name": "Fence Section East 23",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 10.789189
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-093",
+      "name": "Fence Section East 24",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 13.486486
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-094",
+      "name": "Fence Section East 25",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 16.183784
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-095",
+      "name": "Fence Section East 26",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 18.881081
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-096",
+      "name": "Fence Section East 27",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 21.578378
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-097",
+      "name": "Fence Section East 28",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 24.275676
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-098",
+      "name": "Fence Section East 29",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 26.972973
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-099",
+      "name": "Fence Section East 30",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 29.67027
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-100",
+      "name": "Fence Section East 31",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 32.367568
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-101",
+      "name": "Fence Section East 32",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 35.064865
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-102",
+      "name": "Fence Section East 33",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 37.762162
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-103",
+      "name": "Fence Section East 34",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 40.459459
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-104",
+      "name": "Fence Section East 35",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 43.156757
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-105",
+      "name": "Fence Section East 36",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 45.854054
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-106",
+      "name": "Fence Section East 37",
+      "assetPath": "res://venues/shared_assets/scenes/fence_section.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 48.551351
+      },
+      "elevation": 0,
+      "rotationDeg": 90,
+      "scale": {
+        "x": 0.998999,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 2.51982,
+        "length": 0.08
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-107",
+      "name": "Fence Post South 1",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-108",
+      "name": "Fence Post South 2",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -17.246667,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-109",
+      "name": "Fence Post South 3",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -14.593333,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-110",
+      "name": "Fence Post South 4",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -11.94,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-111",
+      "name": "Fence Post South 5",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -9.286667,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-112",
+      "name": "Fence Post South 6",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -6.633333,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-113",
+      "name": "Fence Post South 7",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -3.98,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-114",
+      "name": "Fence Post South 8",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -1.326667,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-115",
+      "name": "Fence Post South 9",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 1.326667,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-116",
+      "name": "Fence Post South 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 3.98,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-117",
+      "name": "Fence Post South 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 6.633333,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-118",
+      "name": "Fence Post South 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 9.286667,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-119",
+      "name": "Fence Post South 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 11.94,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-120",
+      "name": "Fence Post South 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 14.593333,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-121",
+      "name": "Fence Post South 15",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 17.246667,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-122",
+      "name": "Fence Post South 16",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-123",
+      "name": "Fence Post North 1",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-124",
+      "name": "Fence Post North 2",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -17.246667,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-125",
+      "name": "Fence Post North 3",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -14.593333,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-126",
+      "name": "Fence Post North 4",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -11.94,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-127",
+      "name": "Fence Post North 5",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -9.286667,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-128",
+      "name": "Fence Post North 6",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -6.633333,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-129",
+      "name": "Fence Post North 7",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -3.98,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-130",
+      "name": "Fence Post North 8",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -1.326667,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-131",
+      "name": "Fence Post North 9",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 1.326667,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-132",
+      "name": "Fence Post North 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 3.98,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-133",
+      "name": "Fence Post North 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 6.633333,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-134",
+      "name": "Fence Post North 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 9.286667,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-135",
+      "name": "Fence Post North 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 11.94,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-136",
+      "name": "Fence Post North 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 14.593333,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-137",
+      "name": "Fence Post North 15",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 17.246667,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-138",
+      "name": "Fence Post North 16",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 49.9
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-139",
+      "name": "Fence Post West 1",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -47.202703
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-140",
+      "name": "Fence Post West 2",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -44.505405
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-141",
+      "name": "Fence Post West 3",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -41.808108
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-142",
+      "name": "Fence Post West 4",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -39.110811
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-143",
+      "name": "Fence Post West 5",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -36.413514
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-144",
+      "name": "Fence Post West 6",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -33.716216
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-145",
+      "name": "Fence Post West 7",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -31.018919
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-146",
+      "name": "Fence Post West 8",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -28.321622
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-147",
+      "name": "Fence Post West 9",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -25.624324
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-148",
+      "name": "Fence Post West 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -22.927027
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-149",
+      "name": "Fence Post West 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -20.22973
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-150",
+      "name": "Fence Post West 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -17.532432
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-151",
+      "name": "Fence Post West 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -14.835135
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-152",
+      "name": "Fence Post West 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -12.137838
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-153",
+      "name": "Fence Post West 15",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -9.440541
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-154",
+      "name": "Fence Post West 16",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -6.743243
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-155",
+      "name": "Fence Post West 17",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -4.045946
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-156",
+      "name": "Fence Post West 18",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": -1.348649
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-157",
+      "name": "Fence Post West 19",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 1.348649
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-158",
+      "name": "Fence Post West 20",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 4.045946
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-159",
+      "name": "Fence Post West 21",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 6.743243
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-160",
+      "name": "Fence Post West 22",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 9.440541
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-161",
+      "name": "Fence Post West 23",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 12.137838
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-162",
+      "name": "Fence Post West 24",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 14.835135
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-163",
+      "name": "Fence Post West 25",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 17.532432
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-164",
+      "name": "Fence Post West 26",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 20.22973
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-165",
+      "name": "Fence Post West 27",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 22.927027
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-166",
+      "name": "Fence Post West 28",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 25.624324
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-167",
+      "name": "Fence Post West 29",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 28.321622
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-168",
+      "name": "Fence Post West 30",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 31.018919
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-169",
+      "name": "Fence Post West 31",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 33.716216
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-170",
+      "name": "Fence Post West 32",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 36.413514
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-171",
+      "name": "Fence Post West 33",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 39.110811
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-172",
+      "name": "Fence Post West 34",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 41.808108
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-173",
+      "name": "Fence Post West 35",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 44.505405
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-174",
+      "name": "Fence Post West 36",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": -19.9,
+        "y": 47.202703
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-175",
+      "name": "Fence Post East 1",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -47.202703
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-176",
+      "name": "Fence Post East 2",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -44.505405
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-177",
+      "name": "Fence Post East 3",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -41.808108
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-178",
+      "name": "Fence Post East 4",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -39.110811
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-179",
+      "name": "Fence Post East 5",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -36.413514
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-180",
+      "name": "Fence Post East 6",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -33.716216
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-181",
+      "name": "Fence Post East 7",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -31.018919
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-182",
+      "name": "Fence Post East 8",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -28.321622
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-183",
+      "name": "Fence Post East 9",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -25.624324
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-184",
+      "name": "Fence Post East 10",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -22.927027
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-185",
+      "name": "Fence Post East 11",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -20.22973
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-186",
+      "name": "Fence Post East 12",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -17.532432
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-187",
+      "name": "Fence Post East 13",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -14.835135
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-188",
+      "name": "Fence Post East 14",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -12.137838
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-189",
+      "name": "Fence Post East 15",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -9.440541
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-190",
+      "name": "Fence Post East 16",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -6.743243
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-191",
+      "name": "Fence Post East 17",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -4.045946
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-192",
+      "name": "Fence Post East 18",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": -1.348649
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-193",
+      "name": "Fence Post East 19",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 1.348649
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-194",
+      "name": "Fence Post East 20",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 4.045946
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-195",
+      "name": "Fence Post East 21",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 6.743243
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-196",
+      "name": "Fence Post East 22",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 9.440541
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-197",
+      "name": "Fence Post East 23",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 12.137838
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-198",
+      "name": "Fence Post East 24",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 14.835135
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-199",
+      "name": "Fence Post East 25",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 17.532432
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-200",
+      "name": "Fence Post East 26",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 20.22973
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-201",
+      "name": "Fence Post East 27",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 22.927027
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-202",
+      "name": "Fence Post East 28",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 25.624324
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-203",
+      "name": "Fence Post East 29",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 28.321622
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-204",
+      "name": "Fence Post East 30",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 31.018919
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-205",
+      "name": "Fence Post East 31",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 33.716216
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-206",
+      "name": "Fence Post East 32",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 36.413514
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-207",
+      "name": "Fence Post East 33",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 39.110811
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-208",
+      "name": "Fence Post East 34",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 41.808108
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-209",
+      "name": "Fence Post East 35",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 44.505405
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    },
+    {
+      "objectId": "venue-object-210",
+      "name": "Fence Post East 36",
+      "assetPath": "res://venues/shared_assets/scenes/fence_post.tscn",
+      "position": {
+        "x": 19.9,
+        "y": 47.202703
+      },
+      "elevation": 0,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "footprint": {
+        "width": 0.15,
+        "length": 0.15
+      },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    }
+  ],
+  "cones": [],
+  "markings": []
+}

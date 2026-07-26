@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://bi3h4045fmee3" path="res://venues/shared_assets/models/House_reference_model.glb" id="1_house"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_house"]
+size = Vector3(9, 4.1, 6.7)
+
+[node name="HouseReferenceModel" instance=ExtResource("1_house")]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+position = Vector3(0, 2.27, 0)
+shape = SubResource("BoxShape3D_house")
