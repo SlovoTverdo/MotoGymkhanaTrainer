@@ -765,4 +765,33 @@ Reload Venue
 * Venue Editor работает;
 * Track Editor работает;
 * проект собирается без compile errors;
+
+
+Также в прежних разделах:
+
+- удалить упоминания ручного редактирования `area.width/length`;
+- заменить их указанием, что bounds приходят из Venue;
+- в `Definition of Done` добавить обязательную Venue;
+- удалить требование совместимости Track Project v2.
+
+---
+
+## `docs/DomainModel.md`
+
+Добавь в конец:
+
+```markdown
+# Track and Venue relationship
+
+## Venue-bound TrackProject
+
+TrackProject version 3 всегда относится к одной Venue Definition:
+
+```text
+TrackProject
+├─ TrackMetadata
+├─ VenuePath
+├─ Instances[]
+└─ TransitionOverrides[]
+```
 * runtime logs не содержат необработанных ошибок.
