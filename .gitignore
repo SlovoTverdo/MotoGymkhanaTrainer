@@ -17,3 +17,11 @@ obj/
 # OS
 .DS_Store
 Thumbs.db
+
+# Godot Web Viewer generated import/cache
+
+web-viewer/.godot/
+
+# Keep the Pages build committed during Web Viewer Feasibility Iteration 1.
+
+# Do not ignore dist/web yet.
