@@ -20,15 +20,15 @@
       "name": "house_reference_model",
       "assetPath": "res://venues/shared_assets/scenes/house_reference_model.tscn",
       "position": {
-        "x": 31,
-        "y": 11
+        "x": 34.25,
+        "y": 13.5
       },
       "elevation": 0,
       "rotationDeg": 90,
       "scale": {
-        "x": 1.01,
+        "x": 0.61,
         "y": 1.01,
-        "z": 1.01
+        "z": 0.81
       },
       "footprint": {
         "width": 11.51,
