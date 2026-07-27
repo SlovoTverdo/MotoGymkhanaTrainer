@@ -101,3 +101,26 @@ When documentation is ambiguous, choose the smallest implementation compatible w
 - Не реализовывать compatibility или migration для старых Track Project и exports.
   
 - `docs/ViewerVenuePhysicsPlan.md` — физический контроллер Viewer, collision Venue, движение по эстакаде и проекция Track geometry на поверхности.
+
+
+### Web Viewer documentation
+
+* `docs/WebViewerPlan.md` — отдельный GDScript Web Viewer, Track v4 loading, browser runtime и GitHub Pages deployment.
+* `web-viewer/README.md` — локальная сборка и проверка Web Viewer.
+
+### Web Viewer architectural constraints
+
+* Desktop editors and Track compilation remain in the Godot C# project.
+* `web-viewer/` is a separate Godot project using only GDScript.
+* The Web Viewer loads only Exported Track formatVersion 4.
+* The published Track is `tracks/default-track.json`.
+* The Web Viewer must work under a GitHub Project Pages subpath and must not assume `/` is the site root.
+* The Web Viewer must use the Compatibility renderer.
+* Initial Web export must be single-threaded.
+* The external Track JSON must have an embedded `res://tracks/default-track.json` fallback.
+* Venue assets referenced by `res://` must exist at the same resource paths inside the Web Viewer project.
+* Web asset scenes must not depend on C# scripts.
+* Web Viewer runtime must not contain Exercise, Venue or Track editing functionality.
+* GitHub Pages deployment publishes only `dist/web`.
+* Do not put secrets, GitHub tokens or credentials into the Web export.
+
