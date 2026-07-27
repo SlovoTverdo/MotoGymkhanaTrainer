@@ -1,202 +1,105 @@
+[CmdletBinding()]
 param(
-[Parameter(Mandatory = $true)]
-[string] $GodotPath,
+    [Parameter(Mandatory = $true)]
+    [string] $GodotPath,
 
-```
-[string] $TrackPath = "",
-
-[string] $PresetName = "Web"
-```
-
+    [string] $TrackPath = "exports/tracks/new-track-001.json"
 )
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
-$repoRoot = Split-Path -Parent $PSScriptRoot
-$webProjectRoot = Join-Path $repoRoot "web-viewer"
-$webProjectFile = Join-Path $webProjectRoot "project.godot"
-$distRoot = Join-Path $repoRoot "dist\web"
-$embeddedTrackPath = Join-Path $webProjectRoot "tracks\default-track.json"
-$externalTrackDirectory = Join-Path $distRoot "tracks"
-$externalTrackPath = Join-Path $externalTrackDirectory "default-track.json"
-$exportIndexPath = Join-Path $distRoot "index.html"
+$repositoryRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
+$webProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot "web-viewer"))
+$distRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot "dist\web"))
+$distBoundary = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot "dist")) + [System.IO.Path]::DirectorySeparatorChar
+$godotExecutable = [System.IO.Path]::GetFullPath($GodotPath)
+$sourceTrack = if ([System.IO.Path]::IsPathRooted($TrackPath)) {
+    [System.IO.Path]::GetFullPath($TrackPath)
+} else {
+    [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot $TrackPath))
+}
+$embeddedTrack = Join-Path $webProjectRoot "tracks\default-track.json"
+$outputIndex = Join-Path $distRoot "index.html"
+$externalTrack = Join-Path $distRoot "tracks\default-track.json"
 
-if (-not (Test-Path -LiteralPath $GodotPath -PathType Leaf)) {
-throw "Godot executable was not found: $GodotPath"
+function Invoke-Godot {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]] $Arguments,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Operation
+    )
+
+    # Standard Godot on Windows is a GUI-subsystem executable. PowerShell's call
+    # operator can return before it exits, so Start-Process is required for a
+    # trustworthy exit code in local and CI-like scripted builds.
+    $quotedArguments = foreach ($argument in $Arguments) {
+        '"' + $argument.Replace('"', '\"') + '"'
+    }
+    $process = Start-Process `
+        -FilePath $godotExecutable `
+        -ArgumentList $quotedArguments `
+        -WindowStyle Hidden `
+        -Wait `
+        -PassThru
+    if ($process.ExitCode -ne 0) {
+        throw "$Operation failed with exit code $($process.ExitCode)."
+    }
 }
 
-if (-not (Test-Path -LiteralPath $webProjectFile -PathType Leaf)) {
-throw "Web Viewer project was not found: $webProjectFile"
+if (-not (Test-Path -LiteralPath $godotExecutable -PathType Leaf)) {
+    throw "Godot executable was not found: $godotExecutable"
+}
+if ([System.IO.Path]::GetFileName($godotExecutable) -match "(?i)mono|\.net") {
+    throw "Use the regular Godot executable for the GDScript Web Viewer, not a .NET/Mono build: $godotExecutable"
+}
+if (-not (Test-Path -LiteralPath (Join-Path $webProjectRoot "project.godot") -PathType Leaf)) {
+    throw "Web Viewer project is missing: $webProjectRoot"
+}
+if (-not (Test-Path -LiteralPath $sourceTrack -PathType Leaf)) {
+    throw "Track v4 source was not found: $sourceTrack"
+}
+if (@(Get-ChildItem -LiteralPath $webProjectRoot -Recurse -Filter "*.cs" -File).Count -ne 0) {
+    throw "Web Viewer must not contain C# scripts."
 }
 
-$godotFileName = [System.IO.Path]::GetFileName($GodotPath)
-
-if ($godotFileName -match "(?i)mono|dotnet") {
-Write-Warning (
-"The selected Godot executable appears to be a .NET build. " +
-"Use the standard Godot build for the GDScript Web Viewer."
-)
+$track = Get-Content -LiteralPath $sourceTrack -Raw -Encoding UTF8 | ConvertFrom-Json
+if ($null -eq $track -or $track.formatVersion -ne 4) {
+    throw "Track source must be an Exported Track with formatVersion 4: $sourceTrack"
 }
 
-if (-not [string]::IsNullOrWhiteSpace($TrackPath)) {
-$resolvedTrackPath = [System.IO.Path]::GetFullPath(
-(Join-Path (Get-Location) $TrackPath)
-)
+Copy-Item -LiteralPath $sourceTrack -Destination $embeddedTrack -Force
 
-```
-if (-not (Test-Path -LiteralPath $resolvedTrackPath -PathType Leaf)) {
-    throw "Track JSON was not found: $resolvedTrackPath"
+Invoke-Godot `
+    -Arguments @("--headless", "--editor", "--path", $webProjectRoot, "--quit") `
+    -Operation "Godot import"
+
+Invoke-Godot `
+    -Arguments @("--headless", "--path", $webProjectRoot, "--script", "res://tests/track_v4_parser_test.gd") `
+    -Operation "Track v4 parser tests"
+
+if (-not $distRoot.StartsWith($distBoundary, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "Refusing to replace output outside the repository dist directory: $distRoot"
 }
-
-$embeddedTrackDirectory = Split-Path -Parent $embeddedTrackPath
-
-New-Item `
-    -ItemType Directory `
-    -Force `
-    -Path $embeddedTrackDirectory |
-    Out-Null
-
-Copy-Item `
-    -LiteralPath $resolvedTrackPath `
-    -Destination $embeddedTrackPath `
-    -Force
-
-Write-Host "Updated embedded fallback Track:"
-Write-Host "  $embeddedTrackPath"
-```
-
-}
-
-if (-not (Test-Path -LiteralPath $embeddedTrackPath -PathType Leaf)) {
-throw (
-"Fallback Track JSON is missing: $embeddedTrackPath`n" +
-"Pass -TrackPath or add web-viewer/tracks/default-track.json."
-)
-}
-
 if (Test-Path -LiteralPath $distRoot) {
-Remove-Item `        -LiteralPath $distRoot`
--Recurse `
--Force
+    Remove-Item -LiteralPath $distRoot -Recurse -Force
+}
+[System.IO.Directory]::CreateDirectory($distRoot) | Out-Null
+
+Invoke-Godot `
+    -Arguments @("--headless", "--path", $webProjectRoot, "--export-release", "Web", $outputIndex) `
+    -Operation "Godot Web release export"
+if (-not (Test-Path -LiteralPath $outputIndex -PathType Leaf)) {
+    throw "Godot reported success but index.html was not created: $outputIndex"
 }
 
-New-Item `    -ItemType Directory`
--Force `
--Path $distRoot |
-Out-Null
-
-Write-Host "Exporting Godot Web Viewer..."
-Write-Host "Project: $webProjectRoot"
-Write-Host "Preset:  $PresetName"
-Write-Host "Output:  $exportIndexPath"
-
-& $GodotPath `    --headless`
---path $webProjectRoot `    --export-release $PresetName`
-$exportIndexPath
-
-if ($LASTEXITCODE -ne 0) {
-throw "Godot Web export failed with exit code $LASTEXITCODE."
+[System.IO.Directory]::CreateDirectory((Split-Path -Parent $externalTrack)) | Out-Null
+Copy-Item -LiteralPath $embeddedTrack -Destination $externalTrack -Force
+if (-not (Test-Path -LiteralPath $externalTrack -PathType Leaf)) {
+    throw "External Track copy was not created: $externalTrack"
 }
 
-if (-not (Test-Path -LiteralPath $exportIndexPath -PathType Leaf)) {
-throw "Godot reported success, but index.html was not created."
-}
-
-New-Item `    -ItemType Directory`
--Force `
--Path $externalTrackDirectory |
-Out-Null
-
-Copy-Item `    -LiteralPath $embeddedTrackPath`
--Destination $externalTrackPath `
--Force
-
-# Prevent accidental Jekyll processing if the folder is ever deployed
-
-# through a branch-based Pages configuration.
-
-New-Item `    -ItemType File`
--Force `
--Path (Join-Path $distRoot ".nojekyll") |
-Out-Null
-
-Write-Host ""
-Write-Host "Web Viewer export completed:"
-Write-Host "  $distRoot"
-Write-Host ""
-Write-Host "External Track:"
-Write-Host "  $externalTrackPath"
-Write-Host ""
-Write-Host "Local test:"
-Write-Host "  cd `"$distRoot`""
-Write-Host "  python -m http.server 8060"
-Write-Host "  open http://localhost:8060/"
-
-## FILE: .github/workflows/deploy-web-viewer.yml
-
-name: Deploy Web Viewer
-
-on:
-push:
-branches:
-- main
-paths:
-- "dist/web/**"
-- ".github/workflows/deploy-web-viewer.yml"
-
-workflow_dispatch:
-
-permissions:
-contents: read
-pages: write
-id-token: write
-
-concurrency:
-group: github-pages
-cancel-in-progress: true
-
-jobs:
-deploy:
-name: Deploy GitHub Pages
-runs-on: ubuntu-latest
-
-```
-environment:
-  name: github-pages
-  url: ${{ steps.deployment.outputs.page_url }}
-
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
-
-  - name: Verify Pages artifact
-    shell: bash
-    run: |
-      set -euo pipefail
-
-      if [ ! -f "dist/web/index.html" ]; then
-        echo "::error::dist/web/index.html was not found."
-        exit 1
-      fi
-
-      if [ ! -f "dist/web/tracks/default-track.json" ]; then
-        echo "::error::dist/web/tracks/default-track.json was not found."
-        exit 1
-      fi
-
-      echo "Pages artifact:"
-      find dist/web -maxdepth 3 -type f -print
-
-  - name: Configure GitHub Pages
-    uses: actions/configure-pages@v5
-
-  - name: Upload GitHub Pages artifact
-    uses: actions/upload-pages-artifact@v4
-    with:
-      path: dist/web
-
-  - name: Deploy GitHub Pages
-    id: deployment
-    uses: actions/deploy-pages@v4
-```
+Write-Output "Web Viewer export completed: $outputIndex"
+Write-Output "Published Track: $externalTrack"

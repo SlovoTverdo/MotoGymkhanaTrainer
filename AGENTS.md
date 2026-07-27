@@ -123,4 +123,8 @@ When documentation is ambiguous, choose the smallest implementation compatible w
 * Web Viewer runtime must not contain Exercise, Venue or Track editing functionality.
 * GitHub Pages deployment publishes only `dist/web`.
 * Do not put secrets, GitHub tokens or credentials into the Web export.
+* Build the Web Viewer only with `tools/build-web-viewer.ps1` and a regular Godot executable; do not use the .NET/Mono binary for the published export.
+* `web-viewer/` must remain free of `.cs`, `.csproj`, desktop editor scenes and editor-only DTOs.
+* Keep both Track copies intentional: embedded `web-viewer/tracks/default-track.json` for fallback and external `dist/web/tracks/default-track.json` for Pages updates.
+* GitHub Actions publishes the already-built `dist/web`; it must not install or run Godot.
 
