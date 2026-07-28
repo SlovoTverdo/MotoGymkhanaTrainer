@@ -107,6 +107,7 @@ When documentation is ambiguous, choose the smallest implementation compatible w
 
 * `docs/WebViewerPlan.md` — отдельный GDScript Web Viewer, Track v4 loading, browser runtime и GitHub Pages deployment.
 * `web-viewer/README.md` — локальная сборка и проверка Web Viewer.
+* `docs/WebViewerMobileControlsPlan.md` — сенсорное управление Web Viewer, мультитач, responsive mobile UI и ограничение минимальной высоты Fly camera.
 
 ### Web Viewer architectural constraints
 
@@ -128,3 +129,11 @@ When documentation is ambiguous, choose the smallest implementation compatible w
 * Keep both Track copies intentional: embedded `web-viewer/tracks/default-track.json` for fallback and external `dist/web/tracks/default-track.json` for Pages updates.
 * GitHub Actions publishes the already-built `dist/web`; it must not install or run Godot.
 
+- Mobile Web controls must feed the shared Viewer input state and must not implement a second movement controller.
+- Movement and look touch contacts must be tracked by independent touch IDs.
+- Mobile UI buttons must not leak touch events into the camera look area.
+- Losing browser focus must clear all active touch state.
+- Fly mode camera height must be clamped relative to the WalkableSurface below the camera.
+- Fly minimum height must reuse the Walk eye-height source of truth.
+- Fly height clamp must not act as ground-following movement and must not automatically lower the camera.
+- If no WalkableSurface is found, Fly mode must use the Venue base level as a safe lower-bound fallback.
