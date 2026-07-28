@@ -108,6 +108,7 @@ When documentation is ambiguous, choose the smallest implementation compatible w
 * `docs/WebViewerPlan.md` — отдельный GDScript Web Viewer, Track v4 loading, browser runtime и GitHub Pages deployment.
 * `web-viewer/README.md` — локальная сборка и проверка Web Viewer.
 * `docs/WebViewerMobileControlsPlan.md` — сенсорное управление Web Viewer, мультитач, responsive mobile UI и ограничение минимальной высоты Fly camera.
+* `docs/WebViewerRouteFollowPlan.md` — автоматическое следование Web Viewer по projected trajectory, playback, управление камерой и мобильный Follow UI.
 
 ### Web Viewer architectural constraints
 
@@ -137,6 +138,16 @@ When documentation is ambiguous, choose the smallest implementation compatible w
 - Fly minimum height must reuse the Walk eye-height source of truth.
 - Fly height clamp must not act as ground-following movement and must not automatically lower the camera.
 - If no WalkableSurface is found, Fly mode must use the Venue base level as a safe lower-bound fallback.
+- Route Follow must use the already projected global Track trajectory and must not recompile Exercise routes or transitions.
+- Route Follow position must be represented as distance in meters, not as a sample-point index.
+- Route paths must maintain cumulative distances and provide interpolation by distance.
+- Follow camera direction must use a look-ahead point rather than only the next sample.
+- User look in Follow mode must be stored as an offset from route orientation and must not change route movement.
+- Follow camera height must use projected route height plus the shared Viewer eye-height source of truth.
+- Mobile Follow mode must hide the movement joystick while preserving the touch look area.
+- Losing browser focus during Follow must pause playback and clear active touch state.
+- Reloading a Track must clear the old RoutePath and all Follow runtime state.
+- Route Follow is a route-learning feature, not motorcycle simulation; do not add vehicle physics, checkpoints or timing to this iteration.
 
 ## Subagent workflow
 
