@@ -61,10 +61,13 @@ func set_controls_visible(show_controls: bool) -> void:
 
 
 func set_mode(mode: String) -> void:
+	if _mode != mode:
+		cancel_active_input()
 	_mode = mode
 	if _mode != WebViewerCharacter.MODE_FLY:
 		_release_fly_buttons()
 	_update_mode_ui()
+	_apply_responsive_layout()
 
 
 func cancel_active_input() -> void:
@@ -226,8 +229,13 @@ func _release_fly_buttons() -> void:
 func _update_mode_ui() -> void:
 	if not is_instance_valid(_mode_button) or not is_instance_valid(_fly_buttons):
 		return
+	var following := _mode == WebViewerCharacter.MODE_FOLLOW
 	_mode_button.text = "Mode: %s" % _mode
+	_mode_button.visible = not following
+	_reset_button.visible = not following
+	_joystick.visible = visible and not following
 	_fly_buttons.visible = visible and _mode == WebViewerCharacter.MODE_FLY
+	_mobile_help.text = "Right: look · Follow controls move along the route" if following else "Left: move · Right: look · Mode: Walk/Fly"
 
 
 func _on_viewport_size_changed() -> void:
@@ -249,6 +257,15 @@ func _apply_responsive_layout() -> void:
 	if not is_instance_valid(_top_buttons):
 		return
 	var portrait := get_viewport_rect().size.y > get_viewport_rect().size.x
+	var following := _mode == WebViewerCharacter.MODE_FOLLOW
+	_look_area.anchor_left = 0.0 if following else 0.42
+	_look_area.anchor_top = 0.0
+	_look_area.anchor_right = 1.0
+	_look_area.anchor_bottom = 1.0
+	_look_area.offset_left = 0.0
+	_look_area.offset_top = 220.0 if visible else 0.0
+	_look_area.offset_right = 0.0
+	_look_area.offset_bottom = (-260.0 if portrait else -202.0) if following else 0.0
 	if portrait:
 		_top_buttons.anchor_left = 0.0
 		_top_buttons.anchor_right = 1.0

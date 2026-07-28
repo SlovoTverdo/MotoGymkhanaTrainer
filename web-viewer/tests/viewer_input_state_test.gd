@@ -34,6 +34,12 @@ func _initialize() -> void:
 	_expect(not state.consume_mode_toggle_request(), "mode toggle request is one-shot")
 	state.request_reset()
 	_expect(state.consume_reset_request(), "reset request is consumed")
+	state.request_follow_play_pause()
+	_expect(state.consume_follow_play_pause_request(), "Follow play/pause request is consumed")
+	state.request_follow_exit()
+	_expect(state.consume_follow_exit_request(), "Follow exit request is consumed")
+	state.request_follow_look_forward()
+	_expect(state.consume_follow_look_forward_request(), "Follow look-forward request is consumed")
 
 	state.set_touch_movement(Vector2.ONE)
 	state.set_touch_fly_buttons(true, false)

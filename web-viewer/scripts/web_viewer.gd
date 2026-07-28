@@ -20,6 +20,8 @@ var _track: Dictionary
 var _external_warning := ""
 var _loading := false
 var _input_state := ViewerInputState.new()
+var _route_path := RoutePath.new()
+var _route_follow := RouteFollowController.new()
 
 @onready var _world_environment: WorldEnvironment = $WorldEnvironment
 @onready var _venue_root: Node3D = $VenueRoot
@@ -35,21 +37,33 @@ var _input_state := ViewerInputState.new()
 @onready var _controls_label: Label = $UI/Controls
 @onready var _touch_controls_toggle: Button = $UI/TouchControlsToggle
 @onready var _mobile_controls: WebMobileControls = $UI/MobileControls
+@onready var _route_follow_ui: RouteFollowUI = $UI/RouteFollowUI
 
 
 func _ready() -> void:
 	_fallback_environment = _world_environment.environment
 	_character.set_input_state(_input_state)
+	_character.set_route_follow_controller(_route_follow)
 	_mobile_controls.configure(_input_state, _character.movement_mode)
+	_route_follow_ui.configure(_route_follow)
 	_http_request.request_completed.connect(_on_track_request_completed)
 	_character.mode_changed.connect(_on_mode_changed)
 	_character.pointer_capture_changed.connect(_on_pointer_capture_changed)
 	_touch_controls_toggle.pressed.connect(_toggle_touch_controls)
 	_mobile_controls.status_message.connect(_on_mobile_status_message)
+	_route_follow_ui.follow_requested.connect(_on_follow_requested)
+	_route_follow_ui.exit_requested.connect(_on_follow_exit_requested)
+	_route_follow_ui.restart_requested.connect(_on_follow_restart_requested)
+	_route_follow_ui.step_backward_requested.connect(_on_follow_step_backward_requested)
+	_route_follow_ui.play_pause_requested.connect(_on_follow_play_pause_requested)
+	_route_follow_ui.step_forward_requested.connect(_on_follow_step_forward_requested)
+	_route_follow_ui.speed_down_requested.connect(_on_follow_speed_down_requested)
+	_route_follow_ui.speed_up_requested.connect(_on_follow_speed_up_requested)
+	_route_follow_ui.look_forward_requested.connect(_on_follow_look_forward_requested)
 	_error_panel.visible = false
 	_warning_label.visible = false
 	_mode_label.text = "Mode: Walk"
-	_controls_label.text = "Click to capture mouse · WASD move · Shift faster · F Walk/Fly · Space/Ctrl fly · T touch UI · Esc release"
+	_controls_label.text = "Click to capture mouse · WASD move · Shift faster · F Walk/Fly · Follow button · T touch UI · Esc release"
 	var touch_setting := _argument_value("--touch-controls", "auto").to_lower()
 	var show_touch_controls := DisplayServer.is_touchscreen_available()
 	if touch_setting == "show":
@@ -57,6 +71,8 @@ func _ready() -> void:
 	elif touch_setting == "hide":
 		show_touch_controls = false
 	_set_touch_controls_visible(show_touch_controls)
+	_route_follow_ui.set_route_available(false, "Track projection is still loading.")
+	_route_follow_ui.visible = false
 	call_deferred("_begin_loading")
 
 
@@ -146,7 +162,12 @@ func _build_runtime(track: Dictionary, source_label: String) -> void:
 
 	_create_cones(track["cones"], cone_scene)
 	_create_markings(track["markings"])
-	_create_trajectory(track["trajectory"]["segments"])
+	var route_projection := _create_trajectory(track["trajectory"]["segments"])
+	_route_path.build(route_projection["points"])
+	if not route_projection["valid"]:
+		_route_path.invalidate(route_projection["message"])
+	_route_follow.configure(_route_path)
+	_route_follow_ui.set_route_available(_route_path.is_valid(), _route_path.validation_message)
 
 	var entry := RuntimeGeometry.trajectory_entry_pose(track["trajectory"]["segments"])
 	var start: Dictionary = entry.get("start", {"x": 0.0, "y": 0.0})
@@ -159,6 +180,7 @@ func _build_runtime(track: Dictionary, source_label: String) -> void:
 	_loading_panel.visible = false
 	_error_panel.visible = false
 	_touch_controls_toggle.visible = true
+	_route_follow_ui.visible = true
 	_mode_label.text = "Mode: %s" % _character.movement_mode
 	if _external_warning.is_empty():
 		_show_warning("Loaded %s: %s" % [source_label, track["track"]["name"]], false)
@@ -170,14 +192,80 @@ func _build_runtime(track: Dictionary, source_label: String) -> void:
 			track["markings"].size(), track["trajectory"]["segments"].size(), _projection.diagnostics.size()
 		]
 	)
+	if "--follow-smoke-test" in OS.get_cmdline_user_args():
+		await _run_follow_smoke_test()
+		return
 	if "--smoke-test" in OS.get_cmdline_user_args():
-		print("Touch controls visible: %s; orientation hint visible: %s." % [
-			_mobile_controls.visible, $UI/MobileControls/OrientationHint.visible
+		print("Touch controls visible: %s; orientation hint visible: %s; Follow UI visible: %s; entry visible: %s; entry rect: %s / %s." % [
+			_mobile_controls.visible, $UI/MobileControls/OrientationHint.visible,
+			_route_follow_ui.visible, $UI/RouteFollowUI/DesktopEntryButton.visible,
+			$UI/RouteFollowUI/DesktopEntryButton.position, $UI/RouteFollowUI/DesktopEntryButton.size
 		])
 		get_tree().quit(0)
 
 
+func _run_follow_smoke_test() -> void:
+	var failures: Array[String] = []
+	if not _route_path.is_valid():
+		failures.append("projected RoutePath is invalid: %s" % _route_path.validation_message)
+	else:
+		if not _character.enter_follow_from_start():
+			failures.append("Follow could not enter from Walk")
+		else:
+			_route_follow.pause()
+			var camera: Camera3D = $ViewerCharacter/Head/Camera3D
+			var expected_eye := _route_path.sample_position(0.0) + Vector3.UP * _character.get_walk_eye_height()
+			if camera.global_position.distance_to(expected_eye) > 0.002:
+				failures.append("initial Follow camera eye does not match route position plus shared eye height")
+			_route_follow.step_forward()
+			_character.refresh_follow_pose()
+			if not is_equal_approx(_route_follow.route_distance_meters, 1.0):
+				failures.append("Follow step did not advance exactly 1 meter")
+			_route_follow.add_user_look(Vector2(-10.0, 5.0))
+			_character.refresh_follow_pose()
+			if not is_equal_approx(_route_follow.follow_look_yaw_offset_degrees, 10.0):
+				failures.append("Follow look offset was not retained")
+			_route_follow.restart()
+			_character.refresh_follow_pose()
+			if not is_zero_approx(_route_follow.route_distance_meters) or _route_follow.is_playing:
+				failures.append("paused Restart did not preserve pause at route start")
+			if _mobile_controls.visible:
+				if $UI/MobileControls/MovementJoystick.visible:
+					failures.append("mobile joystick remained visible in Follow")
+				if not $UI/RouteFollowUI/MobilePanel.visible:
+					failures.append("mobile Follow panel is hidden")
+			_character.exit_follow_to_safe_mode()
+			if _character.movement_mode not in [WebViewerCharacter.MODE_WALK, WebViewerCharacter.MODE_FLY]:
+				failures.append("Follow exit did not choose a free mode")
+
+		# Exercise the same entry API from Fly. The physics frame consumes the
+		# existing Walk/Fly request through ViewerInputState.
+		if _character.movement_mode == WebViewerCharacter.MODE_WALK:
+			_input_state.request_mode_toggle()
+			await get_tree().physics_frame
+		if _character.movement_mode != WebViewerCharacter.MODE_FLY:
+			failures.append("test setup could not enter Fly")
+		elif not _character.enter_follow_from_start():
+			failures.append("Follow could not enter from Fly")
+		else:
+			_route_follow.pause()
+			_character.exit_follow_to_safe_mode()
+
+	if failures.is_empty():
+		print("Route Follow integration smoke checks passed (route %.2f m, %d points)." % [
+			_route_path.total_length, _route_path.points.size()
+		])
+		get_tree().quit(0)
+		return
+	for failure in failures:
+		push_error(failure)
+	get_tree().quit(1)
+
+
 func _clear_runtime() -> void:
+	_route_follow.clear()
+	_route_path.clear()
+	_route_follow_ui.set_route_available(false, "Track projection is not available.")
 	for root in [_venue_root, _track_root]:
 		for child in root.get_children():
 			root.remove_child(child)
@@ -343,7 +431,7 @@ func _create_markings(markings: Array) -> void:
 	_track_root.add_child(exercise_markings)
 
 
-func _create_trajectory(segments: Array) -> void:
+func _create_trajectory(segments: Array) -> Dictionary:
 	var root := Node3D.new()
 	root.name = "Trajectory"
 	var material := StandardMaterial3D.new()
@@ -352,6 +440,9 @@ func _create_trajectory(segments: Array) -> void:
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	var previous_end: Variant = null
 	var previous_id := ""
+	var route_points: Array = []
+	var route_valid := true
+	var route_message := ""
 	for segment in segments:
 		var points: Array = segment["points"] if segment["type"] == "polyline" else RuntimeGeometry.sample_cubic_bezier(segment)
 		if previous_end != null:
@@ -360,6 +451,8 @@ func _create_trajectory(segments: Array) -> void:
 			)
 			if gap > 0.01:
 				push_warning("Trajectory discontinuity between '%s' and '%s': %.3f m." % [previous_id, segment["id"], gap])
+				route_valid = false
+				route_message = "Trajectory is discontinuous between '%s' and '%s'." % [previous_id, segment["id"]]
 		var projected := _projection.project_polyline(
 			points, "TrajectorySegment", segment["id"], MAXIMUM_PROJECTION_SPACING, TRAJECTORY_SURFACE_OFFSET
 		)
@@ -367,10 +460,16 @@ func _create_trajectory(segments: Array) -> void:
 		segment_root.name = segment["id"]
 		_add_projected_path(segment_root, projected, TRAJECTORY_WIDTH, material, "Path")
 		_add_direction_markers(segment_root, projected, material)
+		for projected_point in projected:
+			route_points.append(projected_point["position"])
+			if not projected_point["hit"] and route_valid:
+				route_valid = false
+				route_message = "Trajectory segment '%s' contains a projection fallback." % segment["id"]
 		root.add_child(segment_root)
 		previous_end = points[points.size() - 1]
 		previous_id = segment["id"]
 	_track_root.add_child(root)
+	return {"points": route_points, "valid": route_valid, "message": route_message}
 
 
 func _add_projected_path(parent: Node3D, points: Array, width: float, material: Material, prefix: String) -> void:
@@ -480,6 +579,8 @@ func _show_loading(message: String) -> void:
 	_loading_panel.visible = true
 	_loading_label.text = message
 	_error_panel.visible = false
+	if is_instance_valid(_route_follow_ui):
+		_route_follow_ui.visible = false
 
 
 func _show_warning(message: String, warning: bool = true) -> void:
@@ -495,6 +596,7 @@ func _show_blocking_error(message: String) -> void:
 	_error_panel.visible = true
 	_mobile_controls.set_controls_visible(false)
 	_touch_controls_toggle.visible = false
+	_route_follow_ui.visible = false
 	_character.suspend_for_reload()
 	push_error(message)
 	if "--smoke-test" in OS.get_cmdline_user_args():
@@ -504,14 +606,16 @@ func _show_blocking_error(message: String) -> void:
 func _on_mode_changed(mode: String, message: String) -> void:
 	_mode_label.text = "Mode: %s" % mode
 	_mobile_controls.set_mode(mode)
+	_route_follow_ui.set_mode(mode)
+	_controls_label.visible = mode != WebViewerCharacter.MODE_FOLLOW and not _mobile_controls.visible
 	_show_warning(message, false)
 
 
 func _on_pointer_capture_changed(captured: bool) -> void:
 	if captured:
-		_controls_label.text = "WASD move · Shift faster · F Walk/Fly · Space/Ctrl fly · T touch UI · Esc release"
+		_controls_label.text = "WASD move · Shift faster · F Walk/Fly · Space/Ctrl fly · Follow: Space pause, Esc exit"
 	else:
-		_controls_label.text = "Click Viewer to capture mouse · WASD move · Shift faster · F Walk/Fly · T touch UI"
+		_controls_label.text = "Click Viewer to capture mouse · WASD move · Shift faster · F Walk/Fly · Follow button"
 
 
 func _toggle_touch_controls() -> void:
@@ -521,9 +625,53 @@ func _toggle_touch_controls() -> void:
 func _set_touch_controls_visible(show_controls: bool) -> void:
 	_character.clear_runtime_input()
 	_mobile_controls.set_controls_visible(show_controls)
-	_controls_label.visible = not show_controls
+	_route_follow_ui.set_touch_controls_visible(show_controls)
+	_controls_label.visible = not show_controls and _character.movement_mode != WebViewerCharacter.MODE_FOLLOW
 	_touch_controls_toggle.text = "Hide Touch UI" if show_controls else "Show Touch UI"
 
 
 func _on_mobile_status_message(message: String, warning: bool) -> void:
 	_show_warning(message, warning)
+
+
+func _on_follow_requested() -> void:
+	_mobile_controls.cancel_active_input()
+	if not _character.enter_follow_from_start():
+		_show_warning("Follow unavailable: %s" % _route_follow.validation_message(), true)
+
+
+func _on_follow_exit_requested() -> void:
+	_mobile_controls.cancel_active_input()
+	_character.exit_follow_to_safe_mode()
+
+
+func _on_follow_restart_requested() -> void:
+	_route_follow.restart()
+	_character.refresh_follow_pose()
+
+
+func _on_follow_step_backward_requested() -> void:
+	_route_follow.step_backward()
+	_character.refresh_follow_pose()
+
+
+func _on_follow_play_pause_requested() -> void:
+	_route_follow.toggle_play_pause()
+
+
+func _on_follow_step_forward_requested() -> void:
+	_route_follow.step_forward()
+	_character.refresh_follow_pose()
+
+
+func _on_follow_speed_down_requested() -> void:
+	_route_follow.speed_down()
+
+
+func _on_follow_speed_up_requested() -> void:
+	_route_follow.speed_up()
+
+
+func _on_follow_look_forward_requested() -> void:
+	_route_follow.reset_look()
+	_character.refresh_follow_pose()

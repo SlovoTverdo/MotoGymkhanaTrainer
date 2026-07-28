@@ -217,3 +217,35 @@ Exit             выход в свободный режим
 На мобильном устройстве MovementJoystick скрывается, а вместо него показываются крупные кнопки управления маршрутом.
 
 При потере фокуса браузера Follow автоматически ставится на Pause.
+
+Runtime строит `RoutePath` только из уже спроецированных точек глобальной
+`trajectory.segments[]`. Эти же точки используются trajectory renderer; повторной
+компиляции Exercise/transitions и извлечения пути из mesh нет. `RoutePath` удаляет
+невалидные и соседние дублирующиеся точки, хранит cumulative distances и выполняет
+sampling по метрам через binary search.
+
+`RouteFollowController` хранит playback state отдельно от `ViewerCharacter`.
+`ViewerCharacter` остаётся единственным владельцем `CharacterBody3D`, `Head` и
+`Camera3D` transform. В режиме Follow Walk/Fly physics не выполняется; projected
+route задаёт базовую позицию и orientation, а mouse/touch look меняет только
+пользовательские yaw/pitch offsets. Высота глаз берётся из фактического offset
+существующей `Camera3D` (`ViewerCharacter.get_walk_eye_height()`).
+
+Desktop:
+
+```text
+Space  Play/Pause во время Follow
+Esc    Exit Follow
+```
+
+На touch layout MovementJoystick, Walk/Fly и Fly Up/Down скрываются, LookArea
+остаётся активной, а route controls показываются двумя responsive группами.
+
+Deterministic проверки:
+
+```powershell
+godot --headless --path web-viewer --script res://tests/route_path_test.gd
+godot --headless --path web-viewer --script res://tests/route_follow_controller_test.gd
+godot --headless --path web-viewer -- --embedded-only --follow-smoke-test
+godot --headless --path web-viewer -- --embedded-only --follow-smoke-test --touch-controls show
+```

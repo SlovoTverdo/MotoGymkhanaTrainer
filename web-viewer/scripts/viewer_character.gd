@@ -3,9 +3,11 @@ extends CharacterBody3D
 
 signal mode_changed(mode: String, message: String)
 signal pointer_capture_changed(captured: bool)
+signal follow_pose_changed
 
 const MODE_WALK := "Walk"
 const MODE_FLY := "Fly"
+const MODE_FOLLOW := "Follow"
 const WALKABLE_MASK := SurfaceProjectionService.WALKABLE_SURFACE_MASK
 const WORLD_OBSTACLE_MASK := 2
 const CHARACTER_LAYER := 8
@@ -27,11 +29,13 @@ const SPAWN_OFFSETS := [
 @export_range(0.02, 0.05, 0.005) var fly_floor_clearance := 0.03
 @export var fly_surface_ray_above := 50.0
 @export var fly_surface_ray_bottom := -10.0
+@export_range(1.0, 30.0, 0.5) var follow_orientation_response := 10.0
 
 var movement_mode := MODE_WALK
 
 var _input_state: ViewerInputState
 var _projection: SurfaceProjectionService
+var _route_follow: RouteFollowController
 var _gravity := 9.8
 var _pitch_degrees := 0.0
 var _yaw_degrees := 0.0
@@ -39,6 +43,7 @@ var _spawn_domain := Vector2.ZERO
 var _spawn_direction := Vector2(0.0, 1.0)
 var _has_spawn := false
 var _fly_surface_missing := false
+var _follow_route_quaternion := Quaternion.IDENTITY
 
 @onready var _collision_shape: CollisionShape3D = $CollisionShape3D
 @onready var _capsule: CapsuleShape3D = $CollisionShape3D.shape
@@ -66,6 +71,8 @@ func set_input_state(input_state: ViewerInputState) -> void:
 
 
 func suspend_for_reload() -> void:
+	if is_inside_tree():
+		_apply_free_orientation_from_forward(-_camera.global_transform.basis.z)
 	velocity = Vector3.ZERO
 	_projection = null
 	clear_runtime_input()
@@ -80,6 +87,71 @@ func clear_runtime_input() -> void:
 
 func set_projection_service(projection: SurfaceProjectionService) -> void:
 	_projection = projection
+
+
+func set_route_follow_controller(controller: RouteFollowController) -> void:
+	_route_follow = controller
+
+
+func enter_follow_from_start() -> bool:
+	if _route_follow == null or not _route_follow.follow_from_start():
+		var reason := "Projected route is unavailable."
+		if _route_follow != null and not _route_follow.validation_message().is_empty():
+			reason = _route_follow.validation_message()
+		mode_changed.emit(movement_mode, "Follow unavailable: %s" % reason)
+		return false
+	clear_runtime_input()
+	velocity = Vector3.ZERO
+	movement_mode = MODE_FOLLOW
+	_collision_shape.disabled = true
+	collision_layer = 0
+	collision_mask = 0
+	_apply_follow_pose(0.0, true)
+	mode_changed.emit(movement_mode, "Mode: Follow — Space pauses, Esc exits, mouse/touch looks around.")
+	return true
+
+
+func exit_follow_to_safe_mode() -> void:
+	if movement_mode != MODE_FOLLOW:
+		return
+	if _route_follow != null:
+		_route_follow.pause()
+	var view_forward := -_camera.global_transform.basis.z
+	var eye_position := _camera.global_position
+	var route_position := _route_follow.sample_position() if _route_follow != null else global_position
+	var requested := RuntimeGeometry.godot_to_domain(route_position)
+	# Occupancy must be tested with the upright free-mode capsule basis. The
+	# Follow quaternion can contain route pitch on ramps and is not a valid Walk
+	# collision orientation.
+	_apply_free_orientation_from_forward(view_forward)
+	global_position = eye_position - Vector3.UP * get_walk_eye_height()
+	var safe := _find_safe_walk_position(requested, _camera.global_position.y + floor_snap_meters)
+	if safe["ok"]:
+		global_position = safe["position"]
+		clear_runtime_input()
+		_enter_walk_mode()
+		return
+
+	# If the capsule cannot safely occupy the current route X/Z, preserve the
+	# current eye position in Fly rather than placing Walk inside geometry.
+	clear_runtime_input()
+	movement_mode = MODE_FLY
+	_collision_shape.disabled = true
+	collision_layer = 0
+	collision_mask = 0
+	velocity = Vector3.ZERO
+	mode_changed.emit(movement_mode, "Follow exited to Fly because no safe Walk placement was found.")
+
+
+func restart_follow_route() -> void:
+	if movement_mode == MODE_FOLLOW and _route_follow != null:
+		_route_follow.restart()
+		_apply_follow_pose(0.0, true)
+
+
+func refresh_follow_pose() -> void:
+	if movement_mode == MODE_FOLLOW:
+		_apply_follow_pose(0.0, true)
 
 
 func place_at_domain_start(start: Dictionary, direction: Vector2, remember_spawn: bool = true) -> bool:
@@ -107,7 +179,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _input_state == null:
 		return
 	if event.is_action_pressed("toggle_walk_fly"):
-		_input_state.request_mode_toggle()
+		if movement_mode == MODE_FOLLOW:
+			_input_state.request_follow_exit()
+		else:
+			_input_state.request_mode_toggle()
+		get_viewport().set_input_as_handled()
+		return
+	if movement_mode == MODE_FOLLOW and event.is_action_pressed("fly_up"):
+		_input_state.request_follow_play_pause()
 		get_viewport().set_input_as_handled()
 		return
 
@@ -116,6 +195,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		if movement_mode == MODE_FOLLOW:
+			_input_state.request_follow_exit()
 		_release_pointer()
 		get_viewport().set_input_as_handled()
 		return
@@ -127,6 +208,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		if _route_follow != null:
+			_route_follow.pause()
 		clear_runtime_input()
 
 
@@ -135,21 +218,37 @@ func _physics_process(delta: float) -> void:
 		return
 	_update_desktop_input()
 	if _input_state.consume_reset_request():
-		_reset_to_safe_spawn()
+		if movement_mode == MODE_FOLLOW:
+			restart_follow_route()
+		else:
+			_reset_to_safe_spawn()
 		return
+	if _input_state.consume_follow_exit_request():
+		exit_follow_to_safe_mode()
+		return
+	if _input_state.consume_follow_play_pause_request() and movement_mode == MODE_FOLLOW and _route_follow != null:
+		_route_follow.toggle_play_pause()
+	if _input_state.consume_follow_look_forward_request() and movement_mode == MODE_FOLLOW and _route_follow != null:
+		_route_follow.reset_look()
+		_apply_follow_pose(0.0, false)
 	if _input_state.consume_mode_toggle_request():
 		_toggle_movement_mode()
 	_apply_pending_look()
-	if movement_mode == MODE_FLY:
+	if movement_mode == MODE_FOLLOW:
+		_process_follow(delta)
+	elif movement_mode == MODE_FLY:
 		_process_fly(delta)
 	else:
 		_process_walk(delta)
 
 
 func _update_desktop_input() -> void:
-	_input_state.set_keyboard_movement(
-		Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
-	)
+	if movement_mode == MODE_FOLLOW:
+		_input_state.set_keyboard_movement(Vector2.ZERO)
+	else:
+		_input_state.set_keyboard_movement(
+			Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
+		)
 	# Vertical intent is invalid in Walk mode. Keeping it at zero prevents a
 	# held key from being carried into the first Fly physics frame.
 	if movement_mode == MODE_FLY:
@@ -162,6 +261,9 @@ func _update_desktop_input() -> void:
 func _apply_pending_look() -> void:
 	var look := _input_state.consume_look_delta()
 	if look.is_zero_approx():
+		return
+	if movement_mode == MODE_FOLLOW and _route_follow != null:
+		_route_follow.add_user_look(look)
 		return
 	_yaw_degrees -= look.x
 	_pitch_degrees = clampf(_pitch_degrees - look.y, -85.0, 85.0)
@@ -197,6 +299,41 @@ func _process_fly(delta: float) -> void:
 	var proposed_root := global_position + velocity * delta
 	proposed_root = _clamp_fly_root_to_surface(proposed_root)
 	global_position = proposed_root
+
+
+func _process_follow(delta: float) -> void:
+	if _route_follow == null or not _route_follow.has_valid_route():
+		exit_follow_to_safe_mode()
+		return
+	_route_follow.advance(delta)
+	_apply_follow_pose(delta, false)
+
+
+func _apply_follow_pose(delta: float, snap_orientation: bool) -> void:
+	if _route_follow == null or not _route_follow.has_valid_route():
+		return
+	var route_position := _route_follow.sample_position()
+	var route_forward := _route_follow.sample_direction()
+	if route_forward.length_squared() <= 0.000001:
+		return
+	var desired_basis := Basis.looking_at(route_forward.normalized(), Vector3.UP)
+	var desired_quaternion := desired_basis.get_rotation_quaternion()
+	if snap_orientation:
+		_follow_route_quaternion = desired_quaternion
+	else:
+		var blend := 1.0 - exp(-follow_orientation_response * maxf(delta, 0.0))
+		_follow_route_quaternion = _follow_route_quaternion.slerp(desired_quaternion, blend).normalized()
+	quaternion = _follow_route_quaternion
+	_head.rotation_degrees = Vector3(
+		_route_follow.follow_look_pitch_offset_degrees,
+		_route_follow.follow_look_yaw_offset_degrees,
+		0.0
+	)
+	var target_eye := route_position + Vector3.UP * get_walk_eye_height()
+	var camera_offset := global_transform.basis * Vector3(0.0, get_walk_eye_height(), 0.0)
+	global_position = target_eye - camera_offset
+	velocity = Vector3.ZERO
+	follow_pose_changed.emit()
 
 
 func _clamp_fly_root_to_surface(proposed_root: Vector3) -> Vector3:
@@ -237,6 +374,9 @@ static func calculate_minimum_root_y(
 
 
 func _toggle_movement_mode() -> void:
+	if movement_mode == MODE_FOLLOW:
+		exit_follow_to_safe_mode()
+		return
 	if movement_mode == MODE_WALK:
 		movement_mode = MODE_FLY
 		velocity = Vector3.ZERO
@@ -267,6 +407,16 @@ func _enter_walk_mode() -> void:
 		_input_state.set_keyboard_fly_vertical(0.0)
 	apply_floor_snap()
 	mode_changed.emit(movement_mode, "Mode: Walk — F or the mode button toggles Fly.")
+
+
+func _apply_free_orientation_from_forward(view_forward: Vector3) -> void:
+	var normalized := view_forward.normalized()
+	var horizontal := Vector2(normalized.x, -normalized.z)
+	if horizontal.length_squared() > 0.000001:
+		_yaw_degrees = rad_to_deg(atan2(-normalized.x, -normalized.z))
+	_pitch_degrees = clampf(rad_to_deg(asin(clampf(normalized.y, -1.0, 1.0))), -85.0, 85.0)
+	rotation_degrees = Vector3(0.0, _yaw_degrees, 0.0)
+	_head.rotation_degrees = Vector3(_pitch_degrees, 0.0, 0.0)
 
 
 func _reset_to_safe_spawn() -> void:

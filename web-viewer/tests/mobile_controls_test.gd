@@ -92,6 +92,11 @@ func _run() -> void:
 	fixture.cancel_active_input()
 	_expect(fixture.movement_touch_id == -1 and fixture.look_touch_id == -1, "cancellation clears both ownership IDs")
 	_expect(state.movement.is_zero_approx() and state.look_delta.is_zero_approx(), "cancellation clears pending touch input")
+	fixture.set_mode(WebViewerCharacter.MODE_FOLLOW)
+	_expect(not fixture._joystick.visible, "Follow hides the movement joystick")
+	_expect(not fixture._mode_button.visible and not fixture._reset_button.visible, "Follow hides ordinary mode/reset buttons")
+	_expect(not fixture._fly_buttons.visible, "Follow hides Fly vertical buttons")
+	_expect(fixture._look_area.visible, "Follow keeps LookArea available")
 	fixture.queue_free()
 	_finish()
 

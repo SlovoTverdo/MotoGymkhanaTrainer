@@ -1,8 +1,9 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/web_viewer.gd" id="1_root"]
 [ext_resource type="Script" path="res://scripts/viewer_character.gd" id="2_character"]
 [ext_resource type="Script" path="res://scripts/mobile_controls.gd" id="3_mobile"]
+[ext_resource type="Script" path="res://scripts/route_follow_ui.gd" id="4_follow_ui"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_fallback"]
 sky_top_color = Color(0.2, 0.42, 0.68, 1)
@@ -216,7 +217,9 @@ mouse_filter = 2
 layout_mode = 1
 anchors_preset = 2
 anchor_left = 1.0
+anchor_top = 0.0
 anchor_right = 1.0
+anchor_bottom = 0.0
 offset_left = -190.0
 offset_top = 16.0
 offset_right = -16.0
@@ -448,3 +451,225 @@ theme_override_font_sizes/font_size = 16
 text = "Left: move · Right: look · Mode: Walk/Fly"
 horizontal_alignment = 1
 mouse_filter = 2
+
+[node name="RouteFollowUI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_follow_ui")
+
+[node name="DesktopEntryButton" type="Button" parent="UI/RouteFollowUI"]
+layout_mode = 1
+anchors_preset = 2
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -220.0
+offset_top = 54.0
+offset_right = -16.0
+offset_bottom = 102.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBox_mobile_button")
+text = "Следовать по трассе"
+
+[node name="MobileEntryButton" type="Button" parent="UI/RouteFollowUI"]
+visible = false
+layout_mode = 1
+anchors_preset = 10
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -112.0
+offset_top = 88.0
+offset_right = 112.0
+offset_bottom = 146.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("StyleBox_mobile_button")
+text = "Следовать по трассе"
+
+[node name="UnavailableLabel" type="Label" parent="UI/RouteFollowUI"]
+visible = false
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 180.0
+offset_top = 154.0
+offset_right = -180.0
+offset_bottom = 210.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.65, 0.28, 1)
+theme_override_colors/font_outline_color = Color(0.03, 0.04, 0.05, 1)
+theme_override_constants/outline_size = 4
+text = "Follow недоступен"
+horizontal_alignment = 1
+autowrap_mode = 2
+mouse_filter = 2
+
+[node name="DesktopPanel" type="PanelContainer" parent="UI/RouteFollowUI"]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = -122.0
+offset_right = -18.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBox_panel")
+
+[node name="Margin" type="MarginContainer" parent="UI/RouteFollowUI/DesktopPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="Layout" type="VBoxContainer" parent="UI/RouteFollowUI/DesktopPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Actions" type="HBoxContainer" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 7
+
+[node name="Exit" type="Button" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout/Actions"]
+layout_mode = 2
+text = "Exit"
+[node name="Restart" type="Button" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout/Actions"]
+layout_mode = 2
+text = "Restart"
+[node name="StepBack" type="Button" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout/Actions"]
+layout_mode = 2
+text = "−1 m"
+[node name="PlayPause" type="Button" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout/Actions"]
+custom_minimum_size = Vector2(88, 0)
+layout_mode = 2
+text = "Play"
+[node name="StepForward" type="Button" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout/Actions"]
+layout_mode = 2
+text = "+1 m"
+[node name="SpeedDown" type="Button" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout/Actions"]
+layout_mode = 2
+text = "Speed −"
+[node name="SpeedUp" type="Button" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout/Actions"]
+layout_mode = 2
+text = "Speed +"
+[node name="LookForward" type="Button" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout/Actions"]
+layout_mode = 2
+text = "Look Forward"
+
+[node name="Status" type="HBoxContainer" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 20
+
+[node name="Speed" type="Label" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout/Status"]
+layout_mode = 2
+text = "Speed 1.00x"
+[node name="Progress" type="Label" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout/Status"]
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+text = "0.0 / 0.0 m (0%)"
+horizontal_alignment = 1
+[node name="Finished" type="Label" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout/Status"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.95, 0.62, 1)
+text = "Finished"
+
+[node name="MobilePanel" type="PanelContainer" parent="UI/RouteFollowUI"]
+visible = false
+layout_mode = 1
+anchor_left = 0.12
+anchor_top = 1.0
+anchor_right = 0.88
+anchor_bottom = 1.0
+offset_top = -194.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBox_panel")
+
+[node name="Margin" type="MarginContainer" parent="UI/RouteFollowUI/MobilePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Layout" type="VBoxContainer" parent="UI/RouteFollowUI/MobilePanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Primary" type="HBoxContainer" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 6
+
+[node name="Exit" type="Button" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout/Primary"]
+custom_minimum_size = Vector2(68, 54)
+layout_mode = 2
+text = "Exit"
+[node name="Restart" type="Button" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout/Primary"]
+custom_minimum_size = Vector2(76, 54)
+layout_mode = 2
+text = "Restart"
+[node name="StepBack" type="Button" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout/Primary"]
+custom_minimum_size = Vector2(68, 54)
+layout_mode = 2
+text = "−1 m"
+[node name="PlayPause" type="Button" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout/Primary"]
+custom_minimum_size = Vector2(84, 54)
+layout_mode = 2
+text = "Play"
+[node name="StepForward" type="Button" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout/Primary"]
+custom_minimum_size = Vector2(68, 54)
+layout_mode = 2
+text = "+1 m"
+
+[node name="Secondary" type="HBoxContainer" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 6
+
+[node name="SpeedDown" type="Button" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout/Secondary"]
+custom_minimum_size = Vector2(82, 50)
+layout_mode = 2
+text = "Speed −"
+[node name="Speed" type="Label" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout/Secondary"]
+custom_minimum_size = Vector2(112, 50)
+layout_mode = 2
+text = "Speed 1.00x"
+horizontal_alignment = 1
+vertical_alignment = 1
+[node name="SpeedUp" type="Button" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout/Secondary"]
+custom_minimum_size = Vector2(82, 50)
+layout_mode = 2
+text = "Speed +"
+[node name="LookForward" type="Button" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout/Secondary"]
+custom_minimum_size = Vector2(116, 50)
+layout_mode = 2
+text = "Look Forward"
+
+[node name="Progress" type="Label" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout"]
+layout_mode = 2
+text = "0.0 / 0.0 m (0%)"
+horizontal_alignment = 1
+[node name="Finished" type="Label" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.95, 0.62, 1)
+text = "Finished"
+horizontal_alignment = 1

@@ -10,6 +10,9 @@ var fly_vertical := 0.0
 var fast_move := false
 var reset_requested := false
 var mode_toggle_requested := false
+var follow_play_pause_requested := false
+var follow_exit_requested := false
+var follow_look_forward_requested := false
 
 var _keyboard_movement := Vector2.ZERO
 var _touch_movement := Vector2.ZERO
@@ -69,6 +72,36 @@ func consume_mode_toggle_request() -> bool:
 	return result
 
 
+func request_follow_play_pause() -> void:
+	follow_play_pause_requested = true
+
+
+func consume_follow_play_pause_request() -> bool:
+	var result := follow_play_pause_requested
+	follow_play_pause_requested = false
+	return result
+
+
+func request_follow_exit() -> void:
+	follow_exit_requested = true
+
+
+func consume_follow_exit_request() -> bool:
+	var result := follow_exit_requested
+	follow_exit_requested = false
+	return result
+
+
+func request_follow_look_forward() -> void:
+	follow_look_forward_requested = true
+
+
+func consume_follow_look_forward_request() -> bool:
+	var result := follow_look_forward_requested
+	follow_look_forward_requested = false
+	return result
+
+
 func clear_touch() -> void:
 	_touch_movement = Vector2.ZERO
 	_touch_fly_up = false
@@ -91,6 +124,9 @@ func clear_all(clear_requests: bool = true) -> void:
 	if clear_requests:
 		reset_requested = false
 		mode_toggle_requested = false
+		follow_play_pause_requested = false
+		follow_exit_requested = false
+		follow_look_forward_requested = false
 
 
 func _rebuild_movement() -> void:
