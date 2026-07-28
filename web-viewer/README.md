@@ -114,3 +114,39 @@ Workflow:
 ```text
 .github/workflows/deploy-web-viewer.yml
 ```
+
+## Mobile controls
+
+На устройствах с touch input Viewer автоматически показывает:
+
+* виртуальный джойстик движения;
+* touch-зону вращения камеры;
+* Walk/Fly;
+* Fly Up/Down;
+* Reset Position.
+
+Основной режим использования на телефоне:
+
+```text
+landscape
+```
+
+Управление:
+
+```text
+Левый палец:
+движение
+
+Правый палец:
+обзор
+
+Walk/Fly:
+переключение режима
+
+Up/Down:
+высота в Fly mode
+```
+
+В Fly mode камера не может опуститься ниже высоты глаз Walk mode относительно поверхности площадки или эстакады.
+
+Touch controls можно вручную показать или скрыть для тестирования на desktop.
