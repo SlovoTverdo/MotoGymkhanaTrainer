@@ -780,6 +780,83 @@ Mobile controls должны быть читаемы поверх:
 
 ---
 
+# Mobile controls in Follow mode
+
+При переходе Viewer в Follow mode мобильный UI меняет layout.
+
+Скрыть:
+
+```text
+MovementJoystick
+FlyUpButton
+FlyDownButton
+обычную Walk/Fly кнопку
+```
+
+Сохранить:
+
+```text
+LookArea
+orientation handling
+fullscreen, если он поддерживается
+```
+
+Показать:
+
+```text
+Exit Follow
+Restart Route
+Step Backward
+Play/Pause
+Step Forward
+Speed Down
+Speed Up
+Look Forward
+Progress
+```
+
+## Touch ownership
+
+Follow buttons должны захватывать собственные touch events.
+
+Касание Follow button не должно:
+
+* вращать камеру;
+* назначаться LookArea;
+* создавать movement input.
+
+## Mobile look
+
+Во время Follow пользователь может осматриваться вторым или единственным пальцем через существующую LookArea.
+
+Look input изменяет только:
+
+```text
+follow look yaw offset
+follow look pitch offset
+```
+
+Он не изменяет route direction и route distance.
+
+## Focus loss
+
+При потере browser focus:
+
+* Follow playback переводится в Pause;
+* active touch IDs очищаются;
+* удерживаемые Follow buttons освобождаются.
+
+После возврата во вкладку playback не запускается автоматически.
+
+## Responsive layout
+
+В landscape Follow controls предпочтительно размещать вдоль нижнего края в одной или двух логических группах.
+
+В portrait кнопки должны переноситься на несколько строк.
+
+Минимальный touch target должен оставаться достаточно крупным для телефона.
+
+
 # 32. Definition of Done
 
 Итерация завершена, если:
