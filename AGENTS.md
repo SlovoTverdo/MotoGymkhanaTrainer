@@ -137,3 +137,31 @@ When documentation is ambiguous, choose the smallest implementation compatible w
 - Fly minimum height must reuse the Walk eye-height source of truth.
 - Fly height clamp must not act as ground-following movement and must not automatically lower the camera.
 - If no WalkableSurface is found, Fly mode must use the Venue base level as a safe lower-bound fallback.
+
+## Subagent workflow
+
+Use subagents selectively. Do not create subagents for trivial, localized tasks.
+
+Before implementing a non-trivial change:
+
+1. Delegate read-only codebase exploration to `project_explorer`.
+2. Wait for its result.
+3. Produce a concise implementation plan based on verified repository evidence.
+4. Keep ownership of the architectural decision and final integration in the main agent.
+5. Use only one write-capable agent for files that may overlap.
+6. After implementation, delegate independent review to `change_reviewer`.
+7. Delegate build and automated verification to `test_runner`.
+8. Fix blocking findings and rerun affected checks.
+9. Return a final report containing:
+   - changed files;
+   - behavioral changes;
+   - tests and commands executed;
+   - unresolved risks;
+   - documentation changes.
+
+Parallelize only independent workstreams.
+Prefer read-only subagents for exploration, review, logs, tests, and documentation analysis.
+Do not allow multiple agents to edit the same file concurrently.
+Do not delegate product requirements, architecture ownership, or final acceptance.
+Use lightweight models for bounded read-heavy tasks and stronger models for
+ambiguous implementation and final review.
