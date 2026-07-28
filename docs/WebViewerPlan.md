@@ -599,3 +599,75 @@ Fly lower bound:
 * не является ground following;
 * не заставляет camera снижаться;
 * только запрещает проникновение ниже допустимой высоты.
+
+# Route Follow mode
+
+Автоматический просмотр маршрута реализуется согласно:
+
+```text
+docs/WebViewerRouteFollowPlan.md
+```
+
+Web Viewer поддерживает три взаимоисключающих режима:
+
+```text
+Walk
+Fly
+Follow
+```
+
+Follow использует уже спроецированную глобальную trajectory Exported Track v4.
+
+## Follow source
+
+Источник Follow path:
+
+```text
+projected global trajectory
+```
+
+Не выполнять повторную компиляцию Exercise trajectories и transitions.
+
+## Follow path state
+
+Основное состояние маршрута:
+
+```text
+route distance in meters
+```
+
+Не использовать sample index как источник текущей позиции.
+
+Для маршрута строится cumulative distance table, позволяющая:
+
+* двигаться с постоянной скоростью;
+* ставить playback на паузу;
+* выполнять шаг вперёд и назад;
+* менять скорость;
+* показывать progress.
+
+## Follow camera
+
+Базовая позиция камеры:
+
+```text
+projected route position
++
+Walk eye height
+```
+
+Базовое направление определяется look-ahead point.
+
+Пользовательский mouse/touch look применяется как независимый yaw/pitch offset и не меняет направление движения по маршруту.
+
+## Mobile Follow
+
+В Follow mode:
+
+* MovementJoystick скрыт;
+* Fly Up/Down скрыты;
+* LookArea остаётся активной;
+* показываются крупные playback controls;
+* focus loss ставит playback на Pause.
+
+Follow не является симуляцией мотоцикла и не вводит checkpoints, таймер или контроль отклонения от маршрута.
