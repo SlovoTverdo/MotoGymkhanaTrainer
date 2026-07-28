@@ -45,24 +45,47 @@ func project_godot_xz(
 	if not is_finite(top) or top <= projection_bottom_y:
 		return {"position": Vector3(godot_xz.x, fallback_y + offset, godot_xz.y), "normal": Vector3.UP, "hit": false}
 
-	var query := PhysicsRayQueryParameters3D.create(
-		Vector3(godot_xz.x, top, godot_xz.y),
-		Vector3(godot_xz.x, projection_bottom_y, godot_xz.y),
-		WALKABLE_SURFACE_MASK
-	)
-	query.collide_with_areas = false
-	query.collide_with_bodies = true
-	query.hit_from_inside = false
-	var hit := _world.direct_space_state.intersect_ray(query)
-	if not hit.is_empty():
-		var normal: Vector3 = hit["normal"].normalized()
-		return {"position": hit["position"] + normal * offset, "normal": normal, "hit": true}
+	var surface := query_walkable_surface(godot_xz, top, projection_bottom_y)
+	if surface["hit"]:
+		var normal: Vector3 = surface["normal"]
+		return {"position": surface["position"] + normal * offset, "normal": normal, "hit": true}
 
 	_warn_once(source_type, source_id, godot_xz)
 	return {
 		"position": Vector3(godot_xz.x, fallback_y + offset, godot_xz.y),
 		"normal": Vector3.UP,
 		"hit": false,
+	}
+
+
+func query_walkable_surface(
+	godot_xz: Vector2,
+	ray_start_y: float = NAN,
+	ray_end_y: float = NAN,
+	exclude: Array[RID] = []
+) -> Dictionary:
+	## Raw WalkableSurface query shared by projection and the Fly lower-bound.
+	## It deliberately performs no visual offset and no per-frame diagnostics.
+	var top := projection_top_y if is_nan(ray_start_y) else ray_start_y
+	var bottom := projection_bottom_y if is_nan(ray_end_y) else ray_end_y
+	if not is_finite(top) or not is_finite(bottom) or top <= bottom:
+		return {"position": Vector3(godot_xz.x, fallback_y, godot_xz.y), "normal": Vector3.UP, "hit": false}
+	var query := PhysicsRayQueryParameters3D.create(
+		Vector3(godot_xz.x, top, godot_xz.y),
+		Vector3(godot_xz.x, bottom, godot_xz.y),
+		WALKABLE_SURFACE_MASK
+	)
+	query.exclude = exclude
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	query.hit_from_inside = false
+	var hit := _world.direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return {"position": Vector3(godot_xz.x, fallback_y, godot_xz.y), "normal": Vector3.UP, "hit": false}
+	return {
+		"position": hit["position"],
+		"normal": (hit["normal"] as Vector3).normalized(),
+		"hit": true,
 	}
 
 

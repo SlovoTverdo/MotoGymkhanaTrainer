@@ -19,6 +19,7 @@ var _projection: SurfaceProjectionService
 var _track: Dictionary
 var _external_warning := ""
 var _loading := false
+var _input_state := ViewerInputState.new()
 
 @onready var _world_environment: WorldEnvironment = $WorldEnvironment
 @onready var _venue_root: Node3D = $VenueRoot
@@ -32,18 +33,37 @@ var _loading := false
 @onready var _warning_label: Label = $UI/Warning
 @onready var _mode_label: Label = $UI/Mode
 @onready var _controls_label: Label = $UI/Controls
+@onready var _touch_controls_toggle: Button = $UI/TouchControlsToggle
+@onready var _mobile_controls: WebMobileControls = $UI/MobileControls
 
 
 func _ready() -> void:
 	_fallback_environment = _world_environment.environment
+	_character.set_input_state(_input_state)
+	_mobile_controls.configure(_input_state, _character.movement_mode)
 	_http_request.request_completed.connect(_on_track_request_completed)
 	_character.mode_changed.connect(_on_mode_changed)
 	_character.pointer_capture_changed.connect(_on_pointer_capture_changed)
+	_touch_controls_toggle.pressed.connect(_toggle_touch_controls)
+	_mobile_controls.status_message.connect(_on_mobile_status_message)
 	_error_panel.visible = false
 	_warning_label.visible = false
 	_mode_label.text = "Mode: Walk"
-	_controls_label.text = "Click to capture mouse · WASD move · Shift faster · F Walk/Fly · Space/Ctrl fly · Esc release"
+	_controls_label.text = "Click to capture mouse · WASD move · Shift faster · F Walk/Fly · Space/Ctrl fly · T touch UI · Esc release"
+	var touch_setting := _argument_value("--touch-controls", "auto").to_lower()
+	var show_touch_controls := DisplayServer.is_touchscreen_available()
+	if touch_setting == "show":
+		show_touch_controls = true
+	elif touch_setting == "hide":
+		show_touch_controls = false
+	_set_touch_controls_visible(show_touch_controls)
 	call_deferred("_begin_loading")
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("toggle_touch_controls"):
+		_toggle_touch_controls()
+		get_viewport().set_input_as_handled()
 
 
 func _begin_loading() -> void:
@@ -104,6 +124,7 @@ func _load_embedded_fallback(reason: String) -> void:
 
 func _build_runtime(track: Dictionary, source_label: String) -> void:
 	_show_loading("Building Venue…")
+	_mobile_controls.cancel_active_input()
 	_character.suspend_for_reload()
 	_clear_runtime()
 	_world_environment.environment = _fallback_environment
@@ -137,6 +158,7 @@ func _build_runtime(track: Dictionary, source_label: String) -> void:
 	_loading = false
 	_loading_panel.visible = false
 	_error_panel.visible = false
+	_touch_controls_toggle.visible = true
 	_mode_label.text = "Mode: %s" % _character.movement_mode
 	if _external_warning.is_empty():
 		_show_warning("Loaded %s: %s" % [source_label, track["track"]["name"]], false)
@@ -149,6 +171,9 @@ func _build_runtime(track: Dictionary, source_label: String) -> void:
 		]
 	)
 	if "--smoke-test" in OS.get_cmdline_user_args():
+		print("Touch controls visible: %s; orientation hint visible: %s." % [
+			_mobile_controls.visible, $UI/MobileControls/OrientationHint.visible
+		])
 		get_tree().quit(0)
 
 
@@ -468,6 +493,8 @@ func _show_blocking_error(message: String) -> void:
 	_loading_panel.visible = false
 	_error_label.text = "Web Viewer could not start\n\n%s" % message
 	_error_panel.visible = true
+	_mobile_controls.set_controls_visible(false)
+	_touch_controls_toggle.visible = false
 	_character.suspend_for_reload()
 	push_error(message)
 	if "--smoke-test" in OS.get_cmdline_user_args():
@@ -476,11 +503,27 @@ func _show_blocking_error(message: String) -> void:
 
 func _on_mode_changed(mode: String, message: String) -> void:
 	_mode_label.text = "Mode: %s" % mode
+	_mobile_controls.set_mode(mode)
 	_show_warning(message, false)
 
 
 func _on_pointer_capture_changed(captured: bool) -> void:
 	if captured:
-		_controls_label.text = "WASD move · Shift faster · F Walk/Fly · Space/Ctrl fly · Esc release"
+		_controls_label.text = "WASD move · Shift faster · F Walk/Fly · Space/Ctrl fly · T touch UI · Esc release"
 	else:
-		_controls_label.text = "Click Viewer to capture mouse · WASD move · Shift faster · F Walk/Fly"
+		_controls_label.text = "Click Viewer to capture mouse · WASD move · Shift faster · F Walk/Fly · T touch UI"
+
+
+func _toggle_touch_controls() -> void:
+	_set_touch_controls_visible(not _mobile_controls.visible)
+
+
+func _set_touch_controls_visible(show_controls: bool) -> void:
+	_character.clear_runtime_input()
+	_mobile_controls.set_controls_visible(show_controls)
+	_controls_label.visible = not show_controls
+	_touch_controls_toggle.text = "Hide Touch UI" if show_controls else "Show Touch UI"
+
+
+func _on_mobile_status_message(message: String, warning: bool) -> void:
+	_show_warning(message, warning)
