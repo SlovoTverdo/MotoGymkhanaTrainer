@@ -89,6 +89,13 @@ exports/tracks/new-track-001.json
 
 Script синхронизирует embedded fallback, запускает parser tests, выполняет
 release export и затем создаёт внешний `dist/web/tracks/default-track.json`.
+PCK получает content-addressed имя `index.<sha256>.pck`, а `index.html`
+ссылается на него через `mainPack`. Это исключает запуск устаревшего PCK из
+кэша мобильного браузера после нового GitHub Pages deployment.
+`index.html` и соответствующий hashed PCK необходимо коммитить вместе. После
+первого перехода со старого `index.pck` можно открыть Pages URL с одноразовым
+query, например `?v=<commit>`, чтобы сразу обойти ранее закэшированный HTML;
+без этого GitHub Pages может удерживать старую точку входа до 10 минут.
 
 ## Headless проверки
 

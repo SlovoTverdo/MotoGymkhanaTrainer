@@ -32,6 +32,10 @@ jobs:
         run: |
           test -f dist/web/index.html
           test -f dist/web/tracks/default-track.json
+          test "$(find dist/web -maxdepth 1 -type f -name 'index.*.pck' | wc -l)" -eq 1
+          pack_name="$(grep -oE 'index\.[0-9a-f]{16}\.pck' dist/web/index.html | sort -u)"
+          test -n "$pack_name"
+          test -f "dist/web/$pack_name"
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

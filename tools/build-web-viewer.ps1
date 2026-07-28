@@ -21,6 +21,7 @@ $sourceTrack = if ([System.IO.Path]::IsPathRooted($TrackPath)) {
 }
 $embeddedTrack = Join-Path $webProjectRoot "tracks\default-track.json"
 $outputIndex = Join-Path $distRoot "index.html"
+$outputPack = Join-Path $distRoot "index.pck"
 $externalTrack = Join-Path $distRoot "tracks\default-track.json"
 
 function Invoke-Godot {
@@ -94,6 +95,56 @@ Invoke-Godot `
 if (-not (Test-Path -LiteralPath $outputIndex -PathType Leaf)) {
     throw "Godot reported success but index.html was not created: $outputIndex"
 }
+if (-not (Test-Path -LiteralPath $outputPack -PathType Leaf)) {
+    throw "Godot reported success but index.pck was not created: $outputPack"
+}
+
+# GitHub Pages caches the PCK URL for several minutes. A content-addressed
+# filename makes every runtime change immediately distinguishable from a stale
+# mobile-browser cache while index.html remains the stable Pages entry point.
+$packHash = (Get-FileHash -LiteralPath $outputPack -Algorithm SHA256).Hash.ToLowerInvariant().Substring(0, 16)
+$versionedPackName = "index.$packHash.pck"
+$versionedPack = Join-Path $distRoot $versionedPackName
+$packLength = (Get-Item -LiteralPath $outputPack).Length
+$indexHtml = [System.IO.File]::ReadAllText($outputIndex, [System.Text.Encoding]::UTF8)
+$configPattern = '(?m)^const GODOT_CONFIG = (?<json>\{[^\r\n]+\});$'
+$configMatches = [regex]::Matches($indexHtml, $configPattern)
+if ($configMatches.Count -ne 1) {
+    throw "Godot index.html must contain exactly one GODOT_CONFIG object."
+}
+$configMatch = $configMatches[0]
+$godotConfig = $configMatch.Groups["json"].Value | ConvertFrom-Json
+$originalPackProperty = $godotConfig.fileSizes.PSObject.Properties["index.pck"]
+if (
+    $godotConfig.executable -ne "index" -or
+    $null -eq $originalPackProperty -or
+    [long] $originalPackProperty.Value -ne $packLength
+) {
+    throw "Godot index.html does not contain the expected executable/PCK configuration."
+}
+$godotConfig | Add-Member -NotePropertyName "mainPack" -NotePropertyValue $versionedPackName -Force
+$godotConfig.fileSizes.PSObject.Properties.Remove("index.pck")
+$godotConfig.fileSizes | Add-Member -NotePropertyName $versionedPackName -NotePropertyValue $packLength
+$versionedConfigLine = "const GODOT_CONFIG = $($godotConfig | ConvertTo-Json -Compress -Depth 10);"
+$indexHtml = `
+    $indexHtml.Substring(0, $configMatch.Index) + `
+    $versionedConfigLine + `
+    $indexHtml.Substring($configMatch.Index + $configMatch.Length)
+Move-Item -LiteralPath $outputPack -Destination $versionedPack
+[System.IO.File]::WriteAllText(
+    $outputIndex,
+    $indexHtml,
+    [System.Text.UTF8Encoding]::new($false)
+)
+$versionedPackMarker = '"' + $versionedPackName + '":' + $packLength
+if (
+    -not (Test-Path -LiteralPath $versionedPack -PathType Leaf) -or
+    (Test-Path -LiteralPath $outputPack) -or
+    -not $indexHtml.Contains('"mainPack":"' + $versionedPackName + '"') -or
+    -not $indexHtml.Contains($versionedPackMarker)
+) {
+    throw "Versioned PCK post-processing validation failed."
+}
 
 [System.IO.Directory]::CreateDirectory((Split-Path -Parent $externalTrack)) | Out-Null
 Copy-Item -LiteralPath $embeddedTrack -Destination $externalTrack -Force
@@ -102,4 +153,5 @@ if (-not (Test-Path -LiteralPath $externalTrack -PathType Leaf)) {
 }
 
 Write-Output "Web Viewer export completed: $outputIndex"
+Write-Output "Versioned runtime pack: $versionedPack"
 Write-Output "Published Track: $externalTrack"
