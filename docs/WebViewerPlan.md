@@ -541,3 +541,61 @@ Iteration завершена, если:
 * GitHub Actions публикует `dist/web`;
 * GitHub Pages открывает Viewer;
 * обновление только `default-track.json` меняет опубликованную трассу.
+
+# Mobile Web controls
+
+Мобильное сенсорное управление реализуется согласно:
+
+```text
+docs/WebViewerMobileControlsPlan.md
+```
+
+Web Viewer должен поддерживать:
+
+* автоматическое определение touch input;
+* виртуальный movement joystick;
+* отдельную touch look area;
+* независимые touch IDs;
+* Walk/Fly button;
+* Fly Up/Down;
+* Reset Position;
+* responsive layout;
+* orientation handling;
+* focus-loss input reset.
+
+## Mobile input architecture
+
+Mobile Controls не создают отдельный movement controller.
+
+Они формируют общий Viewer input state, который используется существующим:
+
+```text
+ViewerCharacter
+```
+
+Keyboard, mouse и touch являются разными источниками одного runtime input state.
+
+## Fly lower bound
+
+Fly mode должен иметь нижнюю границу camera height.
+
+Граница вычисляется относительно ближайшей `WalkableSurface` под камерой:
+
+```text
+minimum camera height
+=
+surface height
++
+Walk eye height
++
+small clearance
+```
+
+При отсутствии surface hit используется базовый уровень Venue.
+
+Fly lower bound:
+
+* не является gravity;
+* не является ground following;
+* не заставляет camera снижаться;
+* только запрещает проникновение ниже допустимой высоты.
