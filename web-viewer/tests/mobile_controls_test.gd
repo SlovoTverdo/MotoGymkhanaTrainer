@@ -41,12 +41,28 @@ func _run() -> void:
 	var state := ViewerInputState.new()
 	fixture.configure(state, WebViewerCharacter.MODE_WALK)
 	fixture.set_controls_visible(true)
+	fixture._set_joystick_rect(180.0, 20.0)
+	fixture._center_joystick()
+	_expect(fixture._joystick.size.is_equal_approx(Vector2(180.0, 180.0)), "joystick layout has a non-zero square hit rectangle")
+	_expect(fixture._joystick.position.is_equal_approx(Vector2(20.0, 520.0)), "joystick layout is inside the lower-left viewport corner")
+	_expect(fixture._joystick_knob.position.is_equal_approx(Vector2(54.0, 54.0)), "landscape layout centers joystick knob")
+	fixture._set_joystick_rect(160.0, 16.0)
+	fixture._center_joystick()
+	_expect(fixture._joystick_knob.position.is_equal_approx(Vector2(44.0, 44.0)), "portrait resize recenters joystick knob")
+	fixture._set_joystick_rect(180.0, 20.0)
+	fixture._center_joystick()
 
 	var movement_press := InputEventScreenTouch.new()
 	movement_press.index = 11
 	movement_press.pressed = true
-	movement_press.position = Vector2(90.0, 12.0)
+	movement_press.position = Vector2(90.0, 90.0)
 	fixture._on_joystick_gui_input(movement_press)
+	_expect(state.movement.is_zero_approx(), "local joystick center touch remains neutral")
+	var movement_drag := InputEventScreenDrag.new()
+	movement_drag.index = 11
+	movement_drag.position = fixture._joystick.global_position + Vector2(90.0, 12.0)
+	fixture._input(movement_drag)
+	_expect(state.movement.y < -0.9, "viewport-space drag is converted to full forward movement")
 	var look_press := InputEventScreenTouch.new()
 	look_press.index = 22
 	look_press.pressed = true

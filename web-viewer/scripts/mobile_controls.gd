@@ -110,6 +110,8 @@ func _on_joystick_gui_input(event: InputEvent) -> void:
 		return
 	if event is InputEventScreenTouch and event.pressed and movement_touch_id == -1:
 		movement_touch_id = event.index
+		# Control.gui_input provides event.position relative to this Control.
+		# Global drag routing in _input() performs its own canvas conversion.
 		_update_joystick(event.position)
 		_joystick.accept_event()
 		return
@@ -255,9 +257,7 @@ func _apply_responsive_layout() -> void:
 		_mode_button.custom_minimum_size = Vector2(86.0, 56.0)
 		_reset_button.custom_minimum_size = Vector2(86.0, 56.0)
 		_fullscreen_button.custom_minimum_size = Vector2(96.0, 56.0)
-		_joystick.custom_minimum_size = Vector2(160.0, 160.0)
-		_joystick.offset_top = -180.0
-		_joystick.offset_right = 180.0
+		_set_joystick_rect(160.0, 16.0)
 		_mobile_help.visible = false
 	else:
 		_top_buttons.anchor_left = 1.0
@@ -267,11 +267,25 @@ func _apply_responsive_layout() -> void:
 		_mode_button.custom_minimum_size = Vector2(116.0, 58.0)
 		_reset_button.custom_minimum_size = Vector2(116.0, 58.0)
 		_fullscreen_button.custom_minimum_size = Vector2(124.0, 58.0)
-		_joystick.custom_minimum_size = Vector2(180.0, 180.0)
-		_joystick.offset_top = -200.0
-		_joystick.offset_right = 200.0
+		_set_joystick_rect(180.0, 20.0)
 		_mobile_help.visible = visible
+	_center_joystick()
 	_update_orientation_hint()
+
+
+func _set_joystick_rect(control_size: float, margin: float) -> void:
+	# Assign the complete anchored rectangle on every layout pass. Partial
+	# offset updates are unreliable after Web canvas scaling or device rotation
+	# and can leave a non-container Control with a zero/off-screen hit rectangle.
+	_joystick.custom_minimum_size = Vector2(control_size, control_size)
+	_joystick.anchor_left = 0.0
+	_joystick.anchor_top = 1.0
+	_joystick.anchor_right = 0.0
+	_joystick.anchor_bottom = 1.0
+	_joystick.offset_left = margin
+	_joystick.offset_top = -margin - control_size
+	_joystick.offset_right = margin + control_size
+	_joystick.offset_bottom = -margin
 
 
 func _on_fullscreen_pressed() -> void:
