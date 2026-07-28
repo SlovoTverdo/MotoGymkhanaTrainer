@@ -83,6 +83,51 @@ Fly mode предназначен для свободного осмотра т�
 
 Для Iteration 1 допускается сохранить существующее свободное перемещение как Fly mode.
 
+## Fly mode minimum height
+
+Fly mode не должен позволять camera eye опуститься ниже высоты Walk mode относительно проходимой поверхности.
+
+Для текущих Camera X/Z Viewer выполняет downward query по physics layer:
+
+```text
+WalkableSurface
+```
+
+После hit:
+
+```text
+minimumCameraY =
+    hitPositionY
+    + walkEyeHeight
+    + flyFloorClearance
+```
+
+Если предполагаемое положение camera ниже minimum:
+
+* положение ограничивается minimum;
+* input вниз перестаёт уменьшать высоту;
+* горизонтальное движение сохраняется.
+
+Если surface query не дал hit:
+
+```text
+surfaceY = Venue base Y
+```
+
+Ограничение должно работать:
+
+* над основной площадкой;
+* над ramp;
+* над верхней платформой;
+* над другими walkable Venue surfaces.
+
+При переходе с высокой поверхности на низкую camera не опускается автоматически.
+
+Пользователь может самостоятельно снизить высоту до нового minimum.
+
+Источник Walk eye height должен быть общим для Walk и Fly. Не хранить две расходящиеся константы.
+
+
 ## 3.3. Переключение
 
 Добавить явную команду:
