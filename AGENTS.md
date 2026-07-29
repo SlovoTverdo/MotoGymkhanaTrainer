@@ -109,6 +109,7 @@ When documentation is ambiguous, choose the smallest implementation compatible w
 * `web-viewer/README.md` — локальная сборка и проверка Web Viewer.
 * `docs/WebViewerMobileControlsPlan.md` — сенсорное управление Web Viewer, мультитач, responsive mobile UI и ограничение минимальной высоты Fly camera.
 * `docs/WebViewerRouteFollowPlan.md` — автоматическое следование Web Viewer по projected trajectory, playback, управление камерой и мобильный Follow UI.
+* `docs/WebViewerFollowTrajectoryHighlightPlan.md` — динамическое окно видимости и цветовая подсветка trajectory во время Follow.
 
 ### Web Viewer architectural constraints
 
@@ -148,6 +149,14 @@ When documentation is ambiguous, choose the smallest implementation compatible w
 - Losing browser focus during Follow must pause playback and clear active touch state.
 - Reloading a Track must clear the old RoutePath and all Follow runtime state.
 - Route Follow is a route-learning feature, not motorcycle simulation; do not add vehicle physics, checkpoints or timing to this iteration.
+- Follow trajectory highlighting must use RoutePath cumulative distance in meters, not world-space distance from the camera.
+- Walk and Fly must continue to display the complete trajectory.
+- Follow mode must hide passed and distant route portions while showing a green-to-base-color preview window ahead.
+- Route-distance data for rendering must reuse the RoutePath metric contract instead of building an unrelated distance model from the rendered mesh.
+- Pausing, stepping backward or forward, restarting and exiting Follow must update trajectory visualization immediately.
+- The preferred implementation is a Compatibility-compatible shader driven by a route-distance vertex attribute and a current-distance uniform.
+- If the shader path is not viable, use a bounded CPU-generated mesh fallback; do not create one scene node per short trajectory segment.
+- Failure of the highlight renderer must not disable Route Follow movement.
 
 ## Subagent workflow
 
