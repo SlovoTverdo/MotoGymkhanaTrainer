@@ -671,3 +671,25 @@ Walk eye height
 * focus loss ставит playback на Pause.
 
 Follow не является симуляцией мотоцикла и не вводит checkpoints, таймер или контроль отклонения от маршрута.
+
+# Follow trajectory highlight
+
+Специальная визуализация маршрута во время Follow описана в:
+
+```text
+docs/WebViewerFollowTrajectoryHighlightPlan.md
+```
+
+Trajectory renderer должен иметь два режима:
+
+```text
+FULL_ROUTE
+FOLLOW_WINDOW
+```
+
+В Walk/Fly используется `FULL_ROUTE`.
+
+В Follow используется `FOLLOW_WINDOW`, управляемый текущей дистанцией RouteFollowController.
+
+Динамическая подсветка не меняет Track JSON и не должна требовать повторной surface projection.
+
