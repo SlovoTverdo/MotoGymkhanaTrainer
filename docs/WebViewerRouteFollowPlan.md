@@ -1052,3 +1052,8 @@ RouteFollowUI
 * mobile Walk/Fly не сломаны;
 * Web export успешно создаётся;
 * GitHub Pages build запускается.
+* Follow trajectory highlight window работает;
+* пройденная и далёкая части trajectory скрываются;
+* ближайшая зона зелёная;
+* градиенты рассчитываются по route distance;
+* Pause, Step и Restart обновляют highlight корректно.
