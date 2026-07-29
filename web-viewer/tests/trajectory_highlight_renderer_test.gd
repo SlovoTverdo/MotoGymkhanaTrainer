@@ -64,6 +64,11 @@ func _test_modes_update_without_mesh_rebuild() -> void:
 	_expect(renderer.build_from_route(route, [[_projected(Vector3.ZERO), _projected(Vector3(0.0, 0.0, -5.0))]], 0.08), "mode-test ribbon builds")
 	var original_mesh := renderer.mesh
 	_expect(renderer.render_mode == RendererScript.FULL_ROUTE, "Walk/Fly default to full route")
+	var full_route_material := renderer.material_override as StandardMaterial3D
+	_expect(
+		full_route_material != null and full_route_material.cull_mode == BaseMaterial3D.CULL_DISABLED,
+		"FULL_ROUTE ribbon disables face culling"
+	)
 	_expect(renderer.supports_follow_window, "Compatibility shader resource exposes Follow uniforms")
 	renderer.set_render_mode(RendererScript.FOLLOW_WINDOW, 1.25)
 	_expect(renderer.render_mode == RendererScript.FOLLOW_WINDOW, "Follow enables window mode")

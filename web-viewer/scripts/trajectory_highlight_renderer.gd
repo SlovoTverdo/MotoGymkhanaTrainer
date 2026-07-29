@@ -154,6 +154,10 @@ func _create_materials() -> void:
 	_base_material.albedo_color = BASE_TRAJECTORY_COLOR
 	_base_material.roughness = 0.8
 	_base_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	# The ribbon is a zero-thickness surface. Match the Follow shader's
+	# cull_disabled contract so FULL_ROUTE remains visible from above even when
+	# Compatibility interprets the generated triangle winding as a back face.
+	_base_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 
 	var shader_resource := ResourceLoader.load(SHADER_PATH, "Shader") as Shader
 	if shader_resource != null and _has_required_uniforms(shader_resource):
