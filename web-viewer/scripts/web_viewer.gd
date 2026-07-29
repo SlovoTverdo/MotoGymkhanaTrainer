@@ -1,5 +1,6 @@
 extends Node3D
 
+const TrajectoryHighlightRendererScript := preload("res://scripts/trajectory_highlight_renderer.gd")
 const CONE_MODEL_PATH := "res://Assets/Models/Traffic Cone_Textured.glb"
 const FALLBACK_TRACK_PATH := "res://tracks/default-track.json"
 const MAXIMUM_PROJECTION_SPACING := 0.35
@@ -22,6 +23,9 @@ var _loading := false
 var _input_state := ViewerInputState.new()
 var _route_path := RoutePath.new()
 var _route_follow := RouteFollowController.new()
+var _trajectory_renderer = null
+var _direction_markers_root: Node3D
+var _follow_smoke_reloaded := false
 
 @onready var _world_environment: WorldEnvironment = $WorldEnvironment
 @onready var _venue_root: Node3D = $VenueRoot
@@ -46,6 +50,7 @@ func _ready() -> void:
 	_character.set_route_follow_controller(_route_follow)
 	_mobile_controls.configure(_input_state, _character.movement_mode)
 	_route_follow_ui.configure(_route_follow)
+	_route_follow.state_changed.connect(_on_route_follow_state_changed)
 	_http_request.request_completed.connect(_on_track_request_completed)
 	_character.mode_changed.connect(_on_mode_changed)
 	_character.pointer_capture_changed.connect(_on_pointer_capture_changed)
@@ -166,6 +171,7 @@ func _build_runtime(track: Dictionary, source_label: String) -> void:
 	_route_path.build(route_projection["points"])
 	if not route_projection["valid"]:
 		_route_path.invalidate(route_projection["message"])
+	_create_trajectory_renderer(route_projection)
 	_route_follow.configure(_route_path)
 	_route_follow_ui.set_route_available(_route_path.is_valid(), _route_path.validation_message)
 
@@ -206,12 +212,23 @@ func _build_runtime(track: Dictionary, source_label: String) -> void:
 
 func _run_follow_smoke_test() -> void:
 	var failures: Array[String] = []
+	if _follow_smoke_reloaded:
+		if _trajectory_renderer == null or _trajectory_renderer.render_mode != TrajectoryHighlightRendererScript.FULL_ROUTE:
+			failures.append("Track reload did not reset trajectory rendering to FULL_ROUTE")
+		if _trajectory_renderer != null and not is_zero_approx(_trajectory_renderer.current_route_distance):
+			failures.append("Track reload retained the old trajectory distance")
+		if not is_zero_approx(_route_follow.route_distance_meters):
+			failures.append("Track reload retained the old Follow controller distance")
 	if not _route_path.is_valid():
 		failures.append("projected RoutePath is invalid: %s" % _route_path.validation_message)
 	else:
 		if not _character.enter_follow_from_start():
 			failures.append("Follow could not enter from Walk")
 		else:
+			if _trajectory_renderer == null or _trajectory_renderer.render_mode != TrajectoryHighlightRendererScript.FOLLOW_WINDOW:
+				failures.append("Follow entry did not enable the trajectory window")
+			if _direction_markers_root != null and _direction_markers_root.visible:
+				failures.append("direction arrows remained visible in Follow")
 			_route_follow.pause()
 			var camera: Camera3D = $ViewerCharacter/Head/Camera3D
 			var expected_eye := _route_path.sample_position(0.0) + Vector3.UP * _character.get_walk_eye_height()
@@ -221,6 +238,8 @@ func _run_follow_smoke_test() -> void:
 			_character.refresh_follow_pose()
 			if not is_equal_approx(_route_follow.route_distance_meters, 1.0):
 				failures.append("Follow step did not advance exactly 1 meter")
+			if _trajectory_renderer != null and not is_equal_approx(_trajectory_renderer.current_route_distance, 1.0):
+				failures.append("trajectory window did not receive stepped route distance")
 			_route_follow.add_user_look(Vector2(-10.0, 5.0))
 			_character.refresh_follow_pose()
 			if not is_equal_approx(_route_follow.follow_look_yaw_offset_degrees, 10.0):
@@ -237,6 +256,8 @@ func _run_follow_smoke_test() -> void:
 			_character.exit_follow_to_safe_mode()
 			if _character.movement_mode not in [WebViewerCharacter.MODE_WALK, WebViewerCharacter.MODE_FLY]:
 				failures.append("Follow exit did not choose a free mode")
+			if _trajectory_renderer != null and _trajectory_renderer.render_mode != TrajectoryHighlightRendererScript.FULL_ROUTE:
+				failures.append("Follow exit did not restore the full trajectory")
 
 		# Exercise the same entry API from Fly. The physics frame consumes the
 		# existing Walk/Fly request through ViewerInputState.
@@ -251,6 +272,13 @@ func _run_follow_smoke_test() -> void:
 			_route_follow.pause()
 			_character.exit_follow_to_safe_mode()
 
+	if failures.is_empty() and not _follow_smoke_reloaded:
+		# Exercise the complete runtime reload order once: old renderer/path state
+		# is cleared, projection is rebuilt, and the second smoke pass starts from
+		# a new FULL_ROUTE mesh at distance zero.
+		_follow_smoke_reloaded = true
+		await _build_runtime(_track, "Follow smoke Track reload")
+		return
 	if failures.is_empty():
 		print("Route Follow integration smoke checks passed (route %.2f m, %d points)." % [
 			_route_path.total_length, _route_path.points.size()
@@ -263,6 +291,14 @@ func _run_follow_smoke_test() -> void:
 
 
 func _clear_runtime() -> void:
+	# Reset the old visual state before its nodes are queued for deletion so a
+	# reload cannot leak Follow uniforms or hidden arrows into the next Track.
+	if _trajectory_renderer != null:
+		_trajectory_renderer.set_render_mode(TrajectoryHighlightRendererScript.FULL_ROUTE, 0.0)
+	if _direction_markers_root != null:
+		_direction_markers_root.visible = true
+	_trajectory_renderer = null
+	_direction_markers_root = null
 	_route_follow.clear()
 	_route_path.clear()
 	_route_follow_ui.set_route_available(false, "Track projection is not available.")
@@ -435,12 +471,16 @@ func _create_trajectory(segments: Array) -> Dictionary:
 	var root := Node3D.new()
 	root.name = "Trajectory"
 	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.1, 0.9, 0.95)
+	material.albedo_color = TrajectoryHighlightRendererScript.BASE_TRAJECTORY_COLOR
 	material.roughness = 0.8
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_direction_markers_root = Node3D.new()
+	_direction_markers_root.name = "DirectionMarkers"
+	root.add_child(_direction_markers_root)
 	var previous_end: Variant = null
 	var previous_id := ""
 	var route_points: Array = []
+	var projected_segments: Array = []
 	var route_valid := true
 	var route_message := ""
 	for segment in segments:
@@ -456,20 +496,48 @@ func _create_trajectory(segments: Array) -> Dictionary:
 		var projected := _projection.project_polyline(
 			points, "TrajectorySegment", segment["id"], MAXIMUM_PROJECTION_SPACING, TRAJECTORY_SURFACE_OFFSET
 		)
-		var segment_root := Node3D.new()
-		segment_root.name = segment["id"]
-		_add_projected_path(segment_root, projected, TRAJECTORY_WIDTH, material, "Path")
-		_add_direction_markers(segment_root, projected, material)
+		projected_segments.append(projected)
+		_add_direction_markers(_direction_markers_root, projected, material)
 		for projected_point in projected:
 			route_points.append(projected_point["position"])
 			if not projected_point["hit"] and route_valid:
 				route_valid = false
 				route_message = "Trajectory segment '%s' contains a projection fallback." % segment["id"]
-		root.add_child(segment_root)
 		previous_end = points[points.size() - 1]
 		previous_id = segment["id"]
 	_track_root.add_child(root)
-	return {"points": route_points, "valid": route_valid, "message": route_message}
+	return {
+		"points": route_points,
+		"projected_segments": projected_segments,
+		"root": root,
+		"valid": route_valid,
+		"message": route_message,
+	}
+
+
+func _create_trajectory_renderer(route_projection: Dictionary) -> void:
+	var root: Node3D = route_projection["root"]
+	var renderer = TrajectoryHighlightRendererScript.new()
+	renderer.name = "Ribbon"
+	if renderer.build_from_route(_route_path, route_projection["projected_segments"], TRAJECTORY_WIDTH):
+		_trajectory_renderer = renderer
+		root.add_child(renderer)
+		if not renderer.diagnostic_warning.is_empty():
+			push_warning(renderer.diagnostic_warning)
+		return
+
+	# Geometry mapping failure must not block Follow camera movement. Preserve
+	# the former full-route BoxMesh rendering as the diagnostic fallback.
+	var fallback_root := Node3D.new()
+	fallback_root.name = "FullRouteFallback"
+	var fallback_material := StandardMaterial3D.new()
+	fallback_material.albedo_color = TrajectoryHighlightRendererScript.BASE_TRAJECTORY_COLOR
+	fallback_material.roughness = 0.8
+	fallback_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	for projected in route_projection["projected_segments"]:
+		_add_projected_path(fallback_root, projected, TRAJECTORY_WIDTH, fallback_material, "Path")
+	root.add_child(fallback_root)
+	push_warning("%s Full-route BoxMesh fallback is active; Follow camera remains available." % renderer.diagnostic_warning)
 
 
 func _add_projected_path(parent: Node3D, points: Array, width: float, material: Material, prefix: String) -> void:
@@ -604,11 +672,32 @@ func _show_blocking_error(message: String) -> void:
 
 
 func _on_mode_changed(mode: String, message: String) -> void:
+	_apply_trajectory_render_mode(mode)
 	_mode_label.text = "Mode: %s" % mode
 	_mobile_controls.set_mode(mode)
 	_route_follow_ui.set_mode(mode)
 	_controls_label.visible = mode != WebViewerCharacter.MODE_FOLLOW and not _mobile_controls.visible
 	_show_warning(message, false)
+
+
+func _on_route_follow_state_changed() -> void:
+	# Playback, pause, steps, restart, and finish all publish through the same
+	# controller signal. In the shader path this changes only one uniform.
+	if _trajectory_renderer != null and _character.movement_mode == WebViewerCharacter.MODE_FOLLOW:
+		_trajectory_renderer.update_route_distance(_route_follow.route_distance_meters)
+
+
+func _apply_trajectory_render_mode(viewer_mode: String) -> void:
+	var following := viewer_mode == WebViewerCharacter.MODE_FOLLOW
+	if _trajectory_renderer != null:
+		_trajectory_renderer.set_render_mode(
+			TrajectoryHighlightRendererScript.FOLLOW_WINDOW if following else TrajectoryHighlightRendererScript.FULL_ROUTE,
+			_route_follow.route_distance_meters if following else 0.0
+		)
+	if _direction_markers_root != null:
+		# Iteration 1 keeps arrows on their existing BoxMesh contract. They are
+		# hidden in Follow and immediately restored in Walk/Fly.
+		_direction_markers_root.visible = not following
 
 
 func _on_pointer_capture_changed(captured: bool) -> void:

@@ -283,3 +283,33 @@ godot --headless --path web-viewer -- --embedded-only --follow-smoke-test --touc
 * завершение маршрута.
 
 Если Web renderer не поддерживает специализированный shader, Viewer может использовать CPU fallback либо обычное полное отображение trajectory, не блокируя Follow.
+
+Реализация расширяет существующий renderer глобальной trajectory одним ribbon
+`ArrayMesh`. `UV2.x` каждой ribbon-вершины хранит расстояние в метрах из
+`RoutePath.cumulative_distances`; обе вершины одного поперечного сечения имеют
+одинаковое значение. Обычные UV, vertex colors и normals для кодирования
+дистанции не используются.
+
+Режимы материала централизованы в `TrajectoryHighlightRenderer`:
+
+```text
+FULL_ROUTE     Walk/Fly, вся cyan trajectory
+FOLLOW_WINDOW Follow, окно относительно route_distance_meters
+```
+
+Начальные длины зон: `0.75 m` позади, `6 m` зелёной подсветки, `8 m` перехода
+к cyan, `12 m` обычного preview и `5 m` переднего fade. В Follow отдельные
+direction arrows скрываются; в Walk/Fly они показываются как раньше. Shader
+сохраняет depth test и surface projection offset, поэтому линия не становится
+безусловно видимой сквозь Venue objects.
+
+Если highlight shader resource или его обязательные uniforms недоступны,
+используется полная trajectory с обычным материалом. Если не удаётся построить
+ribbon, сохраняется прежний full-route BoxMesh fallback. Оба варианта оставляют
+движение Follow работоспособным и выводят одно diagnostic warning.
+
+Deterministic проверка математики зон, `UV2.x` mapping и переключения режимов:
+
+```powershell
+godot --headless --path web-viewer --script res://tests/trajectory_highlight_renderer_test.gd
+```
