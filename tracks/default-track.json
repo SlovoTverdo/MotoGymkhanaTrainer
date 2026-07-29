@@ -1,0 +1,363 @@
+{
+  "formatVersion": 3,
+  "track": {
+    "id": "default-track",
+    "name": "\u041A\u0443\u0431\u043E\u043A \u041E\u0440\u043B\u0430"
+  },
+  "venuePath": "default-venue.json",
+  "instances": [
+    {
+      "instanceId": "exercise-instance-001",
+      "exercisePath": "Common/exercise-start.json",
+      "position": {
+        "x": 20,
+        "y": -15
+      },
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-003",
+      "exercisePath": "Common/Rotation-360-right.json",
+      "position": {
+        "x": 19.75,
+        "y": -7.5
+      },
+      "rotationDeg": 92,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-021",
+      "exercisePath": "Uncommon/Long-Turn-Right.json",
+      "position": {
+        "x": 21.25,
+        "y": 0
+      },
+      "rotationDeg": -154,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-002",
+      "exercisePath": "Uncommon/Long-Turn-Left.json",
+      "position": {
+        "x": 31.5,
+        "y": -4.5
+      },
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-004",
+      "exercisePath": "Common/Rotation-360-left.json",
+      "position": {
+        "x": 34.25,
+        "y": 5.25
+      },
+      "rotationDeg": -47,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-005",
+      "exercisePath": "Common/Rotation-360-right.json",
+      "position": {
+        "x": 26.25,
+        "y": 8.5
+      },
+      "rotationDeg": -140,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-006",
+      "exercisePath": "Common/snake-8.json",
+      "position": {
+        "x": 9,
+        "y": 12.5
+      },
+      "rotationDeg": 180,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-007",
+      "exercisePath": "Uncommon/mirror-blue.json",
+      "position": {
+        "x": -19.25,
+        "y": 13.75
+      },
+      "rotationDeg": -142,
+      "scale": {
+        "x": 1,
+        "y": 1.1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-008",
+      "exercisePath": "Uncommon/labirinth-1.json",
+      "position": {
+        "x": -17,
+        "y": -1.75
+      },
+      "rotationDeg": -180,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-009",
+      "exercisePath": "Common/route-point.json",
+      "position": {
+        "x": -8.25,
+        "y": -0
+      },
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-010",
+      "exercisePath": "Uncommon/Flower.json",
+      "position": {
+        "x": 1,
+        "y": -1.75
+      },
+      "rotationDeg": -90,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-011",
+      "exercisePath": "Common/route-point.json",
+      "position": {
+        "x": 0.25,
+        "y": -9.25
+      },
+      "rotationDeg": 89,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-012",
+      "exercisePath": "Common/route-point.json",
+      "position": {
+        "x": -8,
+        "y": 0
+      },
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-013",
+      "exercisePath": "Common/route-point.json",
+      "position": {
+        "x": -17,
+        "y": 7
+      },
+      "rotationDeg": 89,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-014",
+      "exercisePath": "Common/route-point.json",
+      "position": {
+        "x": -23,
+        "y": 0
+      },
+      "rotationDeg": 179,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-015",
+      "exercisePath": "Common/route-point.json",
+      "position": {
+        "x": -17.25,
+        "y": -8.75
+      },
+      "rotationDeg": -88,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-016",
+      "exercisePath": "Uncommon/mirror-blue.json",
+      "position": {
+        "x": -8.5,
+        "y": -10
+      },
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-017",
+      "exercisePath": "Common/Rotation-360-left.json",
+      "position": {
+        "x": 13.25,
+        "y": 4.75
+      },
+      "rotationDeg": 6,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-018",
+      "exercisePath": "Common/Rotation-360-right.json",
+      "position": {
+        "x": 11.75,
+        "y": -7.5
+      },
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-019",
+      "exercisePath": "Common/route-point.json",
+      "position": {
+        "x": 23,
+        "y": -5.75
+      },
+      "rotationDeg": -106,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-020",
+      "exercisePath": "Common/exercise-finish.json",
+      "position": {
+        "x": 23,
+        "y": -15
+      },
+      "rotationDeg": -180,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    }
+  ],
+  "transitionOverrides": [
+    {
+      "transitionId": "transition--exercise-instance-005--exercise-instance-006",
+      "fromInstanceId": "exercise-instance-005",
+      "toInstanceId": "exercise-instance-006",
+      "control1Offset": {
+        "x": -9.358833,
+        "y": 2.2333655
+      },
+      "control2Offset": {
+        "x": 6,
+        "y": -0.25000095
+      }
+    },
+    {
+      "transitionId": "transition--exercise-instance-009--exercise-instance-010",
+      "fromInstanceId": "exercise-instance-009",
+      "toInstanceId": "exercise-instance-010",
+      "control1Offset": {
+        "x": 5.5,
+        "y": 11.5
+      },
+      "control2Offset": {
+        "x": 1.5,
+        "y": 7
+      }
+    },
+    {
+      "transitionId": "transition--exercise-instance-013--exercise-instance-014",
+      "fromInstanceId": "exercise-instance-013",
+      "toInstanceId": "exercise-instance-014",
+      "control1Offset": {
+        "x": -4.75,
+        "y": 0
+      },
+      "control2Offset": {
+        "x": 0.053634644,
+        "y": 3.0727136
+      }
+    },
+    {
+      "transitionId": "transition--exercise-instance-014--exercise-instance-015",
+      "fromInstanceId": "exercise-instance-014",
+      "toInstanceId": "exercise-instance-015",
+      "control1Offset": {
+        "x": 0.25,
+        "y": -6.75
+      },
+      "control2Offset": {
+        "x": -3.4879398,
+        "y": -0.12180138
+      }
+    },
+    {
+      "transitionId": "transition--exercise-instance-015--exercise-instance-016",
+      "fromInstanceId": "exercise-instance-015",
+      "toInstanceId": "exercise-instance-016",
+      "control1Offset": {
+        "x": 2.0887165,
+        "y": 0.07293892
+      },
+      "control2Offset": {
+        "x": -2,
+        "y": 0.25
+      }
+    },
+    {
+      "transitionId": "transition--exercise-instance-016--exercise-instance-017",
+      "fromInstanceId": "exercise-instance-016",
+      "toInstanceId": "exercise-instance-017",
+      "control1Offset": {
+        "x": 20.75,
+        "y": -6
+      },
+      "control2Offset": {
+        "x": 7.220728,
+        "y": 3.610364
+      }
+    }
+  ]
+}

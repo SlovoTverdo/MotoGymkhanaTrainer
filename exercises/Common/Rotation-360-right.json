@@ -1,0 +1,257 @@
+{
+  "formatVersion": 2,
+  "exercise": {
+    "id": "Rotation-360-right",
+    "name": "\u0412\u0440\u0430\u0449\u0435\u043D\u0438\u0435 360 \u043F\u0440\u0430\u0432\u043E\u0435",
+    "version": 1
+  },
+  "bounds": {
+    "width": 4,
+    "length": 4
+  },
+  "cones": [
+    {
+      "id": "cone-001",
+      "position": {
+        "x": -0,
+        "y": 0
+      },
+      "color": "red",
+      "type": "standard"
+    }
+  ],
+  "markings": [],
+  "entryPoint": {
+    "x": -1,
+    "y": 1.75
+  },
+  "exitPoint": {
+    "x": 1,
+    "y": 1.75
+  },
+  "trajectory": {
+    "segments": [
+      {
+        "id": "trajectory-segment-001",
+        "type": "cubicBezier",
+        "start": {
+          "x": -1,
+          "y": 1.75
+        },
+        "control1": {
+          "x": -0.5,
+          "y": 1.75
+        },
+        "control2": {
+          "x": -0.5,
+          "y": 1.5
+        },
+        "end": {
+          "x": -0,
+          "y": 1.5
+        }
+      },
+      {
+        "id": "trajectory-segment-002",
+        "type": "cubicBezier",
+        "start": {
+          "x": -0,
+          "y": 1.5
+        },
+        "control1": {
+          "x": 0.25,
+          "y": 1.5
+        },
+        "control2": {
+          "x": -0.5,
+          "y": 1.5
+        },
+        "end": {
+          "x": 0,
+          "y": 1.5
+        }
+      },
+      {
+        "id": "trajectory-segment-003",
+        "type": "cubicBezier",
+        "start": {
+          "x": 0,
+          "y": 1.5
+        },
+        "control1": {
+          "x": 0.75,
+          "y": 1.5
+        },
+        "control2": {
+          "x": 1,
+          "y": 1.25
+        },
+        "end": {
+          "x": 1.25,
+          "y": 1
+        }
+      },
+      {
+        "id": "trajectory-segment-004",
+        "type": "cubicBezier",
+        "start": {
+          "x": 1.25,
+          "y": 1
+        },
+        "control1": {
+          "x": 1.5,
+          "y": 0.5
+        },
+        "control2": {
+          "x": 1.5,
+          "y": 0.25
+        },
+        "end": {
+          "x": 1.5,
+          "y": 0
+        }
+      },
+      {
+        "id": "trajectory-segment-005",
+        "type": "cubicBezier",
+        "start": {
+          "x": 1.5,
+          "y": 0
+        },
+        "control1": {
+          "x": 1.5,
+          "y": -0.25
+        },
+        "control2": {
+          "x": 1.4166666,
+          "y": -0.6666667
+        },
+        "end": {
+          "x": 1.25,
+          "y": -1
+        }
+      },
+      {
+        "id": "trajectory-segment-006",
+        "type": "cubicBezier",
+        "start": {
+          "x": 1.25,
+          "y": -1
+        },
+        "control1": {
+          "x": 1.0833334,
+          "y": -1.3333333
+        },
+        "control2": {
+          "x": 0.5,
+          "y": -1.5
+        },
+        "end": {
+          "x": 0,
+          "y": -1.5
+        }
+      },
+      {
+        "id": "trajectory-segment-007",
+        "type": "cubicBezier",
+        "start": {
+          "x": 0,
+          "y": -1.5
+        },
+        "control1": {
+          "x": -0.5,
+          "y": -1.5
+        },
+        "control2": {
+          "x": -1,
+          "y": -1.25
+        },
+        "end": {
+          "x": -1.25,
+          "y": -1
+        }
+      },
+      {
+        "id": "trajectory-segment-008",
+        "type": "cubicBezier",
+        "start": {
+          "x": -1.25,
+          "y": -1
+        },
+        "control1": {
+          "x": -1.5,
+          "y": -0.75
+        },
+        "control2": {
+          "x": -1.5,
+          "y": -0.25
+        },
+        "end": {
+          "x": -1.5,
+          "y": 0
+        }
+      },
+      {
+        "id": "trajectory-segment-009",
+        "type": "cubicBezier",
+        "start": {
+          "x": -1.5,
+          "y": 0
+        },
+        "control1": {
+          "x": -1.5,
+          "y": 0.5
+        },
+        "control2": {
+          "x": -1.25,
+          "y": 1
+        },
+        "end": {
+          "x": -1,
+          "y": 1.25
+        }
+      },
+      {
+        "id": "trajectory-segment-010",
+        "type": "cubicBezier",
+        "start": {
+          "x": -1,
+          "y": 1.25
+        },
+        "control1": {
+          "x": -0.75,
+          "y": 1.5
+        },
+        "control2": {
+          "x": -0.5,
+          "y": 1.5
+        },
+        "end": {
+          "x": 0,
+          "y": 1.5
+        }
+      },
+      {
+        "id": "trajectory-segment-011",
+        "type": "cubicBezier",
+        "start": {
+          "x": 0,
+          "y": 1.5
+        },
+        "control1": {
+          "x": 0.5,
+          "y": 1.5
+        },
+        "control2": {
+          "x": 0.5,
+          "y": 1.75
+        },
+        "end": {
+          "x": 1,
+          "y": 1.75
+        }
+      }
+    ]
+  },
+  "checkpoints": []
+}

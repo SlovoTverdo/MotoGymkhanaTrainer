@@ -1,0 +1,385 @@
+{
+  "formatVersion": 2,
+  "exercise": {
+    "id": "Long-Turn-Left",
+    "name": "\u0414\u043B\u0438\u043D\u043D\u044B\u0439 \u043B\u0435\u0432\u044B\u0439 180",
+    "version": 1
+  },
+  "bounds": {
+    "width": 9,
+    "length": 5
+  },
+  "cones": [
+    {
+      "id": "cone-001",
+      "position": {
+        "x": -0,
+        "y": -2
+      },
+      "color": "blue",
+      "type": "standard"
+    },
+    {
+      "id": "cone-002",
+      "position": {
+        "x": 4,
+        "y": 2
+      },
+      "color": "blue",
+      "type": "standard"
+    },
+    {
+      "id": "cone-003",
+      "position": {
+        "x": -4,
+        "y": 2
+      },
+      "color": "blue",
+      "type": "standard"
+    },
+    {
+      "id": "cone-004",
+      "position": {
+        "x": -3.75,
+        "y": 1
+      },
+      "color": "blue",
+      "type": "standard"
+    },
+    {
+      "id": "cone-005",
+      "position": {
+        "x": -3.5,
+        "y": 0
+      },
+      "color": "blue",
+      "type": "standard"
+    },
+    {
+      "id": "cone-006",
+      "position": {
+        "x": -3,
+        "y": -1
+      },
+      "color": "blue",
+      "type": "standard"
+    },
+    {
+      "id": "cone-007",
+      "position": {
+        "x": -1,
+        "y": -1.75
+      },
+      "color": "blue",
+      "type": "standard"
+    },
+    {
+      "id": "cone-008",
+      "position": {
+        "x": -2,
+        "y": -1.5
+      },
+      "color": "blue",
+      "type": "standard"
+    },
+    {
+      "id": "cone-009",
+      "position": {
+        "x": 1,
+        "y": -1.75
+      },
+      "color": "blue",
+      "type": "standard"
+    },
+    {
+      "id": "cone-010",
+      "position": {
+        "x": 2,
+        "y": -1.5
+      },
+      "color": "blue",
+      "type": "standard"
+    },
+    {
+      "id": "cone-011",
+      "position": {
+        "x": 3,
+        "y": -1
+      },
+      "color": "blue",
+      "type": "standard"
+    },
+    {
+      "id": "cone-012",
+      "position": {
+        "x": 3.5,
+        "y": 0
+      },
+      "color": "blue",
+      "type": "standard"
+    },
+    {
+      "id": "cone-013",
+      "position": {
+        "x": 3.75,
+        "y": 1
+      },
+      "color": "blue",
+      "type": "standard"
+    }
+  ],
+  "markings": [],
+  "entryPoint": {
+    "x": -4.25,
+    "y": 2.5
+  },
+  "exitPoint": {
+    "x": 4.25,
+    "y": 2.5
+  },
+  "trajectory": {
+    "segments": [
+      {
+        "id": "trajectory-segment-001",
+        "type": "cubicBezier",
+        "start": {
+          "x": -4.25,
+          "y": 2.5
+        },
+        "control1": {
+          "x": -4.25,
+          "y": 2.25
+        },
+        "control2": {
+          "x": -4.25,
+          "y": 2
+        },
+        "end": {
+          "x": -4.25,
+          "y": 1.5
+        }
+      },
+      {
+        "id": "trajectory-segment-002",
+        "type": "cubicBezier",
+        "start": {
+          "x": -4.25,
+          "y": 1.5
+        },
+        "control1": {
+          "x": -4.25,
+          "y": 1
+        },
+        "control2": {
+          "x": -4.25,
+          "y": 0.75
+        },
+        "end": {
+          "x": -4,
+          "y": 0
+        }
+      },
+      {
+        "id": "trajectory-segment-003",
+        "type": "cubicBezier",
+        "start": {
+          "x": -4,
+          "y": 0
+        },
+        "control1": {
+          "x": -3.75,
+          "y": -0.75
+        },
+        "control2": {
+          "x": -3.75,
+          "y": -0.75
+        },
+        "end": {
+          "x": -3.5,
+          "y": -1
+        }
+      },
+      {
+        "id": "trajectory-segment-004",
+        "type": "cubicBezier",
+        "start": {
+          "x": -3.5,
+          "y": -1
+        },
+        "control1": {
+          "x": -3.3333333,
+          "y": -1.3333333
+        },
+        "control2": {
+          "x": -3,
+          "y": -1.5
+        },
+        "end": {
+          "x": -2.5,
+          "y": -1.75
+        }
+      },
+      {
+        "id": "trajectory-segment-005",
+        "type": "cubicBezier",
+        "start": {
+          "x": -2.5,
+          "y": -1.75
+        },
+        "control1": {
+          "x": -2,
+          "y": -2
+        },
+        "control2": {
+          "x": -1.5833333,
+          "y": -2.0833333
+        },
+        "end": {
+          "x": -1.25,
+          "y": -2.25
+        }
+      },
+      {
+        "id": "trajectory-segment-006",
+        "type": "cubicBezier",
+        "start": {
+          "x": -1.25,
+          "y": -2.25
+        },
+        "control1": {
+          "x": -0.91666675,
+          "y": -2.4166667
+        },
+        "control2": {
+          "x": -0.3333333,
+          "y": -2.5
+        },
+        "end": {
+          "x": 0,
+          "y": -2.5
+        }
+      },
+      {
+        "id": "trajectory-segment-007",
+        "type": "cubicBezier",
+        "start": {
+          "x": 0,
+          "y": -2.5
+        },
+        "control1": {
+          "x": 0.5,
+          "y": -2.5
+        },
+        "control2": {
+          "x": 0.5,
+          "y": -2.5
+        },
+        "end": {
+          "x": 1.25,
+          "y": -2.25
+        }
+      },
+      {
+        "id": "trajectory-segment-008",
+        "type": "cubicBezier",
+        "start": {
+          "x": 1.25,
+          "y": -2.25
+        },
+        "control1": {
+          "x": 2,
+          "y": -2
+        },
+        "control2": {
+          "x": 2,
+          "y": -2
+        },
+        "end": {
+          "x": 2.5,
+          "y": -1.75
+        }
+      },
+      {
+        "id": "trajectory-segment-009",
+        "type": "cubicBezier",
+        "start": {
+          "x": 2.5,
+          "y": -1.75
+        },
+        "control1": {
+          "x": 3.25,
+          "y": -1.25
+        },
+        "control2": {
+          "x": 3,
+          "y": -1.5
+        },
+        "end": {
+          "x": 3.5,
+          "y": -1
+        }
+      },
+      {
+        "id": "trajectory-segment-010",
+        "type": "cubicBezier",
+        "start": {
+          "x": 3.5,
+          "y": -1
+        },
+        "control1": {
+          "x": 4,
+          "y": -0.25
+        },
+        "control2": {
+          "x": 3.75,
+          "y": -0.75
+        },
+        "end": {
+          "x": 4,
+          "y": 0
+        }
+      },
+      {
+        "id": "trajectory-segment-011",
+        "type": "cubicBezier",
+        "start": {
+          "x": 4,
+          "y": 0
+        },
+        "control1": {
+          "x": 4.25,
+          "y": 0.75
+        },
+        "control2": {
+          "x": 4.25,
+          "y": 1
+        },
+        "end": {
+          "x": 4.25,
+          "y": 1.5
+        }
+      },
+      {
+        "id": "trajectory-segment-012",
+        "type": "cubicBezier",
+        "start": {
+          "x": 4.25,
+          "y": 1.5
+        },
+        "control1": {
+          "x": 4.25,
+          "y": 2
+        },
+        "control2": {
+          "x": 4.25,
+          "y": 2.25
+        },
+        "end": {
+          "x": 4.25,
+          "y": 2.5
+        }
+      }
+    ]
+  },
+  "checkpoints": []
+}

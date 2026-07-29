@@ -1,7 +1,7 @@
 {
   "formatVersion": 2,
   "exercise": {
-    "id": "exercise-start",
+    "id": "exercise-finish",
     "name": "\u0421\u0442\u0430\u0440\u0442",
     "version": 1
   },
@@ -50,11 +50,11 @@
   "markings": [],
   "entryPoint": {
     "x": -0,
-    "y": 0
+    "y": -2
   },
   "exitPoint": {
     "x": -0,
-    "y": 2
+    "y": 1
   },
   "trajectory": {
     "segments": [
@@ -64,11 +64,11 @@
         "points": [
           {
             "x": -0,
-            "y": 0
+            "y": -2
           },
           {
             "x": -0,
-            "y": 2
+            "y": 1
           }
         ]
       }

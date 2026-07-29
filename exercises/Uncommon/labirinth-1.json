@@ -1,0 +1,483 @@
+{
+  "formatVersion": 2,
+  "exercise": {
+    "id": "labirinth-1",
+    "name": "\u041B\u0430\u0431\u0438\u0440\u0438\u043D\u0442-1",
+    "version": 1
+  },
+  "bounds": {
+    "width": 8,
+    "length": 14
+  },
+  "cones": [
+    {
+      "id": "cone-001",
+      "position": {
+        "x": 1,
+        "y": -0
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-002",
+      "position": {
+        "x": -1,
+        "y": 0
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-003",
+      "position": {
+        "x": 3,
+        "y": 0
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-004",
+      "position": {
+        "x": -3,
+        "y": 0
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-005",
+      "position": {
+        "x": 1,
+        "y": 5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-006",
+      "position": {
+        "x": 3,
+        "y": 5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-007",
+      "position": {
+        "x": -1,
+        "y": 5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-008",
+      "position": {
+        "x": -3,
+        "y": 5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-009",
+      "position": {
+        "x": -3,
+        "y": -5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-010",
+      "position": {
+        "x": -1,
+        "y": -5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-011",
+      "position": {
+        "x": 1,
+        "y": -5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-012",
+      "position": {
+        "x": 3,
+        "y": -5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-013",
+      "position": {
+        "x": 3,
+        "y": -1.75
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-014",
+      "position": {
+        "x": 3,
+        "y": -3.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-015",
+      "position": {
+        "x": 3,
+        "y": 1.75
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-016",
+      "position": {
+        "x": 3,
+        "y": 3.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-017",
+      "position": {
+        "x": 1,
+        "y": 3.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-018",
+      "position": {
+        "x": 1,
+        "y": 1.75
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-019",
+      "position": {
+        "x": 1,
+        "y": -1.75
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-020",
+      "position": {
+        "x": 1,
+        "y": -3.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-021",
+      "position": {
+        "x": -1,
+        "y": -3.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-022",
+      "position": {
+        "x": -3,
+        "y": -3.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-023",
+      "position": {
+        "x": -3,
+        "y": -1.75
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-024",
+      "position": {
+        "x": -1,
+        "y": -1.75
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-025",
+      "position": {
+        "x": -1,
+        "y": 1.75
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-026",
+      "position": {
+        "x": -3,
+        "y": 1.75
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-027",
+      "position": {
+        "x": -1,
+        "y": 3.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-028",
+      "position": {
+        "x": -3,
+        "y": 3.5
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-030",
+      "position": {
+        "x": 2,
+        "y": 8
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-031",
+      "position": {
+        "x": 1,
+        "y": 8
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-032",
+      "position": {
+        "x": -0,
+        "y": 8
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-033",
+      "position": {
+        "x": -1,
+        "y": 8
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-034",
+      "position": {
+        "x": -2,
+        "y": 8
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-035",
+      "position": {
+        "x": -3,
+        "y": 8
+      },
+      "color": "yellow",
+      "type": "standard"
+    },
+    {
+      "id": "cone-029",
+      "position": {
+        "x": 3,
+        "y": 8
+      },
+      "color": "yellow",
+      "type": "standard"
+    }
+  ],
+  "markings": [],
+  "entryPoint": {
+    "x": 2,
+    "y": -5
+  },
+  "exitPoint": {
+    "x": -2,
+    "y": 5
+  },
+  "trajectory": {
+    "segments": [
+      {
+        "id": "trajectory-segment-001",
+        "type": "cubicBezier",
+        "start": {
+          "x": 2,
+          "y": -5
+        },
+        "control1": {
+          "x": 2,
+          "y": -1.6666665
+        },
+        "control2": {
+          "x": 2,
+          "y": 1.666667
+        },
+        "end": {
+          "x": 2,
+          "y": 5
+        }
+      },
+      {
+        "id": "trajectory-segment-002",
+        "type": "cubicBezier",
+        "start": {
+          "x": 2,
+          "y": 5
+        },
+        "control1": {
+          "x": 2,
+          "y": 5.75
+        },
+        "control2": {
+          "x": 1.5,
+          "y": 6
+        },
+        "end": {
+          "x": 1,
+          "y": 6
+        }
+      },
+      {
+        "id": "trajectory-segment-003",
+        "type": "cubicBezier",
+        "start": {
+          "x": 1,
+          "y": 6
+        },
+        "control1": {
+          "x": 0.5,
+          "y": 6
+        },
+        "control2": {
+          "x": 0,
+          "y": 5.75
+        },
+        "end": {
+          "x": -0,
+          "y": 5
+        }
+      },
+      {
+        "id": "trajectory-segment-004",
+        "type": "cubicBezier",
+        "start": {
+          "x": -0,
+          "y": 5
+        },
+        "control1": {
+          "x": 0,
+          "y": 4.25
+        },
+        "control2": {
+          "x": 0,
+          "y": -1.666667
+        },
+        "end": {
+          "x": -0,
+          "y": -5
+        }
+      },
+      {
+        "id": "trajectory-segment-005",
+        "type": "cubicBezier",
+        "start": {
+          "x": -0,
+          "y": -5
+        },
+        "control1": {
+          "x": 0,
+          "y": -5.5
+        },
+        "control2": {
+          "x": -0.5,
+          "y": -6
+        },
+        "end": {
+          "x": -1,
+          "y": -6
+        }
+      },
+      {
+        "id": "trajectory-segment-006",
+        "type": "cubicBezier",
+        "start": {
+          "x": -1,
+          "y": -6
+        },
+        "control1": {
+          "x": -1.5,
+          "y": -6
+        },
+        "control2": {
+          "x": -2,
+          "y": -5.5
+        },
+        "end": {
+          "x": -2,
+          "y": -5
+        }
+      },
+      {
+        "id": "trajectory-segment-007",
+        "type": "cubicBezier",
+        "start": {
+          "x": -2,
+          "y": -5
+        },
+        "control1": {
+          "x": -2,
+          "y": -4.5
+        },
+        "control2": {
+          "x": -2,
+          "y": 1.666667
+        },
+        "end": {
+          "x": -2,
+          "y": 5
+        }
+      }
+    ]
+  },
+  "checkpoints": []
+}

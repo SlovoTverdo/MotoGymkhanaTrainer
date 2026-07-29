@@ -1,0 +1,47 @@
+{
+  "formatVersion": 2,
+  "exercise": {
+    "id": "route-point",
+    "name": "\u041F\u0443\u0442\u0435\u0432\u0430\u044F \u0442\u043E\u0447\u043A\u0430",
+    "version": 1
+  },
+  "bounds": {
+    "width": 0.25,
+    "length": 0.25
+  },
+  "cones": [],
+  "markings": [],
+  "entryPoint": {
+    "x": -0,
+    "y": -0
+  },
+  "exitPoint": {
+    "x": -0,
+    "y": 0
+  },
+  "trajectory": {
+    "segments": [
+      {
+        "id": "trajectory-segment-001",
+        "type": "cubicBezier",
+        "start": {
+          "x": -0,
+          "y": -0
+        },
+        "control1": {
+          "x": 0,
+          "y": 0.16666667
+        },
+        "control2": {
+          "x": 0,
+          "y": -0.16666666
+        },
+        "end": {
+          "x": -0,
+          "y": 0
+        }
+      }
+    ]
+  },
+  "checkpoints": []
+}
