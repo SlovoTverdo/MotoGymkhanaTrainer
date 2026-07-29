@@ -249,3 +249,37 @@ godot --headless --path web-viewer --script res://tests/route_follow_controller_
 godot --headless --path web-viewer -- --embedded-only --follow-smoke-test
 godot --headless --path web-viewer -- --embedded-only --follow-smoke-test --touch-controls show
 ```
+
+## Подсветка маршрута в Follow
+
+Во время автоматического следования Viewer показывает только ближайшую часть маршрута:
+
+```text
+позади:
+скрыто
+
+ближайший участок впереди:
+зелёный
+
+следующий участок:
+переход к обычному цвету
+
+дальше:
+обычный цвет с постепенным затуханием
+
+далёкий маршрут:
+скрыт
+```
+
+В Walk и Fly траектория отображается целиком.
+
+Подсветка движется по расстоянию маршрута и корректно реагирует на:
+
+* Play;
+* Pause;
+* Step Forward;
+* Step Backward;
+* Restart;
+* завершение маршрута.
+
+Если Web renderer не поддерживает специализированный shader, Viewer может использовать CPU fallback либо обычное полное отображение trajectory, не блокируя Follow.
