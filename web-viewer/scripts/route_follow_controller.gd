@@ -9,6 +9,7 @@ signal state_changed
 const SPEED_PRESETS := [0.25, 0.5, 1.0, 2.0]
 const FOLLOW_PITCH_MIN_DEGREES := -85.0
 const FOLLOW_PITCH_MAX_DEGREES := 85.0
+const INITIAL_FOLLOW_PITCH_DEGREES := -20.0
 
 var route_distance_meters := 0.0
 var total_length := 0.0
@@ -69,6 +70,9 @@ func follow_from_start() -> bool:
 	route_finished = false
 	is_playing = true
 	reset_look(false)
+	# Start Follow looking slightly down so the nearby highlighted trajectory is
+	# visible immediately. Look Forward and Restart keep their documented 0° reset.
+	follow_look_pitch_offset_degrees = INITIAL_FOLLOW_PITCH_DEGREES
 	last_valid_route_forward = _route_path.sample_direction(0.0, look_ahead_meters)
 	state_changed.emit()
 	return true

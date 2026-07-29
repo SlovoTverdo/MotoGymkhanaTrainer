@@ -229,6 +229,11 @@ func _run_follow_smoke_test() -> void:
 				failures.append("Follow entry did not enable the trajectory window")
 			if _direction_markers_root != null and _direction_markers_root.visible:
 				failures.append("direction arrows remained visible in Follow")
+			if not is_equal_approx(
+				$ViewerCharacter/Head.rotation_degrees.x,
+				RouteFollowController.INITIAL_FOLLOW_PITCH_DEGREES
+			):
+				failures.append("Follow entry did not apply the initial downward camera pitch")
 			_route_follow.pause()
 			var camera: Camera3D = $ViewerCharacter/Head/Camera3D
 			var expected_eye := _route_path.sample_position(0.0) + Vector3.UP * _character.get_walk_eye_height()

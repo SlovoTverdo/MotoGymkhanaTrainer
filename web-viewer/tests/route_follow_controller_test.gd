@@ -30,6 +30,11 @@ func _test_play_pause_speed_and_finish() -> void:
 	var controller := FollowControllerScript.new()
 	controller.configure(_make_route())
 	_expect(controller.follow_from_start(), "valid route enters Follow")
+	_expect_close(
+		controller.follow_look_pitch_offset_degrees,
+		FollowControllerScript.INITIAL_FOLLOW_PITCH_DEGREES,
+		"Follow entry starts 20 degrees down"
+	)
 	controller.advance(1.0)
 	_expect_close(controller.route_distance_meters, 2.5, "constant 1x speed")
 	controller.toggle_play_pause()
@@ -63,6 +68,7 @@ func _test_restart_steps_and_look() -> void:
 	controller.restart()
 	_expect_close(controller.route_distance_meters, 0.0, "restart distance")
 	_expect_close(controller.follow_look_yaw_offset_degrees, 0.0, "restart yaw")
+	_expect_close(controller.follow_look_pitch_offset_degrees, 0.0, "restart pitch returns to route forward")
 	_expect(not controller.is_playing, "restart preserves paused state")
 	controller.speed_down()
 	_expect_close(controller.speed_multiplier, 0.5, "0.5x preset")
