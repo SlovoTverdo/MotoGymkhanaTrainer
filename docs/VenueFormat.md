@@ -115,7 +115,7 @@ Asset может находиться в другом каталоге прое�
 
 ```json
 {
-  "formatVersion": 1
+  "formatVersion": 2
 }
 ```
 
@@ -357,7 +357,7 @@ WorldEnvironment
 energyMultiplier >= 0
 ```
 
-В Venue Definition version 1 панорама является прежде всего визуальным фоном.
+В Venue Definition version 2 панорама является прежде всего визуальным фоном.
 
 Она не обязана быть основным источником:
 
@@ -686,41 +686,56 @@ IDs должны быть уникальны внутри `venue.cones[]`.
 # 11. markings
 
 `markings[]` содержит постоянную разметку площадки.
+# Venue Definition formatVersion 2
 
-Используется тот же структурный контракт marking, что и в Exercise Definition:
+## Markings
 
-* `id`;
-* `type`;
-* `points`;
-* `color`;
-* `widthMeters`;
-* `style`;
-* `visibleInViewer`.
-
-Пример:
+Venue marking использует общий Path contract.
 
 ```json
 {
-  "id": "parking-line-001",
-  "type": "line",
-
-  "points": [
-    {
-      "x": -10.0,
-      "y": -30.0
-    },
-    {
-      "x": 10.0,
-      "y": -30.0
-    }
-  ],
-
-  "color": "#FFFFFF",
-  "widthMeters": 0.10,
+  "id": "venue-boundary-guide",
   "style": "solid",
-  "visibleInViewer": true
+  "color": "#FFFFFFFF",
+  "thickness": 0.10,
+  "visibleInViewer": true,
+  "path": {
+    "start": {
+      "x": 0.0,
+      "y": 0.0
+    },
+    "segments": [
+      {
+        "type": "cubicBezier",
+        "control1": {
+          "x": 5.0,
+          "y": 0.0
+        },
+        "control2": {
+          "x": 5.0,
+          "y": 5.0
+        },
+        "end": {
+          "x": 10.0,
+          "y": 5.0
+        }
+      }
+    ]
+  }
 }
 ```
+
+Path coordinates находятся в системе координат Venue.
+
+Marking Path может проходить по:
+
+* основной площадке;
+* ramp;
+* верхней поверхности Venue object;
+
+если соответствующие точки успешно проецируются на WalkableSurface.
+
+Venue Definition v2 не использует старый массив `points` как основной geometry contract.
 
 Постоянная разметка:
 
