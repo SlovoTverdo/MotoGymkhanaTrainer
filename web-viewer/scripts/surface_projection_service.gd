@@ -2,7 +2,7 @@ class_name SurfaceProjectionService
 extends RefCounted
 
 ## Centralized downward-query policy. Projection results are runtime-only and
-## are never written back to Track v4.
+## are never written back to Track v5.
 
 const WALKABLE_SURFACE_MASK := 1
 

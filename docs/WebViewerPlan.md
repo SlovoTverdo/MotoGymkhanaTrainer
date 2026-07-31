@@ -33,7 +33,7 @@ Godot C# desktop project
 ├─ Venue Editor
 ├─ Track Editor
 ├─ Track compiler
-└─ Exported Track v4
+└─ Exported Track v5
         ↓
 tracks/default-track.json
         ↓
@@ -57,7 +57,7 @@ web-viewer/project.godot
 Web Viewer загружает:
 
 ```text
-Exported Track formatVersion 4
+Exported Track formatVersion 5
 ```
 
 Он не загружает:
@@ -67,7 +67,7 @@ Exported Track formatVersion 4
 * Exercise Definition;
 * исходные редакторские документы.
 
-Структура и семантика Track v4 должны соответствовать:
+Структура и семантика Track v5 должны соответствовать:
 
 ```text
 docs/TrackFormat.md
@@ -152,7 +152,7 @@ Viewer должен:
 
 ## 7. Asset paths
 
-Exported Track v4 может содержать Godot resource paths:
+Exported Track v5 может содержать Godot resource paths:
 
 ```text
 res://venues/...
@@ -239,7 +239,7 @@ Compatibility renderer
 
 * загрузку внешнего `default-track.json`;
 * fallback на встроенный JSON;
-* Track v4 validation;
+* Track v5 validation;
 * Venue area surface;
 * panorama;
 * Venue object scenes;
@@ -313,7 +313,7 @@ JSON является внешним контрактом, а parsed runtime dat
 До построения сцены проверить минимум:
 
 * root является Dictionary;
-* `formatVersion == 4`;
+* `formatVersion == 5`;
 * присутствует `track`;
 * присутствует `venue`;
 * area width/length положительны;
@@ -369,6 +369,10 @@ projected Godot X/Y/Z
 * cones.
 
 Projection выполняется после регистрации Venue collision в physics space.
+
+Path markings используют один batched ribbon mesh на solid/dashed marking и
+MultiMesh для dotted centers. Невалидный marking диагностируется по source/ID и
+пропускается отдельно; schema version по-прежнему блокирует весь документ.
 
 ---
 
@@ -494,7 +498,7 @@ dist/web/tracks/default-track.json
 ```text
 1. Открыть Track Editor C#
 2. Отредактировать трассу
-3. Export Track v4
+3. Export Track v5
 4. Скопировать export в:
    web-viewer/tracks/default-track.json
 5. Запустить:
@@ -616,7 +620,7 @@ Fly
 Follow
 ```
 
-Follow использует уже спроецированную глобальную trajectory Exported Track v4.
+Follow использует уже спроецированную глобальную trajectory Exported Track v5.
 
 ## Follow source
 

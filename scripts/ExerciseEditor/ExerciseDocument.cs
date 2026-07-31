@@ -163,8 +163,7 @@ public sealed class ExerciseDocument
         markings.Add(new MarkingDto
         {
             Id = id,
-            Type = type,
-            Points = copiedPoints,
+            Path = PathEditing.FromPolyline(copiedPoints),
             Color = "#FFD10D",
             WidthMeters = 0.08f,
             Style = "solid",
@@ -182,59 +181,33 @@ public sealed class ExerciseDocument
     public bool MoveMarkingPoint(string id, int pointIndex, Point2Dto position)
     {
         MarkingDto? marking = FindMarking(id);
-        if (marking is null || pointIndex < 0 || pointIndex >= marking.Points.Length)
-        {
-            return false;
-        }
-
-        marking.Points[pointIndex] = CopyPoint(position);
-        return true;
+        return marking is not null && PathEditing.TryMoveVertex(marking.Path, pointIndex, position);
     }
 
     /// <summary>Adds a point to a polyline under construction.</summary>
     public int AppendMarkingPoint(string id, Point2Dto position)
     {
         MarkingDto? marking = FindMarking(id);
-        if (marking?.Type != "polyline")
+        if (marking is null || !PathEditing.IsAllLine(marking.Path))
         {
             return -1;
         }
 
-        marking.Points = [.. marking.Points, CopyPoint(position)];
-        return marking.Points.Length - 1;
+        return PathEditing.AppendVertex(marking.Path, position);
     }
 
     /// <summary>Inserts a midpoint after an existing polyline point.</summary>
     public int InsertMarkingPointAfter(string id, int pointIndex)
     {
         MarkingDto? marking = FindMarking(id);
-        if (marking?.Type != "polyline" || pointIndex < 0 || pointIndex >= marking.Points.Length - 1)
-        {
-            return -1;
-        }
-
-        var points = marking.Points.Select(CopyPoint).ToList();
-        Point2Dto start = points[pointIndex];
-        Point2Dto end = points[pointIndex + 1];
-        points.Insert(pointIndex + 1, Lerp(start, end, 0.5f));
-        marking.Points = [.. points];
-        return pointIndex + 1;
+        return marking is null ? -1 : PathEditing.InsertVertexAfter(marking.Path, pointIndex);
     }
 
     /// <summary>Deletes only an internal polyline point and preserves the two-point minimum.</summary>
     public bool DeleteMarkingPoint(string id, int pointIndex)
     {
         MarkingDto? marking = FindMarking(id);
-        if (marking?.Type != "polyline" || marking.Points.Length <= 2 ||
-            pointIndex <= 0 || pointIndex >= marking.Points.Length - 1)
-        {
-            return false;
-        }
-
-        var points = marking.Points.ToList();
-        points.RemoveAt(pointIndex);
-        marking.Points = [.. points];
-        return true;
+        return marking is not null && PathEditing.DeleteInternalVertex(marking.Path, pointIndex);
     }
 
     /// <summary>Removes one complete marking.</summary>

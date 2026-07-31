@@ -3,6 +3,7 @@ extends Node3D
 const TrajectoryHighlightRendererScript := preload("res://scripts/trajectory_highlight_renderer.gd")
 const CONE_MODEL_PATH := "res://Assets/Models/Traffic Cone_Textured.glb"
 const FALLBACK_TRACK_PATH := "res://tracks/default-track.json"
+const MarkingPathContract := preload("res://scripts/marking_path.gd")
 const MAXIMUM_PROJECTION_SPACING := 0.35
 const MARKING_SURFACE_OFFSET := 0.025
 const TRAJECTORY_SURFACE_OFFSET := 0.04
@@ -442,10 +443,10 @@ func _create_markings(markings: Array) -> void:
 	var exercise_markings := Node3D.new()
 	exercise_markings.name = "Markings"
 	for marking in markings:
-		if not marking["visibleInViewer"]:
+		if marking.has("_validationError"):
+			push_warning(marking["_validationError"])
 			continue
-		if marking["type"] != "line" and marking["type"] != "polyline":
-			push_warning("Marking '%s' has unsupported type '%s'; skipped." % [marking["id"], marking["type"]])
+		if not marking["visibleInViewer"]:
 			continue
 		var style: String = marking["style"]
 		if style not in ["solid", "dashed", "dotted"]:
@@ -457,19 +458,62 @@ func _create_markings(markings: Array) -> void:
 		material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		var marking_root := Node3D.new()
 		marking_root.name = marking["id"]
-		var stroke_index := 0
-		for stroke in RuntimeGeometry.create_marking_strokes(marking["points"], style):
+		var path_error: String = MarkingPathContract.validate(marking["path"], "marking '%s'.path" % marking["id"])
+		if not path_error.is_empty():
+			push_warning("Marking '%s' was skipped: %s" % [marking["id"], path_error])
+			continue
+		var sampled := MarkingPathContract.sample(marking["path"])
+		var geometry := RuntimeGeometry.create_marking_geometry(sampled, style)
+		var projected_strokes: Array = []
+		for stroke in geometry["strokes"]:
 			var projected := _projection.project_polyline(
 				stroke, "Marking", marking["id"], MAXIMUM_PROJECTION_SPACING, MARKING_SURFACE_OFFSET
 			)
-			_add_projected_path(marking_root, projected, float(marking["widthMeters"]), material, "Stroke_%d" % stroke_index)
-			stroke_index += 1
+			projected_strokes.append(projected)
+		var ribbon := RuntimeGeometry.create_projected_ribbon(
+			"Ribbon", projected_strokes, float(marking["widthMeters"]), material
+		)
+		if ribbon != null: marking_root.add_child(ribbon)
+		_add_projected_marking_dots(marking_root, geometry["dots"], marking, material)
 		if marking["id"].begins_with("venue--marking--"):
 			venue_markings.add_child(marking_root)
 		else:
 			exercise_markings.add_child(marking_root)
 	_venue_root.add_child(venue_markings)
 	_track_root.add_child(exercise_markings)
+
+
+func _add_projected_marking_dots(parent: Node3D, dots: Array, marking: Dictionary, material: Material) -> void:
+	if dots.is_empty(): return
+	var transforms: Array[Transform3D] = []
+	for dot in dots:
+		var projected := _projection.project_point(
+			dot, "Marking", marking["id"], MARKING_SURFACE_OFFSET
+		)
+		var up: Vector3 = projected["normal"]
+		up = up.normalized()
+		if up.length_squared() <= 0.00001: up = Vector3.UP
+		var right := up.cross(Vector3.RIGHT).normalized() if absf(up.dot(Vector3.RIGHT)) < 0.95 \
+			else up.cross(Vector3.FORWARD).normalized()
+		var forward := right.cross(up).normalized()
+		transforms.append(Transform3D(Basis(right, up, forward), projected["position"]))
+	var disc := CylinderMesh.new()
+	disc.top_radius = float(marking["widthMeters"]) * 0.5
+	disc.bottom_radius = disc.top_radius
+	disc.height = 0.008
+	disc.radial_segments = 12
+	disc.rings = 1
+	disc.material = material
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	multimesh.mesh = disc
+	multimesh.instance_count = transforms.size()
+	for index in transforms.size(): multimesh.set_instance_transform(index, transforms[index])
+	var instance := MultiMeshInstance3D.new()
+	instance.name = "Dots"
+	instance.multimesh = multimesh
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(instance)
 
 
 func _create_trajectory(segments: Array) -> Dictionary:

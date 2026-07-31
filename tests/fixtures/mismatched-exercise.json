@@ -1,45 +1,51 @@
 {
-  "formatVersion": 1,
-  "exercise": {
-    "id": "mismatched-endpoints",
-    "name": "Mismatched Endpoint Fixture",
-    "version": 1
-  },
-  "bounds": {
-    "width": 12.0,
-    "length": 16.0
-  },
-  "cones": [],
-  "markings": [],
-  "entryPoint": {
-    "x": 99.0,
-    "y": 99.0
-  },
-  "exitPoint": {
-    "x": -99.0,
-    "y": -99.0
-  },
-  "trajectory": {
-    "segments": [
-      {
-        "id": "trajectory-segment-001",
-        "type": "polyline",
-        "points": [
-          {
-            "x": -2.0,
-            "y": -6.0
-          },
-          {
-            "x": 1.5,
-            "y": 0.0
-          },
-          {
-            "x": 2.0,
-            "y": 6.0
-          }
-        ]
-      }
-    ]
-  },
-  "checkpoints": []
+    "formatVersion":  3,
+    "exercise":  {
+                     "id":  "mismatched-endpoints",
+                     "name":  "Mismatched Endpoint Fixture",
+                     "version":  1
+                 },
+    "bounds":  {
+                   "width":  12.0,
+                   "length":  16.0
+               },
+    "cones":  [
+
+              ],
+    "markings":  [
+
+                 ],
+    "entryPoint":  {
+                       "x":  99.0,
+                       "y":  99.0
+                   },
+    "exitPoint":  {
+                      "x":  -99.0,
+                      "y":  -99.0
+                  },
+    "trajectory":  {
+                       "segments":  [
+                                        {
+                                            "id":  "trajectory-segment-001",
+                                            "type":  "polyline",
+                                            "points":  [
+                                                           {
+                                                               "x":  -2.0,
+                                                               "y":  -6.0
+                                                           },
+                                                           {
+                                                               "x":  1.5,
+                                                               "y":  0.0
+                                                           },
+                                                           {
+                                                               "x":  2.0,
+                                                               "y":  6.0
+                                                           }
+                                                       ]
+                                        }
+                                    ]
+                   },
+    "checkpoints":  [
+
+                    ]
 }

@@ -328,8 +328,6 @@ Exercise Definition без конусов является допустимым,
 
 # 8. markings
 
-## FILE: docs/ExerciseFormat.md — REPLACE VERSION AND MARKINGS SECTION
-
 # Exercise Definition formatVersion 3
 
 ## Markings
@@ -340,8 +338,8 @@ Exercise marking хранит визуальный стиль и геометр�
 {
   "id": "entry-guide",
   "style": "dashed",
-  "color": "#FFD000FF",
-  "thickness": 0.08,
+  "color": "#FFD10D",
+  "widthMeters": 0.08,
   "visibleInViewer": true,
   "path": {
     "start": {
@@ -402,7 +400,7 @@ Exercise Definition v3 не использует старый массив `poin
 
 ### Thickness
 
-`thickness` задаётся в метрах и не зависит от scale Exercise instance.
+`widthMeters` задаёт физическую толщину в мировых метрах и не зависит от scale Exercise instance.
 
 
 
@@ -896,7 +894,7 @@ Editor должен диагностировать разрыв.
 
 ```json
 {
-  "formatVersion": 1,
+  "formatVersion": 3,
 
   "exercise": {
     "id": "slalom-5",

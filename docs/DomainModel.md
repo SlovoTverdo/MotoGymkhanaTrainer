@@ -128,15 +128,10 @@ Cone
 * стрелка;
 * дополнительный контур.
 
-Потенциальные типы:
-
-```text
-line
-polyline
-arc
-polygon
-arrow
-```
+Геометрия marking хранится отдельным `PathDefinition`: один `start` и упорядоченные
+`line`/`cubicBezier` segments. Start сегмента не дублируется: им является конец
+предыдущего segment или `Path.start`. Marking Path и trajectory остаются разными
+domain contracts, хотя используют общие математические helpers.
 
 Координаты разметки масштабируются вместе с экземпляром элемента.
 

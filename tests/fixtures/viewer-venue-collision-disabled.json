@@ -1,0 +1,26 @@
+{
+  "formatVersion": 5,
+  "track": { "id": "collision-disabled", "name": "Collision Disabled" },
+  "venue": { "id": "collision-venue", "name": "Collision Venue" },
+  "area": { "width": 40.0, "length": 100.0 },
+  "panorama": { "enabled": false, "texturePath": "", "rotationDeg": 0.0, "energyMultiplier": 1.0 },
+  "venueObjects": [
+    {
+      "id": "visible-no-collision",
+      "name": "Visible No Collision",
+      "assetPath": "res://venues/shared_assets/scenes/overpass_model.tscn",
+      "position": { "x": 0.0, "y": 0.0 },
+      "elevation": 0.0,
+      "rotationDeg": 0.0,
+      "scale": { "x": 1.0, "y": 1.0, "z": 1.0 },
+      "footprint": { "width": 10.0, "length": 20.0 },
+      "collisionEnabled": false,
+      "visibleInViewer": true
+    }
+  ],
+  "elements": [],
+  "cones": [],
+  "markings": [],
+  "trajectory": { "segments": [] },
+  "checkpoints": []
+}

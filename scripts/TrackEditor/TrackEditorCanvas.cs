@@ -746,11 +746,15 @@ public partial class TrackEditorCanvas : Control
         {
             Color color = ResolveRgb(marking.Color);
             color.A = marking.VisibleInViewer ? 0.58f : 0.22f;
-            foreach (MarkingStroke stroke in MarkingGeometry.CreateStrokes(marking.Points, marking.Style))
+            MarkingStyleGeometry geometry = MarkingGeometry.CreateStyleGeometry(
+                PathSampler.Sample(marking.Path), marking.Style);
+            foreach (MarkingStroke stroke in geometry.Strokes)
             {
                 DrawLine(ToScreen(stroke.Start), ToScreen(stroke.End), color,
                     MathF.Max(1.0f, marking.WidthMeters * _pixelsPerMeter), true);
             }
+            foreach (Point2Dto dot in geometry.Dots)
+                DrawCircle(ToScreen(dot), MathF.Max(1.0f, marking.WidthMeters * _pixelsPerMeter * 0.5f), color);
         }
 
         foreach (VenueObjectInstanceDto item in venue.Objects)
@@ -789,12 +793,16 @@ public partial class TrackEditorCanvas : Control
                 color.A = 0.35f; // Editor-only visibility indication; data remains present.
             }
 
-            foreach (MarkingStroke stroke in MarkingGeometry.CreateStrokes(marking.Points, marking.Style))
+            PathDefinition worldPath = PathTransformService.Transform(marking.Path, point => Transform(point, instance));
+            MarkingStyleGeometry geometry = MarkingGeometry.CreateStyleGeometry(
+                PathSampler.Sample(worldPath), marking.Style);
+            foreach (MarkingStroke stroke in geometry.Strokes)
             {
-                DrawLine(ToScreen(Transform(stroke.Start, instance)),
-                    ToScreen(Transform(stroke.End, instance)), color,
+                DrawLine(ToScreen(stroke.Start), ToScreen(stroke.End), color,
                     MathF.Max(1.0f, marking.WidthMeters * _pixelsPerMeter), true);
             }
+            foreach (Point2Dto dot in geometry.Dots)
+                DrawCircle(ToScreen(dot), MathF.Max(1.0f, marking.WidthMeters * _pixelsPerMeter * 0.5f), color);
         }
     }
 

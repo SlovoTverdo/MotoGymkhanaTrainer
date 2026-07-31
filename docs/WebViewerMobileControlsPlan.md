@@ -32,10 +32,10 @@ web-viewer/
 
 Не изменять:
 
-* Exported Track formatVersion 4;
-* Venue Definition formatVersion 1;
+* Exported Track formatVersion 5;
+* Venue Definition formatVersion 2;
 * Track Project formatVersion 3;
-* Exercise Definition formatVersion 2.
+* Exercise Definition formatVersion 3.
 
 ---
 

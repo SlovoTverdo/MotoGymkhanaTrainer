@@ -669,7 +669,7 @@ track world point
 Преобразование применяется к:
 
 * cone positions;
-* marking points;
+* marking Path start/end/control points;
 * trajectory polyline points;
 * cubicBezier start;
 * cubicBezier control1;
@@ -1184,18 +1184,21 @@ IDs не должны зависеть от:
 
 Для каждого marking:
 
-1. преобразовать все points в мировые координаты;
+1. преобразовать `Path.start`, line endpoints и cubic controls/endpoints в мировые координаты;
 2. сохранить:
 
    * экспортный id;
-   * type;
-   * points;
+   * Path с сохранёнными segment types;
    * color;
    * widthMeters;
    * style;
    * visibleInViewer.
 
 `widthMeters` не масштабируется.
+
+Для preview сначала преобразуется control geometry, затем Path адаптивно
+семплируется в world space. Поэтому dashed/dotted phase корректен при
+`scaleX != scaleY` и не сбрасывается на границах Path segments.
 
 Marking с:
 

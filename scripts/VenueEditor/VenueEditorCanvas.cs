@@ -101,7 +101,8 @@ public partial class VenueEditorCanvas : Control
             VenueSelectionKind.Cone => id is not null && _document.FindCone(id) is not null,
             VenueSelectionKind.Marking => id is not null && _document.FindMarking(id) is not null,
             VenueSelectionKind.MarkingPoint => id is not null && _document.FindMarking(id) is MarkingDto marking &&
-                pointIndex >= 0 && pointIndex < marking.Points.Length,
+                PathEditing.IsAllLine(marking.Path) && pointIndex >= 0 &&
+                pointIndex < PathEditing.GetVertices(marking.Path).Length,
             _ => false,
         };
         Select(valid ? kind : VenueSelectionKind.None, valid ? id : null, valid ? pointIndex : -1);
@@ -255,8 +256,9 @@ public partial class VenueEditorCanvas : Control
     private void HitTest(Vector2 screen)
     {
         foreach (MarkingDto marking in _document.Definition.Markings.Reverse())
-            for (int index = marking.Points.Length - 1; index >= 0; index--)
-                if (screen.DistanceTo(ToScreen(marking.Points[index])) <= HitPixels)
+            for (int index = PathEditing.IsAllLine(marking.Path) ? PathEditing.GetVertices(marking.Path).Length - 1 : -1;
+                 index >= 0; index--)
+                if (screen.DistanceTo(ToScreen(PathEditing.GetVertices(marking.Path)[index])) <= HitPixels)
                 { Select(VenueSelectionKind.MarkingPoint, marking.Id, index); return; }
         foreach (ConeDto cone in _document.Definition.Cones.Reverse())
             if (screen.DistanceTo(ToScreen(cone.Position)) <= HitPixels)
@@ -268,9 +270,10 @@ public partial class VenueEditorCanvas : Control
         foreach (MarkingDto marking in _document.Definition.Markings.Reverse())
             // Hit testing follows the persisted path, not render-only dash pieces,
             // so a click in a visual dash gap still selects the logical marking.
-            for (int index = 0; index < marking.Points.Length - 1; index++)
+            for (int index = 0; index < PathSampler.Sample(marking.Path).Points.Length - 1; index++)
                 if (EditorCanvasMath.DistanceToSegment(
-                    screen, ToScreen(marking.Points[index]), ToScreen(marking.Points[index + 1])) <= HitPixels)
+                    screen, ToScreen(PathSampler.Sample(marking.Path).Points[index]),
+                    ToScreen(PathSampler.Sample(marking.Path).Points[index + 1])) <= HitPixels)
                 { Select(VenueSelectionKind.Marking, marking.Id, -1); return; }
         ClearSelection();
     }
@@ -338,11 +341,18 @@ public partial class VenueEditorCanvas : Control
         Color color = MarkingGeometry.TryNormalizeColor(marking.Color, false, out string canonical) ? new Color(canonical.TrimStart('#')) : Colors.White;
         if (!marking.VisibleInViewer) color.A = 0.35f; // hidden-in-Viewer remains editable here.
         bool selected = _selectedId == marking.Id && _selectionKind is VenueSelectionKind.Marking or VenueSelectionKind.MarkingPoint;
-        foreach (MarkingStroke stroke in MarkingGeometry.CreateStrokes(marking.Points, marking.Style))
+        SampledPath sampled = PathSampler.Sample(marking.Path);
+        MarkingStyleGeometry geometry = MarkingGeometry.CreateStyleGeometry(sampled, marking.Style);
+        foreach (MarkingStroke stroke in geometry.Strokes)
             DrawLine(ToScreen(stroke.Start), ToScreen(stroke.End), selected ? Colors.Cyan : color, MathF.Max(1, marking.WidthMeters * _pixelsPerMeter), true);
-        if (selected)
-            for (int index = 0; index < marking.Points.Length; index++)
-                DrawCircle(ToScreen(marking.Points[index]), index == _selectedPointIndex ? 7 : 5, index == _selectedPointIndex ? Colors.Yellow : Colors.Cyan);
+        foreach (Point2Dto dot in geometry.Dots)
+            DrawCircle(ToScreen(dot), MathF.Max(1, marking.WidthMeters * _pixelsPerMeter * 0.5f), selected ? Colors.Cyan : color);
+        if (selected && PathEditing.IsAllLine(marking.Path))
+        {
+            Point2Dto[] vertices = PathEditing.GetVertices(marking.Path);
+            for (int index = 0; index < vertices.Length; index++)
+                DrawCircle(ToScreen(vertices[index]), index == _selectedPointIndex ? 7 : 5, index == _selectedPointIndex ? Colors.Yellow : Colors.Cyan);
+        }
     }
 
     private void DrawClosed(IReadOnlyList<Vector2> points, Color color, float width)

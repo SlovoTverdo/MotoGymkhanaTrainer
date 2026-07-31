@@ -20,6 +20,7 @@ $sourceTrack = if ([System.IO.Path]::IsPathRooted($TrackPath)) {
     [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot $TrackPath))
 }
 $embeddedTrack = Join-Path $webProjectRoot "tracks\default-track.json"
+$godotLog = Join-Path $webProjectRoot ".web-viewer-tooling-cache\build-web-viewer.log"
 $outputIndex = Join-Path $distRoot "index.html"
 $outputPack = Join-Path $distRoot "index.pck"
 $externalTrack = Join-Path $distRoot "tracks\default-track.json"
@@ -36,7 +37,8 @@ function Invoke-Godot {
     # Standard Godot on Windows is a GUI-subsystem executable. PowerShell's call
     # operator can return before it exits, so Start-Process is required for a
     # trustworthy exit code in local and CI-like scripted builds.
-    $quotedArguments = foreach ($argument in $Arguments) {
+    $argumentsWithLog = @("--log-file", $godotLog) + $Arguments
+    $quotedArguments = foreach ($argument in $argumentsWithLog) {
         '"' + $argument.Replace('"', '\"') + '"'
     }
     $process = Start-Process `
@@ -60,15 +62,15 @@ if (-not (Test-Path -LiteralPath (Join-Path $webProjectRoot "project.godot") -Pa
     throw "Web Viewer project is missing: $webProjectRoot"
 }
 if (-not (Test-Path -LiteralPath $sourceTrack -PathType Leaf)) {
-    throw "Track v4 source was not found: $sourceTrack"
+    throw "Track v5 source was not found: $sourceTrack"
 }
 if (@(Get-ChildItem -LiteralPath $webProjectRoot -Recurse -Filter "*.cs" -File).Count -ne 0) {
     throw "Web Viewer must not contain C# scripts."
 }
 
 $track = Get-Content -LiteralPath $sourceTrack -Raw -Encoding UTF8 | ConvertFrom-Json
-if ($null -eq $track -or $track.formatVersion -ne 4) {
-    throw "Track source must be an Exported Track with formatVersion 4: $sourceTrack"
+if ($null -eq $track -or $track.formatVersion -ne 5) {
+    throw "Track source must be an Exported Track with formatVersion 5: $sourceTrack"
 }
 
 Copy-Item -LiteralPath $sourceTrack -Destination $embeddedTrack -Force
@@ -79,7 +81,7 @@ Invoke-Godot `
 
 Invoke-Godot `
     -Arguments @("--headless", "--path", $webProjectRoot, "--script", "res://tests/track_v4_parser_test.gd") `
-    -Operation "Track v4 parser tests"
+    -Operation "Track v5 parser and marking Path tests"
 
 if (-not $distRoot.StartsWith($distBoundary, [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "Refusing to replace output outside the repository dist directory: $distRoot"

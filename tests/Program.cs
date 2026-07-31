@@ -1,4 +1,5 @@
 using Godot;
+using System.Text.Json;
 using MotoGymkhanaTrainer;
 using MotoGymkhanaTrainer.ExerciseEditor;
 using MotoGymkhanaTrainer.TrackEditor;
@@ -14,7 +15,7 @@ string invalidFixturePath = Path.Combine(ProjectDirectory, "tests", "fixtures", 
 string noColorFixturePath = Path.Combine(ProjectDirectory, "tests", "fixtures", "no-color-track.json");
 
 TrackSnapshotDto snapshot = TrackLoader.LoadFromJson(json, samplePath);
-AssertEqual(4, snapshot.FormatVersion, "sample uses formatVersion 4");
+AssertEqual(5, snapshot.FormatVersion, "sample uses formatVersion 5");
 AssertEqual("basic-demo", snapshot.Track.Id, "valid JSON loads track metadata");
 AssertEqual(4, snapshot.Cones.Length, "valid JSON loads every sample cone");
 AssertEqual(4, snapshot.Markings.Length, "valid JSON loads solid, dashed, dotted and hidden markings");
@@ -27,9 +28,9 @@ AssertEqual("alternate-test", alternate.Track.Id, "a second exported track loads
 AssertEqual(20.0f, alternate.Area.Width, "the second track supplies a different area width");
 AssertEqual(30.0f, alternate.Area.Length, "the second track supplies a different area length");
 AssertEqual(2, alternate.Cones.Length, "the second track supplies its own runtime cone set");
-AssertEqual(4, alternate.FormatVersion, "a second exported Track uses formatVersion 4");
-AssertEqual("solid", alternate.Markings[0].Style, "Track v4 keeps the marking style");
-AssertTrue(alternate.Markings[0].VisibleInViewer, "Track v4 keeps visibleInViewer=true");
+AssertEqual(5, alternate.FormatVersion, "a second exported Track uses formatVersion 5");
+AssertEqual("solid", alternate.Markings[0].Style, "Track v5 keeps the marking style");
+AssertTrue(alternate.Markings[0].VisibleInViewer, "Track v5 keeps visibleInViewer=true");
 
 TrackSnapshotDto noColorTrack = TrackLoader.LoadFromJson(
     File.ReadAllText(noColorFixturePath), noColorFixturePath);
@@ -146,7 +147,7 @@ AssertThrows<InvalidDataException>(
     "cubicBezier with a missing control point is rejected");
 
 TrackSnapshotDto futureTrack = TrackLoader.LoadFromJson(
-    """{"formatVersion":4,"track":{"id":"future","name":"Future"},"venue":{"id":"venue","name":"Venue"},"area":{"width":40,"length":100},"panorama":{"enabled":false,"texturePath":"","rotationDeg":0,"energyMultiplier":1},"venueObjects":[],"elements":[],"cones":[],"markings":[],"trajectory":{"segments":[{"id":"future-segment","type":"arc"}]},"checkpoints":[]}""",
+    """{"formatVersion":5,"track":{"id":"future","name":"Future"},"venue":{"id":"venue","name":"Venue"},"area":{"width":40,"length":100},"panorama":{"enabled":false,"texturePath":"","rotationDeg":0,"energyMultiplier":1},"venueObjects":[],"elements":[],"cones":[],"markings":[],"trajectory":{"segments":[{"id":"future-segment","type":"arc"}]},"checkpoints":[]}""",
     "future-segment.json");
 AssertEqual(1, futureTrack.Trajectory.Segments.Length, "unknown segment type does not reject the track");
 AssertEqual("arc", futureTrack.Trajectory.Segments[0].Type, "unknown segment type remains diagnostic data");
@@ -369,7 +370,7 @@ AssertTrue(
 AssertTrue(
     exercise.SetMarkingProperties(polylineMarkingId, "#EE44AA", 0.1f, "dashed", visibleInViewer: true),
     "a polyline marking accepts dashed style");
-AssertEqual(0.5f, exercise.FindMarking(polylineMarkingId)!.Points[1].X,
+AssertEqual(0.5f, PathEditing.GetVertices(exercise.FindMarking(polylineMarkingId)!.Path)[1].X,
     "a marking point moves in local exercise metres");
 int insertedMarkingPoint = exercise.InsertMarkingPointAfter(polylineMarkingId, 1);
 AssertEqual(2, insertedMarkingPoint, "an internal polyline marking point can be inserted");
@@ -378,21 +379,18 @@ AssertTrue(exercise.DeleteMarkingPoint(polylineMarkingId, insertedMarkingPoint),
 AssertTrue(!exercise.FindMarking(lineMarkingId)!.VisibleInViewer,
     "visibleInViewer=false remains persisted editor data");
 
-IReadOnlyList<MarkingStroke> solidStrokes = MarkingGeometry.CreateStrokes(
-    exercise.FindMarking(lineMarkingId)!.Points,
-    "solid");
-IReadOnlyList<MarkingStroke> dashedStrokes = MarkingGeometry.CreateStrokes(
-    exercise.FindMarking(polylineMarkingId)!.Points,
-    "dashed");
-IReadOnlyList<MarkingStroke> dottedStrokes = MarkingGeometry.CreateStrokes(
-    exercise.FindMarking(polylineMarkingId)!.Points,
-    "dotted");
+IReadOnlyList<MarkingStroke> solidStrokes = MarkingGeometry.CreateStyleGeometry(
+    PathSampler.Sample(exercise.FindMarking(lineMarkingId)!.Path), "solid").Strokes;
+IReadOnlyList<MarkingStroke> dashedStrokes = MarkingGeometry.CreateStyleGeometry(
+    PathSampler.Sample(exercise.FindMarking(polylineMarkingId)!.Path), "dashed").Strokes;
+IReadOnlyList<Point2Dto> dottedPoints = MarkingGeometry.CreateStyleGeometry(
+    PathSampler.Sample(exercise.FindMarking(polylineMarkingId)!.Path), "dotted").Dots;
 AssertEqual(1, solidStrokes.Count, "solid rendering keeps one stroke per line section");
 AssertTrue(dashedStrokes.Count > 1, "dashed rendering produces temporary separated strokes");
-AssertTrue(dottedStrokes.Count > dashedStrokes.Count, "dotted rendering produces a denser temporary pattern");
+AssertTrue(dottedPoints.Count > dashedStrokes.Count, "dotted rendering produces a denser batched pattern");
 
 string exerciseJson = ExerciseDefinitionStore.Serialize(exercise.Definition);
-AssertTrue(exerciseJson.Contains("\"formatVersion\": 2"), "Exercise Definition saves formatVersion 2 as indented JSON");
+AssertTrue(exerciseJson.Contains("\"formatVersion\": 3"), "Exercise Definition saves formatVersion 3 as indented JSON");
 AssertTrue(!exerciseJson.Contains("zoom", StringComparison.OrdinalIgnoreCase), "serialized document excludes zoom UI state");
 AssertTrue(!exerciseJson.Contains("selected", StringComparison.OrdinalIgnoreCase), "serialized document excludes selection UI state");
 AssertTrue(!exerciseJson.Contains("pan", StringComparison.OrdinalIgnoreCase), "serialized document excludes pan UI state");
@@ -445,13 +443,13 @@ string mismatchPath = Path.Combine(ProjectDirectory, "tests", "fixtures", "misma
 string mismatchSource = File.ReadAllText(mismatchPath);
 ExerciseDefinitionLoadResult mismatchResult =
     ExerciseDefinitionStore.LoadFromJsonWithDiagnostics(mismatchSource, mismatchPath);
-AssertEqual(3, mismatchResult.Warnings.Count,
-    "version migration plus entry and exit mismatches produce diagnostic warnings");
+AssertEqual(2, mismatchResult.Warnings.Count,
+    "entry and exit mismatches produce diagnostic warnings without runtime migration");
 AssertEqual(-2.0f, mismatchResult.Definition.EntryPoint.X,
     "trajectory start replaces mismatched EntryPoint in memory");
 AssertEqual(6.0f, mismatchResult.Definition.ExitPoint.Y,
     "trajectory end replaces mismatched ExitPoint in memory");
-AssertTrue(mismatchSource.Contains("\"x\": 99.0"),
+AssertTrue(mismatchSource.Contains("\"x\"") && mismatchSource.Contains("99"),
     "loading a mismatch does not modify the source file automatically");
 
 AssertThrows<InvalidDataException>(
@@ -503,36 +501,19 @@ AssertThrows<InvalidDataException>(
 
 AssertThrows<InvalidDataException>(
     () => ExerciseDefinitionStore.LoadFromJson(
-        """{"formatVersion":1,"exercise":{"id":"bad-bezier","name":"Bad Bezier","version":1},"bounds":{"width":10,"length":10},"cones":[],"markings":[],"entryPoint":{"x":0,"y":0},"exitPoint":{"x":1,"y":1},"trajectory":{"segments":[{"id":"trajectory-segment-001","type":"cubicBezier","start":{"x":0,"y":0},"control1":{"x":0,"y":1},"end":{"x":1,"y":1}}]},"checkpoints":[]}""",
+        """{"formatVersion":3,"exercise":{"id":"bad-bezier","name":"Bad Bezier","version":1},"bounds":{"width":10,"length":10},"cones":[],"markings":[],"entryPoint":{"x":0,"y":0},"exitPoint":{"x":1,"y":1},"trajectory":{"segments":[{"id":"trajectory-segment-001","type":"cubicBezier","start":{"x":0,"y":0},"control1":{"x":0,"y":1},"end":{"x":1,"y":1}}]},"checkpoints":[]}""",
         "missing-control-exercise.json"),
     "Exercise cubicBezier with a missing control point is rejected");
 
-ExerciseDefinitionLoadResult migratedV1 = ExerciseDefinitionStore.LoadFromJsonWithDiagnostics(
-    """{"formatVersion":1,"exercise":{"id":"legacy-marking","name":"Legacy Marking","version":1},"bounds":{"width":10,"length":10},"cones":[],"markings":[{"id":"marking-001","type":"line","points":[{"x":0,"y":0},{"x":1,"y":0}],"color":"yellow","widthMeters":0.08}],"entryPoint":{"x":0,"y":-1},"exitPoint":{"x":0,"y":1},"trajectory":{"segments":[{"id":"trajectory-segment-001","type":"polyline","points":[{"x":0,"y":-1},{"x":0,"y":1}]}]},"checkpoints":[]}""",
-    "legacy-marking.json");
-AssertEqual(2, migratedV1.Definition.FormatVersion, "Exercise version 1 migrates to version 2 in memory");
-AssertEqual("solid", migratedV1.Definition.Markings[0].Style, "Exercise v1 marking receives solid style");
-AssertTrue(migratedV1.Definition.Markings[0].VisibleInViewer,
-    "Exercise v1 marking receives visibleInViewer=true");
-AssertEqual("#FFD10D", migratedV1.Definition.Markings[0].Color,
-    "legacy named marking color becomes canonical RGB in memory");
-AssertTrue(migratedV1.Warnings.Count > 0, "Exercise migration is reported without rewriting its source");
+AssertThrows<InvalidDataException>(() => ExerciseDefinitionStore.LoadFromJson(
+    """{"formatVersion":1,"exercise":{"id":"legacy","name":"Legacy","version":1},"bounds":{"width":10,"length":10},"cones":[],"markings":[],"entryPoint":{"x":0,"y":-1},"exitPoint":{"x":0,"y":1},"trajectory":{"segments":[{"id":"trajectory-segment-001","type":"polyline","points":[{"x":0,"y":-1},{"x":0,"y":1}]}]},"checkpoints":[]}""",
+    "legacy.json"), "production Exercise loader rejects legacy marking formats");
 
-ExerciseDefinitionLoadResult normalizedMarking = ExerciseDefinitionStore.LoadFromJsonWithDiagnostics(
-    """{"formatVersion":2,"exercise":{"id":"fallback-marking","name":"Fallback Marking","version":1},"bounds":{"width":10,"length":10},"cones":[],"markings":[{"id":"marking-001","type":"line","points":[{"x":0,"y":0},{"x":1,"y":0}],"color":"#aabbcc","widthMeters":0.08,"style":"futureStyle","visibleInViewer":true}],"entryPoint":{"x":0,"y":-1},"exitPoint":{"x":0,"y":1},"trajectory":{"segments":[{"id":"trajectory-segment-001","type":"polyline","points":[{"x":0,"y":-1},{"x":0,"y":1}]}]},"checkpoints":[]}""",
-    "fallback-marking.json");
-AssertEqual("solid", normalizedMarking.Definition.Markings[0].Style,
-    "unknown Exercise marking style uses the documented solid fallback");
-AssertEqual("#AABBCC", normalizedMarking.Definition.Markings[0].Color,
-    "valid lowercase RGB is normalized to canonical #RRGGBB in memory");
-AssertEqual(2, normalizedMarking.Warnings.Count,
-    "style fallback and color normalization both produce diagnostics");
-
-TrackSnapshotDto unknownStyleTrack = TrackLoader.LoadFromJson(
-    """{"formatVersion":4,"track":{"id":"unknown-style","name":"Unknown Style"},"venue":{"id":"venue","name":"Venue"},"area":{"width":10,"length":10},"panorama":{"enabled":false,"texturePath":"","rotationDeg":0,"energyMultiplier":1},"venueObjects":[],"elements":[],"cones":[],"markings":[{"id":"marking-001","type":"line","points":[{"x":0,"y":0},{"x":1,"y":0}],"color":"#FFFFFF","widthMeters":0.1,"style":"futureStyle","visibleInViewer":true}],"trajectory":{"segments":[]},"checkpoints":[]}""",
+TrackSnapshotDto isolatedInvalidMarking = TrackLoader.LoadFromJson(
+    """{"formatVersion":5,"track":{"id":"unknown-style","name":"Unknown Style"},"venue":{"id":"venue","name":"Venue"},"area":{"width":10,"length":10},"panorama":{"enabled":false,"texturePath":"","rotationDeg":0,"energyMultiplier":1},"venueObjects":[],"elements":[],"cones":[],"markings":[{"id":"marking-001","color":"#FFFFFF","widthMeters":0.1,"style":"futureStyle","visibleInViewer":true,"path":{"start":{"x":0,"y":0},"segments":[{"type":"line","end":{"x":1,"y":0}}]}}],"trajectory":{"segments":[]},"checkpoints":[]}""",
     "unknown-style-track.json");
-AssertEqual("futureStyle", unknownStyleTrack.Markings[0].Style,
-    "unknown Track marking style remains available for Viewer warning and solid fallback");
+AssertTrue(!string.IsNullOrEmpty(isolatedInvalidMarking.Markings[0].LoadError),
+    "invalid exported marking is rejected individually without breaking Viewer Track loading");
 
 string temporaryLibraryRoot = Path.Combine(Path.GetTempPath(), $"motogymkhana-library-{Guid.NewGuid():N}");
 try
@@ -789,8 +770,7 @@ try
         new MarkingDto
         {
             Id = "hidden-dash",
-            Type = "line",
-            Points = [new Point2Dto { X = -1, Y = 0 }, new Point2Dto { X = 1, Y = 0 }],
+            Path = PathEditing.FromPolyline([new Point2Dto { X = -1, Y = 0 }, new Point2Dto { X = 1, Y = 0 }]),
             Color = "#12ABEF",
             WidthMeters = 0.22f,
             Style = "dashed",
@@ -799,8 +779,7 @@ try
         new MarkingDto
         {
             Id = "visible-dot",
-            Type = "polyline",
-            Points = [new Point2Dto { X = -1, Y = 1 }, new Point2Dto { X = 0, Y = 2 }, new Point2Dto { X = 1, Y = 1 }],
+            Path = PathEditing.FromPolyline([new Point2Dto { X = -1, Y = 1 }, new Point2Dto { X = 0, Y = 2 }, new Point2Dto { X = 1, Y = 1 }]),
             Color = "#FF00AA",
             WidthMeters = 0.11f,
             Style = "dotted",
@@ -857,8 +836,8 @@ try
     [
         new MarkingDto
         {
-            Id = "venue-line", Type = "line",
-            Points = [new Point2Dto { X = -2, Y = -2 }, new Point2Dto { X = 2, Y = -2 }],
+            Id = "venue-line",
+            Path = PathEditing.FromPolyline([new Point2Dto { X = -2, Y = -2 }, new Point2Dto { X = 2, Y = -2 }]),
             Color = "#AABBCC", WidthMeters = 0.2f, Style = "dashed", VisibleInViewer = false,
         },
     ];
@@ -871,7 +850,7 @@ try
     richDocument.SetTransform("exercise-instance-001", new Point2Dto { X = 3, Y = -8 }, 0,
         new Point2Dto { X = 1, Y = 1 });
     TrackCompilationResult richCompilation = TrackCompiler.Compile(richDocument);
-    AssertTrue(richCompilation.CanExport, "resolved Venue object allows Track v4 export");
+    AssertTrue(richCompilation.CanExport, "resolved Venue object allows Track v5 export");
     AssertEqual("rich-ground", richCompilation.Snapshot!.Venue.Id, "Venue metadata is copied into export");
     AssertEqual(40.0f, richCompilation.Snapshot.Area.Width, "exported area comes from Venue");
     AssertEqual("venue--object--shed", richCompilation.Snapshot.VenueObjects[0].Id,
@@ -1121,7 +1100,7 @@ try
     string exportedPath = exportLibrary.ResolveSaveJson(string.Empty, "iteration-2.json");
     TrackExportStore.SaveToFile(movedCompilation.Snapshot!, exportedPath);
     TrackSnapshotDto viewerRoundTrip = TrackLoader.LoadFromJson(File.ReadAllText(exportedPath), exportedPath);
-    AssertEqual(4, viewerRoundTrip.FormatVersion, "Viewer loader accepts compiled formatVersion 4 export");
+    AssertEqual(5, viewerRoundTrip.FormatVersion, "Viewer loader accepts compiled formatVersion 5 export");
     AssertEqual(movedCompilation.Snapshot!.Trajectory.Segments.Length,
         viewerRoundTrip.Trajectory.Segments.Length,
         "Viewer receives complete global trajectory including transitions");
@@ -1287,8 +1266,8 @@ finally
             $"repository Track Project '{Path.GetFileName(projectPath)}' has no persisted area");
         TrackCompilationResult compiledProject = TrackCompiler.Compile(new TrackProjectDocument(
             loadedProject.Project, loadedProject.Venue, loadedProject.Definitions));
-        AssertTrue(compiledProject.CanExport && compiledProject.Snapshot!.FormatVersion == 4,
-            $"repository Track Project '{Path.GetFileName(projectPath)}' compiles to exported Track v4");
+        AssertTrue(compiledProject.CanExport && compiledProject.Snapshot!.FormatVersion == 5,
+            $"repository Track Project '{Path.GetFileName(projectPath)}' compiles to exported Track v5");
     }
 }
 
@@ -1363,14 +1342,14 @@ try
         new Point2Dto { X = 0, Y = 0 }, new Point2Dto { X = 1, Y = 1 }, new Point2Dto { X = 2, Y = 0 },
     ]);
     venue.InsertMarkingPointAfter(venuePolyline.Id, 1);
-    AssertEqual(4, venuePolyline.Points.Length, "Venue polyline supports internal point insertion");
+    AssertEqual(4, PathEditing.GetVertices(venuePolyline.Path).Length, "Venue polyline supports internal point insertion");
     venue.DeleteMarkingPoint(venuePolyline.Id, 2);
-    AssertEqual(3, venuePolyline.Points.Length, "Venue polyline supports safe internal point deletion");
+    AssertEqual(3, PathEditing.GetVertices(venuePolyline.Path).Length, "Venue polyline supports safe internal point deletion");
 
     string savePath = venueLibrary.ResolveSaveJson(nested, "training-hall.json");
     VenueStore.SaveToFile(venue.Definition, savePath);
     VenueLoadResult venueReload = VenueStore.LoadFromFile(savePath, temporaryVenueRoot);
-    AssertEqual(1, venueReload.Definition.FormatVersion, "Venue Definition saves formatVersion 1");
+    AssertEqual(2, venueReload.Definition.FormatVersion, "Venue Definition saves formatVersion 2");
     AssertEqual(2, venueReload.Definition.Objects.Length, "Venue object instances survive Save/Open");
     AssertEqual("none", venueReload.Definition.Cones[0].Color, "Venue cone color survives Save/Open");
     AssertEqual("dashed", venueReload.Definition.Markings[0].Style, "Venue marking style survives Save/Open");
@@ -1391,7 +1370,7 @@ try
 
     AssertThrows<InvalidDataException>(() => VenueStore.LoadFromJson("{broken", "broken.json", temporaryVenueRoot),
         "corrupt Venue JSON is rejected before document replacement");
-    string unsupported = VenueStore.Serialize(venue.Definition).Replace("\"formatVersion\": 1", "\"formatVersion\": 2");
+    string unsupported = VenueStore.Serialize(venue.Definition).Replace("\"formatVersion\": 2", "\"formatVersion\": 3");
     AssertThrows<InvalidDataException>(() => VenueStore.LoadFromJson(unsupported, "future.json", temporaryVenueRoot),
         "unsupported Venue version is rejected without migration");
     string unresolved = VenueStore.Serialize(venue.Definition).Replace("res://Assets/barrier.tscn", "res://Assets/missing.tscn");
@@ -1436,10 +1415,10 @@ AssertTrue(subdividedProjectionLine[^1].X == 1 && subdividedProjectionLine[^1].Y
     "projection subdivision preserves the last source point");
 
 string viewerPhysicsFixturePath = Path.Combine(
-    ProjectDirectory, "exports", "tracks", "_tests", "viewer-venue-physics.json");
+    ProjectDirectory, "tests", "fixtures", "viewer-venue-physics.json");
 TrackSnapshotDto viewerPhysicsFixture = TrackLoader.LoadFromJson(
     File.ReadAllText(viewerPhysicsFixturePath), viewerPhysicsFixturePath);
-AssertEqual(4, viewerPhysicsFixture.FormatVersion, "Viewer physics fixture remains exported Track v4");
+AssertEqual(5, viewerPhysicsFixture.FormatVersion, "Viewer physics fixture uses exported Track v5");
 AssertEqual("dashed", viewerPhysicsFixture.Markings[0].Style,
     "Viewer physics fixture covers projected dashed Venue markings");
 AssertEqual("dotted", viewerPhysicsFixture.Markings[1].Style,
@@ -1447,12 +1426,202 @@ AssertEqual("dotted", viewerPhysicsFixture.Markings[1].Style,
 AssertEqual(3, viewerPhysicsFixture.Cones.Length,
     "Viewer physics fixture covers cones on the ramp, platform and exit ramp");
 string collisionDisabledFixturePath = Path.Combine(
-    ProjectDirectory, "exports", "tracks", "_tests", "viewer-venue-collision-disabled.json");
+    ProjectDirectory, "tests", "fixtures", "viewer-venue-collision-disabled.json");
 TrackSnapshotDto collisionDisabledFixture = TrackLoader.LoadFromJson(
     File.ReadAllText(collisionDisabledFixturePath), collisionDisabledFixturePath);
 AssertTrue(collisionDisabledFixture.VenueObjects[0].VisibleInViewer &&
            !collisionDisabledFixture.VenueObjects[0].CollisionEnabled,
     "collision-disabled fixture keeps the Venue object visible");
+
+// Curved Markings Iteration 1: shared contract, mathematics, world transforms,
+// bounds and style phase are executable independently of Godot scene nodes.
+var linePath = new PathDefinition
+{
+    Start = new Point2Dto { X = 0, Y = 0 },
+    Segments = [new LinePathSegmentDefinition { End = new Point2Dto { X = 3, Y = 4 } }],
+};
+var cubicPath = new PathDefinition
+{
+    Start = new Point2Dto { X = 0, Y = 0 },
+    Segments = [new CubicBezierPathSegmentDefinition
+    {
+        Control1 = new Point2Dto { X = 1, Y = 2 },
+        Control2 = new Point2Dto { X = 2, Y = -2 },
+        End = new Point2Dto { X = 3, Y = 0 },
+    }],
+};
+var mixedPath = new PathDefinition
+{
+    Start = new Point2Dto { X = -1, Y = 0 },
+    Segments =
+    [
+        new LinePathSegmentDefinition { End = new Point2Dto { X = 0, Y = 0 } },
+        new CubicBezierPathSegmentDefinition
+        {
+            Control1 = new Point2Dto { X = 1, Y = 2 },
+            Control2 = new Point2Dto { X = 2, Y = 2 },
+            End = new Point2Dto { X = 3, Y = 0 },
+        },
+    ],
+};
+string linePathJson = JsonSerializer.Serialize(linePath);
+PathDefinition lineRoundTrip = JsonSerializer.Deserialize<PathDefinition>(linePathJson)!;
+AssertTrue(lineRoundTrip.Segments[0] is LinePathSegmentDefinition && !linePathJson.Contains("control1"),
+    "marking line Path round-trips without cubic fields");
+string cubicPathJson = JsonSerializer.Serialize(cubicPath);
+PathDefinition cubicRoundTrip = JsonSerializer.Deserialize<PathDefinition>(cubicPathJson)!;
+AssertTrue(cubicRoundTrip.Segments[0] is CubicBezierPathSegmentDefinition && cubicPathJson.Contains("control2"),
+    "marking cubic Path round-trips with both controls");
+PathDefinition mixedRoundTrip = JsonSerializer.Deserialize<PathDefinition>(JsonSerializer.Serialize(mixedPath))!;
+AssertTrue(mixedRoundTrip.Segments[0] is LinePathSegmentDefinition &&
+           mixedRoundTrip.Segments[1] is CubicBezierPathSegmentDefinition,
+    "mixed marking Path preserves ordered segment types");
+AssertThrows<JsonException>(() => JsonSerializer.Deserialize<PathDefinition>(
+    """{"start":{"x":0,"y":0},"segments":[{"type":"arc","end":{"x":1,"y":0}}]}"""),
+    "unknown marking Path discriminator is rejected");
+AssertThrows<JsonException>(() => JsonSerializer.Deserialize<PathDefinition>(
+    """{"start":{"x":0,"y":0},"segments":[{"type":"cubicBezier","control1":{"x":1,"y":0},"end":{"x":2,"y":0}}]}"""),
+    "missing cubic control point is rejected during deserialization");
+AssertThrows<JsonException>(() => JsonSerializer.Deserialize<PathDefinition>(
+    """{"segments":[{"type":"line","end":{"x":1,"y":0}}]}"""),
+    "missing Path start is rejected instead of defaulting to the origin");
+var nonFinitePath = new PathDefinition
+{
+    Start = new Point2Dto { X = float.NaN, Y = 0 },
+    Segments = [new LinePathSegmentDefinition { End = new Point2Dto { X = 1, Y = 0 } }],
+};
+AssertThrows<InvalidDataException>(() => PathValidator.ValidateOrThrow(nonFinitePath, "markings[7].path"),
+    "non-finite marking coordinate is rejected with a marking path");
+
+SampledPath sampledLine = PathSampler.Sample(linePath);
+AssertEqual(2, sampledLine.Points.Length, "line sampling returns exact start and end");
+var twoLines = PathEditing.FromPolyline([
+    new Point2Dto { X = 0, Y = 0 }, new Point2Dto { X = 1, Y = 0 }, new Point2Dto { X = 2, Y = 0 }]);
+SampledPath sampledTwoLines = PathSampler.Sample(twoLines);
+AssertEqual(3, sampledTwoLines.Points.Length, "two line segments sample without duplicate join points");
+SampledPath sampledCubic = PathSampler.Sample(cubicPath);
+AssertTrue(sampledCubic.Points[0].X == 0 && sampledCubic.Points[^1].X == 3,
+    "adaptive cubic sampling preserves exact endpoints");
+var nearlyStraight = new PathDefinition
+{
+    Start = new Point2Dto { X = 0, Y = 0 },
+    Segments = [new CubicBezierPathSegmentDefinition
+    {
+        Control1 = new Point2Dto { X = 1, Y = 0.001f }, Control2 = new Point2Dto { X = 2, Y = -0.001f },
+        End = new Point2Dto { X = 3, Y = 0 },
+    }],
+};
+AssertTrue(MathF.Abs(PathSampler.Sample(nearlyStraight).TotalLength - 3.0f) < 0.01f,
+    "nearly straight cubic has stable approximate length");
+AssertTrue(sampledCubic.Points.Any(point => point.Y > 0.1f) && sampledCubic.Points.Any(point => point.Y < -0.1f),
+    "adaptive sampler resolves an S-curve on both sides of its chord");
+var tightCurve = new PathDefinition
+{
+    Start = new Point2Dto { X = 0, Y = 0 },
+    Segments = [new CubicBezierPathSegmentDefinition
+    {
+        Control1 = new Point2Dto { X = 0, Y = 5 }, Control2 = new Point2Dto { X = 0.1f, Y = -5 },
+        End = new Point2Dto { X = 0.1f, Y = 0 },
+    }],
+};
+AssertTrue(PathSampler.Sample(tightCurve).Points.Length > 10,
+    "tight cubic receives additional adaptive subdivisions");
+var pathological = new PathDefinition
+{
+    Start = new Point2Dto { X = 0, Y = 0 },
+    Segments = [new CubicBezierPathSegmentDefinition
+    {
+        Control1 = new Point2Dto { X = 100000, Y = 100000 }, Control2 = new Point2Dto { X = -100000, Y = -100000 },
+        End = new Point2Dto { X = 0, Y = 0 },
+    }],
+};
+AssertTrue(PathSampler.Sample(pathological).Points.Length <= 4097,
+    "adaptive sampler maximum recursion bounds pathological curves");
+var collinearOvershoot = new PathDefinition
+{
+    Start = new Point2Dto { X = 0, Y = 0 },
+    Segments = [new CubicBezierPathSegmentDefinition
+    {
+        Control1 = new Point2Dto { X = 10, Y = 0 },
+        Control2 = new Point2Dto { X = -10, Y = 0 },
+        End = new Point2Dto { X = 0.1f, Y = 0 },
+    }],
+};
+SampledPath overshootSample = PathSampler.Sample(collinearOvershoot);
+AssertTrue(overshootSample.Points.Length > 2 && overshootSample.TotalLength > 1,
+    "collinear cubic overshoot is not collapsed to its short endpoint chord");
+var duplicateControls = new PathDefinition
+{
+    Start = new Point2Dto { X = 0, Y = 0 },
+    Segments = [new CubicBezierPathSegmentDefinition
+    {
+        Control1 = new Point2Dto { X = 0, Y = 0 }, Control2 = new Point2Dto { X = 1, Y = 0 },
+        End = new Point2Dto { X = 1, Y = 0 },
+    }],
+};
+AssertTrue(PathSampler.Sample(duplicateControls).Points.All(point => float.IsFinite(point.X) && float.IsFinite(point.Y)),
+    "duplicate cubic controls still produce finite output");
+AssertEqual(5.0f, sampledLine.TotalLength, "straight sampled Path has known length");
+AssertTrue(sampledCubic.TotalLength > 3.0f && sampledCubic.TotalLength < 6.0f,
+    "cubic sampled length stays in a deterministic expected range");
+AssertTrue(sampledCubic.CumulativeDistances.Zip(sampledCubic.CumulativeDistances.Skip(1))
+        .All(pair => pair.Second > pair.First),
+    "sampled cumulative distances are strictly monotonic");
+AssertEqual(sampledCubic.TotalLength, sampledCubic.CumulativeDistances[^1],
+    "sampled total length equals the last cumulative value");
+
+PathBounds lineBounds = PathBoundsCalculator.Calculate(linePath, 0.0f);
+AssertTrue(lineBounds.MinX == 0 && lineBounds.MaxX == 3 && lineBounds.MinY == 0 && lineBounds.MaxY == 4,
+    "line Path bounds include both endpoints");
+var xExtremum = new PathDefinition
+{
+    Start = new Point2Dto { X = 0, Y = 0 }, Segments = [new CubicBezierPathSegmentDefinition
+    { Control1 = new Point2Dto { X = 2, Y = 0 }, Control2 = new Point2Dto { X = 2, Y = 0 }, End = new Point2Dto { X = 0, Y = 0 } }],
+};
+AssertTrue(MathF.Abs(PathBoundsCalculator.Calculate(xExtremum, 0).MaxX - 1.5f) < 0.0001f,
+    "cubic bounds include an interior X extremum");
+var yExtremum = new PathDefinition
+{
+    Start = new Point2Dto { X = 0, Y = 0 }, Segments = [new CubicBezierPathSegmentDefinition
+    { Control1 = new Point2Dto { X = 0, Y = -2 }, Control2 = new Point2Dto { X = 0, Y = -2 }, End = new Point2Dto { X = 0, Y = 0 } }],
+};
+AssertTrue(MathF.Abs(PathBoundsCalculator.Calculate(yExtremum, 0).MinY + 1.5f) < 0.0001f,
+    "cubic bounds include an interior Y extremum");
+PathBounds expandedBounds = PathBoundsCalculator.Calculate(linePath, 0.4f);
+AssertTrue(MathF.Abs(expandedBounds.MinX + 0.2f) < 0.0001f && MathF.Abs(expandedBounds.MaxY - 4.2f) < 0.0001f,
+    "marking bounds expand by half the world thickness");
+
+PathDefinition translated = PathTransformService.Transform(mixedPath,
+    point => new Point2Dto { X = point.X + 5, Y = point.Y - 2 });
+AssertTrue(translated.Start.X == 4 && ((CubicBezierPathSegmentDefinition)translated.Segments[1]).Control1.X == 6,
+    "Path transform applies translation to start and cubic controls");
+PathDefinition rotated = PathTransformService.Transform(linePath,
+    point => ExerciseInstanceGeometry.TransformPoint(point, new Point2Dto(), 90, new Point2Dto { X = 1, Y = 1 }));
+AssertTrue(MathF.Abs(rotated.Segments[0].EndPoint.X + 4) < 0.0001f && MathF.Abs(rotated.Segments[0].EndPoint.Y - 3) < 0.0001f,
+    "Path transform applies rotation in project coordinates");
+PathDefinition uniformScaled = PathTransformService.Transform(linePath,
+    point => ExerciseInstanceGeometry.TransformPoint(point, new Point2Dto(), 0, new Point2Dto { X = 2, Y = 2 }));
+AssertEqual(10.0f, PathSampler.Sample(uniformScaled).TotalLength, "uniform scale changes world Path length");
+PathDefinition nonUniformScaled = PathTransformService.Transform(cubicPath,
+    point => ExerciseInstanceGeometry.TransformPoint(point, new Point2Dto(), 0, new Point2Dto { X = 2, Y = 0.5f }));
+var scaledCubic = (CubicBezierPathSegmentDefinition)nonUniformScaled.Segments[0];
+AssertTrue(scaledCubic.Control1.X == 2 && scaledCubic.Control1.Y == 1,
+    "non-uniform scale transforms cubic control coordinates before sampling");
+AssertTrue(nonUniformScaled.Start.X == 0 && scaledCubic.End.X == 6 && scaledCubic.Control2.X == 4,
+    "transformed cubic preserves endpoints and both controls as cubic geometry");
+
+var joinedDashPath = PathEditing.FromPolyline([
+    new Point2Dto { X = 0, Y = 0 }, new Point2Dto { X = 0.5f, Y = 0 }, new Point2Dto { X = 1, Y = 0 }]);
+MarkingStyleGeometry joinedDash = MarkingGeometry.CreateStyleGeometry(PathSampler.Sample(joinedDashPath), "dashed");
+AssertTrue(joinedDash.Strokes.Count == 2 && MathF.Abs(joinedDash.Strokes[1].End.X - 0.75f) < 0.0001f,
+    "dashed phase continues across a Path segment boundary");
+MarkingStyleGeometry dottedGeometry = MarkingGeometry.CreateStyleGeometry(sampledLine, "dotted");
+AssertTrue(dottedGeometry.Dots.Count > 2 && MathF.Abs(dottedGeometry.Dots[1].X - 0.192f) < 0.001f,
+    "dotted centers use constant cumulative world-distance spacing");
+PathDefinition scaledPatternPath = PathTransformService.Transform(joinedDashPath,
+    point => ExerciseInstanceGeometry.TransformPoint(point, new Point2Dto(), 0, new Point2Dto { X = 3, Y = 0.5f }));
+AssertTrue(MarkingGeometry.CreateStyleGeometry(PathSampler.Sample(scaledPatternPath), "dashed").Strokes.Count > joinedDash.Strokes.Count,
+    "non-uniform scale generates marking style pattern from transformed world length");
 
 string mainSceneText = File.ReadAllText(Path.Combine(ProjectDirectory, "scenes", "Main.tscn"));
 AssertTrue(mainSceneText.Contains("type=\"CharacterBody3D\"", StringComparison.Ordinal),

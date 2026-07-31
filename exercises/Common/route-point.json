@@ -1,47 +1,53 @@
 {
-  "formatVersion": 2,
-  "exercise": {
-    "id": "route-point",
-    "name": "\u041F\u0443\u0442\u0435\u0432\u0430\u044F \u0442\u043E\u0447\u043A\u0430",
-    "version": 1
-  },
-  "bounds": {
-    "width": 1,
-    "length": 1
-  },
-  "cones": [],
-  "markings": [],
-  "entryPoint": {
-    "x": -0,
-    "y": -0.25
-  },
-  "exitPoint": {
-    "x": -0,
-    "y": 0.25
-  },
-  "trajectory": {
-    "segments": [
-      {
-        "id": "trajectory-segment-001",
-        "type": "cubicBezier",
-        "start": {
-          "x": -0,
-          "y": -0.25
-        },
-        "control1": {
-          "x": 0,
-          "y": -0.08333333
-        },
-        "control2": {
-          "x": 0,
-          "y": 0.08333334
-        },
-        "end": {
-          "x": -0,
-          "y": 0.25
-        }
-      }
-    ]
-  },
-  "checkpoints": []
+    "formatVersion":  3,
+    "exercise":  {
+                     "id":  "route-point",
+                     "name":  "Путевая точка",
+                     "version":  1
+                 },
+    "bounds":  {
+                   "width":  1,
+                   "length":  1
+               },
+    "cones":  [
+
+              ],
+    "markings":  [
+
+                 ],
+    "entryPoint":  {
+                       "x":  0,
+                       "y":  -0.25
+                   },
+    "exitPoint":  {
+                      "x":  0,
+                      "y":  0.25
+                  },
+    "trajectory":  {
+                       "segments":  [
+                                        {
+                                            "id":  "trajectory-segment-001",
+                                            "type":  "cubicBezier",
+                                            "start":  {
+                                                          "x":  0,
+                                                          "y":  -0.25
+                                                      },
+                                            "control1":  {
+                                                             "x":  0,
+                                                             "y":  -0.08333333
+                                                         },
+                                            "control2":  {
+                                                             "x":  0,
+                                                             "y":  0.08333334
+                                                         },
+                                            "end":  {
+                                                        "x":  0,
+                                                        "y":  0.25
+                                                    }
+                                        }
+                                    ]
+                   },
+    "checkpoints":  [
+
+                    ]
 }

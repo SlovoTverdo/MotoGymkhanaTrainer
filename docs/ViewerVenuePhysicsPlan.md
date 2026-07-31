@@ -676,16 +676,19 @@ Arrow orientation должна учитывать:
 
 Venue и Exercise markings проецируются на surface.
 
-Для line/polyline:
+Для Path marking:
 
-1. subdivide segments с максимальным spacing;
-2. project каждую sample point;
-3. построить 3D marking mesh.
+1. адаптивно sample line/cubic centerline;
+2. вычислить cumulative world-space distance и style geometry;
+3. project centerline/stroke/dot samples один раз после physics synchronization;
+4. построить 3D marking mesh с normal offset.
 
 Для dashed/dotted styles:
 
 * использовать существующую style semantics;
-* вычислять pattern по длине projected или исходной линии последовательно;
+* вычислять pattern по cumulative world-space distance без сброса на segment boundaries;
+* dotted centers собирать batched mesh, не создавать Node3D на каждую точку;
+* solid/dashed projected intervals одного marking собирать в один ribbon mesh;
 * не создавать отдельные physics objects.
 
 `visibleInViewer = false` по-прежнему не отображается.
@@ -793,7 +796,7 @@ DirectionArrow
 * попробовать несколько небольших offsets;
 * либо использовать заранее определённую безопасную позицию около центра.
 
-Persisted spawn point не добавляется в formatVersion 4.
+Persisted spawn point не добавляется в formatVersion 5.
 
 ---
 
@@ -841,7 +844,7 @@ CharacterBody3D collision movement
 
 # 31. Viewer reload cleanup
 
-При загрузке нового Track v4 удалить:
+При загрузке нового Track v5 удалить:
 
 * старый CharacterBody runtime state, если он пересоздаётся;
 * Venue surface visual;
@@ -944,10 +947,10 @@ Iteration 1 не добавляет elevation в:
 Не повышать:
 
 ```text
-Venue Definition formatVersion 1
+Venue Definition formatVersion 2
 Track Project formatVersion 3
-Exported Track formatVersion 4
-Exercise Definition formatVersion 2
+Exported Track formatVersion 5
+Exercise Definition formatVersion 3
 ```
 
 ---

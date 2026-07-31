@@ -754,18 +754,15 @@ public partial class TrackViewer : Node3D
 
         foreach (MarkingDto marking in markings)
         {
+            if (!string.IsNullOrEmpty(marking.LoadError))
+            {
+                GD.PushWarning(marking.LoadError);
+                continue;
+            }
             if (!marking.VisibleInViewer)
             {
                 // Hidden markings remain in JSON and editor data, but have no
                 // runtime visual node by explicit exported-track instruction.
-                continue;
-            }
-
-            string type = marking.Type.ToLowerInvariant();
-            if (type is not ("line" or "polyline"))
-            {
-                // Geometry for future contract types is intentionally left undefined.
-                GD.PushWarning($"Marking '{marking.Id}' has unsupported type '{marking.Type}' and was skipped.");
                 continue;
             }
 
@@ -789,8 +786,21 @@ public partial class TrackViewer : Node3D
                 Name = string.IsNullOrWhiteSpace(marking.Id) ? "Marking" : marking.Id,
             };
 
-            int strokeIndex = 0;
-            foreach (MarkingStroke stroke in MarkingGeometry.CreateStrokes(marking.Points, style))
+            SampledPath sampled;
+            try
+            {
+                PathValidator.ValidateOrThrow(marking.Path, $"marking '{marking.Id}'.path");
+                sampled = PathSampler.Sample(marking.Path);
+            }
+            catch (InvalidDataException exception)
+            {
+                GD.PushWarning($"Marking '{marking.Id}' was skipped: {exception.Message}");
+                continue;
+            }
+
+            MarkingStyleGeometry styleGeometry = MarkingGeometry.CreateStyleGeometry(sampled, style);
+            var projectedStrokes = new List<IReadOnlyList<ProjectedSurfacePoint>>();
+            foreach (MarkingStroke stroke in styleGeometry.Strokes)
             {
                 ProjectedSurfacePoint[] projected = projection.ProjectPolyline(
                     [stroke.Start, stroke.End],
@@ -798,19 +808,66 @@ public partial class TrackViewer : Node3D
                     marking.Id,
                     MaximumProjectionSpacingMeters,
                     MarkingSurfaceOffset);
-                var strokeRoot = new Node3D { Name = $"Stroke_{strokeIndex++}" };
-                AddProjectedPathSegments(
-                    strokeRoot,
-                    projected,
-                    marking.WidthMeters,
-                    material);
-                markingRoot.AddChild(strokeRoot);
+                projectedStrokes.Add(projected);
             }
+            MeshInstance3D? ribbon = CreateProjectedRibbon(
+                "Ribbon", projectedStrokes, marking.WidthMeters, material);
+            if (ribbon is not null) markingRoot.AddChild(ribbon);
+            AddProjectedDots(markingRoot, styleGeometry.Dots, marking, projection, material);
 
             root.AddChild(markingRoot);
         }
 
         return root;
+    }
+
+    /// <summary>Adds all dotted-style discs in one MultiMesh instead of one node per dot.</summary>
+    private static void AddProjectedDots(
+        Node3D parent,
+        IReadOnlyList<Point2Dto> dots,
+        MarkingDto marking,
+        SurfaceProjectionService projection,
+        Material material)
+    {
+        if (dots.Count == 0) return;
+
+        var transforms = new List<Transform3D>(dots.Count);
+        foreach (Point2Dto dot in dots)
+        {
+            projection.TryProjectPoint(dot, "Marking", marking.Id,
+                out ProjectedSurfacePoint projected, MarkingSurfaceOffset);
+            Vector3 up = projected.Normal.Normalized();
+            if (up.LengthSquared() <= 0.00001f) up = Vector3.Up;
+            Vector3 right = MathF.Abs(up.Dot(Vector3.Right)) < 0.95f
+                ? up.Cross(Vector3.Right).Normalized()
+                : up.Cross(Vector3.Forward).Normalized();
+            Vector3 forward = right.Cross(up).Normalized();
+            transforms.Add(new Transform3D(new Basis(right, up, forward), projected.Position));
+        }
+
+        var dotMesh = new CylinderMesh
+        {
+            TopRadius = marking.WidthMeters * 0.5f,
+            BottomRadius = marking.WidthMeters * 0.5f,
+            Height = PathSegmentHeight,
+            RadialSegments = 12,
+            Rings = 1,
+            Material = material,
+        };
+        var multiMesh = new MultiMesh
+        {
+            TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
+            Mesh = dotMesh,
+            InstanceCount = transforms.Count,
+        };
+        for (int index = 0; index < transforms.Count; index++)
+            multiMesh.SetInstanceTransform(index, transforms[index]);
+        parent.AddChild(new MultiMeshInstance3D
+        {
+            Name = "Dots",
+            Multimesh = multiMesh,
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+        });
     }
 
     private static Node3D CreateTrajectory(
@@ -1036,6 +1093,75 @@ public partial class TrackViewer : Node3D
                 parent.AddChild(segment);
             }
         }
+    }
+
+    /// <summary>
+    /// Batches all solid/dashed intervals of one marking into a single ribbon
+    /// mesh. Projection is still performed per centerline interval, but sampled
+    /// subdivisions no longer create one Node3D per interval.
+    /// </summary>
+    private static MeshInstance3D? CreateProjectedRibbon(
+        string name,
+        IReadOnlyList<IReadOnlyList<ProjectedSurfacePoint>> strokes,
+        float width,
+        Material material)
+    {
+        var surface = new SurfaceTool();
+        surface.Begin(Mesh.PrimitiveType.Triangles);
+        int triangleCount = 0;
+        float halfWidth = width * 0.5f;
+
+        foreach (IReadOnlyList<ProjectedSurfacePoint> points in strokes)
+        {
+            for (int index = 0; index < points.Count - 1; index++)
+            {
+                Vector3 start = points[index].Position;
+                Vector3 end = points[index + 1].Position;
+                Vector3 direction = end - start;
+                float length = direction.Length();
+                if (length <= Mathf.Epsilon) continue;
+
+                Vector3 forward = direction / length;
+                Vector3 normal = (points[index].Normal + points[index + 1].Normal).Normalized();
+                if (normal.LengthSquared() <= 0.00001f || MathF.Abs(normal.Dot(forward)) > 0.98f)
+                    normal = Vector3.Up;
+                Vector3 right = normal.Cross(forward).Normalized() * halfWidth;
+                Vector3 adjustedNormal = forward.Cross(right.Normalized()).Normalized();
+                Vector3 startLeft = start - right;
+                Vector3 startRight = start + right;
+                Vector3 endLeft = end - right;
+                Vector3 endRight = end + right;
+
+                AddRibbonTriangle(surface, adjustedNormal, startLeft, startRight, endRight);
+                AddRibbonTriangle(surface, adjustedNormal, startLeft, endRight, endLeft);
+                triangleCount += 2;
+            }
+        }
+
+        if (triangleCount == 0) return null;
+        ArrayMesh mesh = surface.Commit();
+        return new MeshInstance3D
+        {
+            Name = name,
+            Mesh = mesh,
+            MaterialOverride = material,
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+        };
+    }
+
+    private static void AddRibbonTriangle(
+        SurfaceTool surface,
+        Vector3 normal,
+        Vector3 a,
+        Vector3 b,
+        Vector3 c)
+    {
+        surface.SetNormal(normal);
+        surface.AddVertex(a);
+        surface.SetNormal(normal);
+        surface.AddVertex(b);
+        surface.SetNormal(normal);
+        surface.AddVertex(c);
     }
 
     private static MeshInstance3D? CreateProjectedPathSegment(

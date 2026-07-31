@@ -11,7 +11,7 @@ namespace MotoGymkhanaTrainer.ExerciseEditor;
 public sealed class ExerciseDefinitionDto
 {
     [JsonPropertyName("formatVersion")]
-    public int FormatVersion { get; set; } = 2;
+    public int FormatVersion { get; set; } = 3;
 
     [JsonPropertyName("exercise")]
     public ExerciseMetadataDto Exercise { get; set; } = new();

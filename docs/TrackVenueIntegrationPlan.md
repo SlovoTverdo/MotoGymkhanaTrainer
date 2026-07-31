@@ -58,10 +58,10 @@ Exported Track JSON содержит полный snapshot Venue и Track.
 После интеграции используются:
 
 ```text
-Venue Definition     formatVersion 1
-Exercise Definition  formatVersion 2
+Venue Definition     formatVersion 2
+Exercise Definition  formatVersion 3
 Track Project        formatVersion 3
-Exported Track       formatVersion 4
+Exported Track       formatVersion 5
 ```
 
 Совместимость Track Project version 1–2 не реализуется.
@@ -799,7 +799,7 @@ TrackProject
 
 # Viewer physical completion
 
-Track/Venue Integration считается визуально завершённой после Exported Track v4, но физическое взаимодействие реализуется отдельной итерацией:
+Track/Venue Integration считается визуально завершённой после Exported Track v5, но физическое взаимодействие реализуется отдельной итерацией:
 
 ```text
 docs/ViewerVenuePhysicsPlan.md
@@ -833,7 +833,7 @@ Viewer:
 
 ## Track visual projection
 
-Двумерная geometry Exported Track v4 проецируется Viewer на runtime surface.
+Двумерная geometry Exported Track v5 проецируется Viewer на runtime surface.
 
 Это относится к:
 

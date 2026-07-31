@@ -3,11 +3,11 @@ using MotoGymkhanaTrainer.Tracks;
 
 namespace MotoGymkhanaTrainer.VenueEditor;
 
-/// <summary>Standalone persisted Venue Definition v1 root.</summary>
+/// <summary>Standalone persisted Venue Definition v2 root.</summary>
 public sealed class VenueDefinitionDto
 {
     [JsonPropertyName("formatVersion")]
-    public int FormatVersion { get; set; } = 1;
+    public int FormatVersion { get; set; } = 2;
 
     [JsonPropertyName("venue")]
     public VenueMetadataDto Venue { get; set; } = new();

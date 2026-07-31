@@ -3,7 +3,7 @@ using MotoGymkhanaTrainer.Tracks;
 
 namespace MotoGymkhanaTrainer.VenueEditor;
 
-/// <summary>Standalone 2D authoring scene for Venue Definition v1.</summary>
+/// <summary>Standalone 2D authoring scene for Venue Definition v2.</summary>
 public partial class VenueEditor : Control
 {
     private enum PendingAction { None, New, Open }
@@ -248,15 +248,19 @@ public partial class VenueEditor : Control
         }
         else if (marking is not null)
         {
-            int index = _canvas.SelectedPointIndex >= 0 ? _canvas.SelectedPointIndex : 0; SetPoint(marking.Points[index]);
+            Point2Dto[] vertices = PathEditing.IsAllLine(marking.Path) ? PathEditing.GetVertices(marking.Path) : [];
+            int index = _canvas.SelectedPointIndex >= 0 ? _canvas.SelectedPointIndex : 0;
+            if (vertices.Length > index) SetPoint(vertices[index]);
             _markingColor!.Color = new Color(marking.Color.TrimStart('#')); _markingWidth!.Value = marking.WidthMeters;
             _markingStyle!.Select(marking.Style switch { "dashed" => 1, "dotted" => 2, _ => 0 });
             _visibleInViewer!.ButtonPressed = marking.VisibleInViewer;
         }
         bool locked = item is not null && _lockedObjectIds.Contains(item.ObjectId);
         foreach (SpinBox control in ObjectTransformControls()) control.Editable = !locked;
-        _duplicateButton!.Disabled = item is null; _insertPointButton!.Disabled = marking?.Type != "polyline";
-        _deletePointButton!.Disabled = marking?.Type != "polyline" || marking.Points.Length <= 2 || _canvas.SelectedPointIndex < 0;
+        bool editableMarkingPath = marking is not null && PathEditing.IsAllLine(marking.Path);
+        int markingVertexCount = editableMarkingPath ? PathEditing.GetVertices(marking!.Path).Length : 0;
+        _duplicateButton!.Disabled = item is null; _insertPointButton!.Disabled = !editableMarkingPath;
+        _deletePointButton!.Disabled = !editableMarkingPath || markingVertexCount <= 2 || _canvas.SelectedPointIndex < 0;
         _updatingUi = false;
     }
 

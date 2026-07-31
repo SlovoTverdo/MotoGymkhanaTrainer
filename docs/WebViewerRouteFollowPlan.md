@@ -36,12 +36,12 @@ web-viewer/
 Не изменять:
 
 * основной Godot C#-проект;
-* Exercise Definition formatVersion 2;
-* Venue Definition formatVersion 1;
+* Exercise Definition formatVersion 3;
+* Venue Definition formatVersion 2;
 * Track Project formatVersion 3;
-* Exported Track formatVersion 4.
+* Exported Track formatVersion 5.
 
-Follow использует уже загруженную глобальную trajectory из Exported Track v4.
+Follow использует уже загруженную глобальную trajectory из Exported Track v5.
 
 ---
 
@@ -53,7 +53,7 @@ Follow использует уже загруженную глобальную t
 track.trajectory
 ```
 
-либо фактическое поле глобальной trajectory в текущем Track v4 DTO.
+либо фактическое поле глобальной trajectory в текущем Track v5 DTO.
 
 Использовать ту же runtime-траекторию, которая применяется для визуального отображения маршрута.
 
@@ -75,7 +75,7 @@ Follow должен использовать trajectory после проекц�
 Последовательность:
 
 ```text
-Track v4 trajectory
+Track v5 trajectory
     ↓
 sampling
     ↓

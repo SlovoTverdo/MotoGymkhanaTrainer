@@ -102,8 +102,7 @@ public sealed class VenueDocument
         var marking = new MarkingDto
         {
             Id = NextId("venue-marking", Definition.Markings.Select(value => value.Id)),
-            Type = type,
-            Points = points.Select(Copy).ToArray(),
+            Path = PathEditing.FromPolyline(points),
             Color = "#FFFFFF",
             WidthMeters = 0.08f,
             Style = "solid",
@@ -121,22 +120,20 @@ public sealed class VenueDocument
     public void MoveMarkingPoint(string id, int index, Point2Dto point)
     {
         MarkingDto marking = FindMarking(id) ?? throw Missing(id);
-        marking.Points[index] = Copy(point);
+        if (!PathEditing.TryMoveVertex(marking.Path, index, point))
+            throw new InvalidOperationException("Curved marking path vertices are read-only in this iteration.");
     }
     public void InsertMarkingPointAfter(string id, int index)
     {
         MarkingDto marking = FindMarking(id) ?? throw Missing(id);
-        if (marking.Type != "polyline") throw new InvalidOperationException("Only polyline supports point insertion.");
-        Point2Dto a = marking.Points[index];
-        Point2Dto b = marking.Points[Math.Min(index + 1, marking.Points.Length - 1)];
-        var point = new Point2Dto { X = (a.X + b.X) * 0.5f, Y = (a.Y + b.Y) * 0.5f };
-        marking.Points = [.. marking.Points.Take(index + 1), point, .. marking.Points.Skip(index + 1)];
+        if (PathEditing.InsertVertexAfter(marking.Path, index) < 0)
+            throw new InvalidOperationException("Only an all-line path supports point insertion.");
     }
     public void DeleteMarkingPoint(string id, int index)
     {
         MarkingDto marking = FindMarking(id) ?? throw Missing(id);
-        if (marking.Type != "polyline" || marking.Points.Length <= 2) throw new InvalidOperationException("A marking must keep at least two points.");
-        marking.Points = [.. marking.Points.Take(index), .. marking.Points.Skip(index + 1)];
+        if (!PathEditing.DeleteInternalVertex(marking.Path, index))
+            throw new InvalidOperationException("Only an internal vertex of an all-line path can be deleted.");
     }
 
     private static string NextId(string prefix, IEnumerable<string> existing)

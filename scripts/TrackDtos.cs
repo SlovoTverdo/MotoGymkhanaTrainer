@@ -30,7 +30,7 @@ public sealed class TrackSnapshotDto
     public ConeDto[] Cones { get; init; } = [];
 
     [JsonPropertyName("markings")]
-    public MarkingDto[] Markings { get; init; } = [];
+    public MarkingDto[] Markings { get; set; } = [];
 
     [JsonPropertyName("trajectory")]
     public TrajectoryDto Trajectory { get; init; } = new();
@@ -174,17 +174,11 @@ public sealed class ConeDto
     public string Type { get; init; } = string.Empty;
 }
 
-/// <summary>A resolved colored marking whose points are already in world coordinates.</summary>
+/// <summary>A colored marking whose Path is local or resolved according to its root document.</summary>
 public sealed class MarkingDto
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
-
-    [JsonPropertyName("type")]
-    public string Type { get; set; } = string.Empty;
-
-    [JsonPropertyName("points")]
-    public Point2Dto[] Points { get; set; } = [];
 
     [JsonPropertyName("color")]
     public string Color { get; set; } = "#FFFFFF";
@@ -202,6 +196,16 @@ public sealed class MarkingDto
     /// </summary>
     [JsonPropertyName("visibleInViewer")]
     public bool VisibleInViewer { get; set; } = true;
+
+    [JsonPropertyName("path")]
+    public PathDefinition Path { get; set; } = new();
+
+    /// <summary>
+    /// Viewer-only diagnostic assigned when one exported marking cannot be
+    /// parsed or validated. It is never serialized back into the contract.
+    /// </summary>
+    [JsonIgnore]
+    public string LoadError { get; set; } = string.Empty;
 }
 
 /// <summary>Resolved world-space reference trajectory rendered by the Viewer.</summary>

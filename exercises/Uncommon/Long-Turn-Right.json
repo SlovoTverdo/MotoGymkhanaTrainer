@@ -1,225 +1,229 @@
 {
-  "formatVersion": 2,
-  "exercise": {
-    "id": "Long-Turn-Right",
-    "name": "\u0414\u043B\u0438\u043D\u043D\u044B\u0439 \u043F\u0440\u0430\u0432\u044B\u0439 180",
-    "version": 1
-  },
-  "bounds": {
-    "width": 9,
-    "length": 5
-  },
-  "cones": [
-    {
-      "id": "cone-001",
-      "position": {
-        "x": 3.929,
-        "y": 2.2022586
-      },
-      "color": "red",
-      "type": "standard"
-    },
-    {
-      "id": "cone-002",
-      "position": {
-        "x": -0,
-        "y": -2
-      },
-      "color": "red",
-      "type": "standard"
-    },
-    {
-      "id": "cone-003",
-      "position": {
-        "x": -3.9383094,
-        "y": 2.2106726
-      },
-      "color": "red",
-      "type": "standard"
-    },
-    {
-      "id": "cone-004",
-      "position": {
-        "x": 3.7186441,
-        "y": 1.3692492
-      },
-      "color": "red",
-      "type": "standard"
-    },
-    {
-      "id": "cone-005",
-      "position": {
-        "x": 3.4493887,
-        "y": 0.41002655
-      },
-      "color": "red",
-      "type": "standard"
-    },
-    {
-      "id": "cone-006",
-      "position": {
-        "x": 1,
-        "y": -1.75
-      },
-      "color": "red",
-      "type": "standard"
-    },
-    {
-      "id": "cone-007",
-      "position": {
-        "x": 2.885635,
-        "y": -0.4734681
-      },
-      "color": "red",
-      "type": "standard"
-    },
-    {
-      "id": "cone-008",
-      "position": {
-        "x": -2.7687309,
-        "y": -0.6333386
-      },
-      "color": "red",
-      "type": "standard"
-    },
-    {
-      "id": "cone-009",
-      "position": {
-        "x": -3.7616105,
-        "y": 1.2262073
-      },
-      "color": "red",
-      "type": "standard"
-    },
-    {
-      "id": "cone-010",
-      "position": {
-        "x": -3.3408988,
-        "y": 0.4016123
-      },
-      "color": "red",
-      "type": "standard"
-    },
-    {
-      "id": "cone-011",
-      "position": {
-        "x": -1,
-        "y": -1.75
-      },
-      "color": "red",
-      "type": "standard"
-    },
-    {
-      "id": "cone-012",
-      "position": {
-        "x": 2.0778685,
-        "y": -1.2728205
-      },
-      "color": "red",
-      "type": "standard"
-    },
-    {
-      "id": "cone-013",
-      "position": {
-        "x": -2.0114496,
-        "y": -1.3317201
-      },
-      "color": "red",
-      "type": "standard"
-    }
-  ],
-  "markings": [],
-  "entryPoint": {
-    "x": 4.5,
-    "y": 2.5
-  },
-  "exitPoint": {
-    "x": -4.5,
-    "y": 2.5
-  },
-  "trajectory": {
-    "segments": [
-      {
-        "id": "trajectory-segment-001",
-        "type": "cubicBezier",
-        "start": {
-          "x": 4.5,
-          "y": 2.5
-        },
-        "control1": {
-          "x": 4.5,
-          "y": 1.5
-        },
-        "control2": {
-          "x": 4.2234983,
-          "y": 0.6540393
-        },
-        "end": {
-          "x": 4,
-          "y": 0
-        }
-      },
-      {
-        "id": "trajectory-segment-003",
-        "type": "cubicBezier",
-        "start": {
-          "x": 4,
-          "y": 0
-        },
-        "control1": {
-          "x": 3.390489,
-          "y": -1.365377
-        },
-        "control2": {
-          "x": 2,
-          "y": -2.5
-        },
-        "end": {
-          "x": -0,
-          "y": -2.5
-        }
-      },
-      {
-        "id": "trajectory-segment-008",
-        "type": "cubicBezier",
-        "start": {
-          "x": -0,
-          "y": -2.5
-        },
-        "control1": {
-          "x": -2,
-          "y": -2.5
-        },
-        "control2": {
-          "x": -3.3072417,
-          "y": -1.2391635
-        },
-        "end": {
-          "x": -3.9803805,
-          "y": -0.0022709484
-        }
-      },
-      {
-        "id": "trajectory-segment-011",
-        "type": "cubicBezier",
-        "start": {
-          "x": -3.9803805,
-          "y": -0.0022709484
-        },
-        "control1": {
-          "x": -4.308536,
-          "y": 0.83073825
-        },
-        "control2": {
-          "x": -4.5,
-          "y": 1.5
-        },
-        "end": {
-          "x": -4.5,
-          "y": 2.5
-        }
-      }
-    ]
-  },
-  "checkpoints": []
+    "formatVersion":  3,
+    "exercise":  {
+                     "id":  "Long-Turn-Right",
+                     "name":  "Длинный правый 180",
+                     "version":  1
+                 },
+    "bounds":  {
+                   "width":  9,
+                   "length":  5
+               },
+    "cones":  [
+                  {
+                      "id":  "cone-001",
+                      "position":  {
+                                       "x":  3.929,
+                                       "y":  2.2022586
+                                   },
+                      "color":  "red",
+                      "type":  "standard"
+                  },
+                  {
+                      "id":  "cone-002",
+                      "position":  {
+                                       "x":  0,
+                                       "y":  -2
+                                   },
+                      "color":  "red",
+                      "type":  "standard"
+                  },
+                  {
+                      "id":  "cone-003",
+                      "position":  {
+                                       "x":  -3.9383094,
+                                       "y":  2.2106726
+                                   },
+                      "color":  "red",
+                      "type":  "standard"
+                  },
+                  {
+                      "id":  "cone-004",
+                      "position":  {
+                                       "x":  3.7186441,
+                                       "y":  1.3692492
+                                   },
+                      "color":  "red",
+                      "type":  "standard"
+                  },
+                  {
+                      "id":  "cone-005",
+                      "position":  {
+                                       "x":  3.4493887,
+                                       "y":  0.41002655
+                                   },
+                      "color":  "red",
+                      "type":  "standard"
+                  },
+                  {
+                      "id":  "cone-006",
+                      "position":  {
+                                       "x":  1,
+                                       "y":  -1.75
+                                   },
+                      "color":  "red",
+                      "type":  "standard"
+                  },
+                  {
+                      "id":  "cone-007",
+                      "position":  {
+                                       "x":  2.885635,
+                                       "y":  -0.4734681
+                                   },
+                      "color":  "red",
+                      "type":  "standard"
+                  },
+                  {
+                      "id":  "cone-008",
+                      "position":  {
+                                       "x":  -2.7687309,
+                                       "y":  -0.6333386
+                                   },
+                      "color":  "red",
+                      "type":  "standard"
+                  },
+                  {
+                      "id":  "cone-009",
+                      "position":  {
+                                       "x":  -3.7616105,
+                                       "y":  1.2262073
+                                   },
+                      "color":  "red",
+                      "type":  "standard"
+                  },
+                  {
+                      "id":  "cone-010",
+                      "position":  {
+                                       "x":  -3.3408988,
+                                       "y":  0.4016123
+                                   },
+                      "color":  "red",
+                      "type":  "standard"
+                  },
+                  {
+                      "id":  "cone-011",
+                      "position":  {
+                                       "x":  -1,
+                                       "y":  -1.75
+                                   },
+                      "color":  "red",
+                      "type":  "standard"
+                  },
+                  {
+                      "id":  "cone-012",
+                      "position":  {
+                                       "x":  2.0778685,
+                                       "y":  -1.2728205
+                                   },
+                      "color":  "red",
+                      "type":  "standard"
+                  },
+                  {
+                      "id":  "cone-013",
+                      "position":  {
+                                       "x":  -2.0114496,
+                                       "y":  -1.3317201
+                                   },
+                      "color":  "red",
+                      "type":  "standard"
+                  }
+              ],
+    "markings":  [
+
+                 ],
+    "entryPoint":  {
+                       "x":  4.5,
+                       "y":  2.5
+                   },
+    "exitPoint":  {
+                      "x":  -4.5,
+                      "y":  2.5
+                  },
+    "trajectory":  {
+                       "segments":  [
+                                        {
+                                            "id":  "trajectory-segment-001",
+                                            "type":  "cubicBezier",
+                                            "start":  {
+                                                          "x":  4.5,
+                                                          "y":  2.5
+                                                      },
+                                            "control1":  {
+                                                             "x":  4.5,
+                                                             "y":  1.5
+                                                         },
+                                            "control2":  {
+                                                             "x":  4.2234983,
+                                                             "y":  0.6540393
+                                                         },
+                                            "end":  {
+                                                        "x":  4,
+                                                        "y":  0
+                                                    }
+                                        },
+                                        {
+                                            "id":  "trajectory-segment-003",
+                                            "type":  "cubicBezier",
+                                            "start":  {
+                                                          "x":  4,
+                                                          "y":  0
+                                                      },
+                                            "control1":  {
+                                                             "x":  3.390489,
+                                                             "y":  -1.365377
+                                                         },
+                                            "control2":  {
+                                                             "x":  2,
+                                                             "y":  -2.5
+                                                         },
+                                            "end":  {
+                                                        "x":  0,
+                                                        "y":  -2.5
+                                                    }
+                                        },
+                                        {
+                                            "id":  "trajectory-segment-008",
+                                            "type":  "cubicBezier",
+                                            "start":  {
+                                                          "x":  0,
+                                                          "y":  -2.5
+                                                      },
+                                            "control1":  {
+                                                             "x":  -2,
+                                                             "y":  -2.5
+                                                         },
+                                            "control2":  {
+                                                             "x":  -3.3072417,
+                                                             "y":  -1.2391635
+                                                         },
+                                            "end":  {
+                                                        "x":  -3.9803805,
+                                                        "y":  -0.0022709484
+                                                    }
+                                        },
+                                        {
+                                            "id":  "trajectory-segment-011",
+                                            "type":  "cubicBezier",
+                                            "start":  {
+                                                          "x":  -3.9803805,
+                                                          "y":  -0.0022709484
+                                                      },
+                                            "control1":  {
+                                                             "x":  -4.308536,
+                                                             "y":  0.83073825
+                                                         },
+                                            "control2":  {
+                                                             "x":  -4.5,
+                                                             "y":  1.5
+                                                         },
+                                            "end":  {
+                                                        "x":  -4.5,
+                                                        "y":  2.5
+                                                    }
+                                        }
+                                    ]
+                   },
+    "checkpoints":  [
+
+                    ]
 }

@@ -73,7 +73,7 @@ web-viewer/tracks/default-track.json
 
 Для Web Viewer нужна обычная версия Godot, не Godot .NET.
 
-По умолчанию script берёт актуальный Exported Track v4 из:
+По умолчанию script берёт актуальный Exported Track v5 из:
 
 ```text
 exports/tracks/new-track-001.json

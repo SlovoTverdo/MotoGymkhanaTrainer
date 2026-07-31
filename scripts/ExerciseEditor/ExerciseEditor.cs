@@ -1214,7 +1214,7 @@ public partial class ExerciseEditor : Control
         _trajectorySegmentProperties!.Visible = false;
         _markingProperties!.Visible = true;
         _markingIdLabel!.Text = marking.Id;
-        _markingTypeLabel!.Text = marking.Type;
+        _markingTypeLabel!.Text = PathEditing.IsAllLine(marking.Path) ? "line path" : "curved path";
         _markingColorEdit!.Color = ParseCanonicalColor(marking.Color);
         _markingWidthEdit!.Value = marking.WidthMeters;
         _markingStyleEdit!.Selected = marking.Style switch
@@ -1230,7 +1230,7 @@ public partial class ExerciseEditor : Control
         if (pointSelected)
         {
             int pointIndex = _canvas.SelectedMarkingPointIndex;
-            Point2Dto point = marking.Points[pointIndex];
+            Point2Dto point = PathEditing.GetVertices(marking.Path)[pointIndex];
             _markingPointIndexLabel!.Text = pointIndex.ToString();
             _markingPointXEdit!.Value = point.X;
             _markingPointYEdit!.Value = point.Y;

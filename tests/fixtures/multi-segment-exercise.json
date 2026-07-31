@@ -1,85 +1,89 @@
 {
-  "formatVersion": 1,
-  "exercise": {
-    "id": "multi-segment-fixture",
-    "name": "Multi Segment Fixture",
-    "version": 1
-  },
-  "bounds": {
-    "width": 12.0,
-    "length": 16.0
-  },
-  "cones": [
-    {
-      "id": "cone-001",
-      "position": {
-        "x": 1.0,
-        "y": 0.0
-      },
-      "color": "orange",
-      "type": "standard"
-    }
-  ],
-  "markings": [],
-  "entryPoint": {
-    "x": 0.0,
-    "y": -6.0
-  },
-  "exitPoint": {
-    "x": 0.0,
-    "y": 6.0
-  },
-  "trajectory": {
-    "segments": [
-      {
-        "id": "fixture-line-in",
-        "type": "polyline",
-        "points": [
-          {
-            "x": 0.0,
-            "y": -6.0
-          },
-          {
-            "x": -2.0,
-            "y": -2.0
-          }
-        ]
-      },
-      {
-        "id": "fixture-curve",
-        "type": "cubicBezier",
-        "start": {
-          "x": -2.0,
-          "y": -2.0
-        },
-        "control1": {
-          "x": 2.0,
-          "y": -2.0
-        },
-        "control2": {
-          "x": 2.0,
-          "y": 2.0
-        },
-        "end": {
-          "x": -2.0,
-          "y": 2.0
-        }
-      },
-      {
-        "id": "fixture-line-out",
-        "type": "polyline",
-        "points": [
-          {
-            "x": -2.0,
-            "y": 2.0
-          },
-          {
-            "x": 0.0,
-            "y": 6.0
-          }
-        ]
-      }
-    ]
-  },
-  "checkpoints": []
+    "formatVersion":  3,
+    "exercise":  {
+                     "id":  "multi-segment-fixture",
+                     "name":  "Multi Segment Fixture",
+                     "version":  1
+                 },
+    "bounds":  {
+                   "width":  12.0,
+                   "length":  16.0
+               },
+    "cones":  [
+                  {
+                      "id":  "cone-001",
+                      "position":  {
+                                       "x":  1.0,
+                                       "y":  0.0
+                                   },
+                      "color":  "orange",
+                      "type":  "standard"
+                  }
+              ],
+    "markings":  [
+
+                 ],
+    "entryPoint":  {
+                       "x":  0.0,
+                       "y":  -6.0
+                   },
+    "exitPoint":  {
+                      "x":  0.0,
+                      "y":  6.0
+                  },
+    "trajectory":  {
+                       "segments":  [
+                                        {
+                                            "id":  "fixture-line-in",
+                                            "type":  "polyline",
+                                            "points":  [
+                                                           {
+                                                               "x":  0.0,
+                                                               "y":  -6.0
+                                                           },
+                                                           {
+                                                               "x":  -2.0,
+                                                               "y":  -2.0
+                                                           }
+                                                       ]
+                                        },
+                                        {
+                                            "id":  "fixture-curve",
+                                            "type":  "cubicBezier",
+                                            "start":  {
+                                                          "x":  -2.0,
+                                                          "y":  -2.0
+                                                      },
+                                            "control1":  {
+                                                             "x":  2.0,
+                                                             "y":  -2.0
+                                                         },
+                                            "control2":  {
+                                                             "x":  2.0,
+                                                             "y":  2.0
+                                                         },
+                                            "end":  {
+                                                        "x":  -2.0,
+                                                        "y":  2.0
+                                                    }
+                                        },
+                                        {
+                                            "id":  "fixture-line-out",
+                                            "type":  "polyline",
+                                            "points":  [
+                                                           {
+                                                               "x":  -2.0,
+                                                               "y":  2.0
+                                                           },
+                                                           {
+                                                               "x":  0.0,
+                                                               "y":  6.0
+                                                           }
+                                                       ]
+                                        }
+                                    ]
+                   },
+    "checkpoints":  [
+
+                    ]
 }

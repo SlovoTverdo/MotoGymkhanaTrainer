@@ -258,7 +258,7 @@ scale.y > 0
 Масштабируются:
 
 * cone positions;
-* marking points;
+* marking Path start/end/control points;
 * trajectory;
 * entry/exit;
 * bounds.

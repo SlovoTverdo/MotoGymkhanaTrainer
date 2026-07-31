@@ -5,7 +5,7 @@ using MotoGymkhanaTrainer.Tracks;
 
 namespace MotoGymkhanaTrainer.TrackEditor;
 
-/// <summary>Writes canonical self-contained Viewer snapshots as Track v4 JSON.</summary>
+/// <summary>Writes canonical self-contained Viewer snapshots as Track v5 JSON.</summary>
 public static class TrackExportStore
 {
     private static readonly JsonSerializerOptions WriteOptions = new()
@@ -17,7 +17,7 @@ public static class TrackExportStore
     /// <summary>Serializes and round-trips through the Viewer loader before disk output.</summary>
     public static string Serialize(TrackSnapshotDto snapshot)
     {
-        snapshot.FormatVersion = 4;
+        snapshot.FormatVersion = 5;
         string json = JsonSerializer.Serialize(snapshot, WriteOptions);
         _ = TrackLoader.LoadFromJson(json, "compiled Track export");
         return json;

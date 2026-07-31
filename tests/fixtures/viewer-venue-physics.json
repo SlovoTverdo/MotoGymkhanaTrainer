@@ -1,0 +1,43 @@
+{
+  "formatVersion": 5,
+  "track": { "id": "viewer-venue-physics", "name": "Viewer Venue Physics" },
+  "venue": { "id": "physics-venue", "name": "Physics Venue" },
+  "area": { "width": 40.0, "length": 100.0 },
+  "panorama": { "enabled": false, "texturePath": "", "rotationDeg": 0.0, "energyMultiplier": 1.0 },
+  "venueObjects": [],
+  "elements": [],
+  "cones": [
+    { "id": "ramp-cone", "position": { "x": -4.0, "y": 0.0 }, "color": "red", "type": "standard" },
+    { "id": "platform-cone", "position": { "x": 0.0, "y": 0.0 }, "color": "blue", "type": "standard" },
+    { "id": "exit-cone", "position": { "x": 4.0, "y": 0.0 }, "color": "yellow", "type": "standard" }
+  ],
+  "markings": [
+    {
+      "id": "ramp-dashed",
+      "color": "#FFFFFF",
+      "widthMeters": 0.12,
+      "style": "dashed",
+      "visibleInViewer": true,
+      "path": {
+        "start": { "x": -5.0, "y": -2.0 },
+        "segments": [{ "type": "line", "end": { "x": 5.0, "y": -2.0 } }]
+      }
+    },
+    {
+      "id": "ramp-dotted",
+      "color": "#FFD10D",
+      "widthMeters": 0.16,
+      "style": "dotted",
+      "visibleInViewer": true,
+      "path": {
+        "start": { "x": -5.0, "y": 2.0 },
+        "segments": [
+          { "type": "line", "end": { "x": -2.0, "y": 2.0 } },
+          { "type": "cubicBezier", "control1": { "x": 0.0, "y": 5.0 }, "control2": { "x": 3.0, "y": -1.0 }, "end": { "x": 5.0, "y": 2.0 } }
+        ]
+      }
+    }
+  ],
+  "trajectory": { "segments": [] },
+  "checkpoints": []
+}

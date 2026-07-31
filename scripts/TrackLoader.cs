@@ -1,11 +1,13 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using MotoGymkhanaTrainer;
 
 namespace MotoGymkhanaTrainer.Tracks;
 
 /// <summary>Deserializes and validates the exported Track JSON contract used by the Viewer.</summary>
 public static class TrackLoader
 {
-    private const int SupportedFormatVersion = 4;
+    private const int SupportedFormatVersion = 5;
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -26,8 +28,15 @@ public static class TrackLoader
         {
             using JsonDocument parsed = JsonDocument.Parse(json);
             ValidateRequiredShape(parsed.RootElement, sourceName);
-            TrackSnapshotDto track = JsonSerializer.Deserialize<TrackSnapshotDto>(json, SerializerOptions)
+            JsonObject root = JsonNode.Parse(json)?.AsObject()
+                ?? throw ContractError(sourceName, "root must be an object");
+            JsonNode?[] markingNodes = root["markings"]!.AsArray()
+                .Select(node => node?.DeepClone())
+                .ToArray();
+            root["markings"] = new JsonArray();
+            TrackSnapshotDto track = JsonSerializer.Deserialize<TrackSnapshotDto>(root.ToJsonString(), SerializerOptions)
                 ?? throw new InvalidDataException($"Track file '{sourceName}' contains no JSON object.");
+            track.Markings = ParseViewerMarkings(markingNodes, sourceName);
 
             Validate(track, sourceName);
             return track;
@@ -37,6 +46,36 @@ public static class TrackLoader
             throw new InvalidDataException(
                 $"Track file '{sourceName}' contains invalid JSON: {exception.Message}", exception);
         }
+    }
+
+    private static MarkingDto[] ParseViewerMarkings(JsonNode?[] nodes, string sourceName)
+    {
+        var markings = new MarkingDto[nodes.Length];
+        for (int index = 0; index < nodes.Length; index++)
+        {
+            JsonNode? node = nodes[index];
+            string id = node is JsonObject item && item["id"] is JsonValue idValue &&
+                idValue.TryGetValue(out string? parsedId)
+                    ? parsedId ?? string.Empty
+                    : string.Empty;
+            try
+            {
+                markings[index] = node?.Deserialize<MarkingDto>(SerializerOptions)
+                    ?? throw new JsonException("marking must be an object");
+            }
+            catch (JsonException exception)
+            {
+                markings[index] = new MarkingDto
+                {
+                    Id = string.IsNullOrWhiteSpace(id) ? $"invalid-marking-{index}" : id,
+                    LoadError =
+                        $"Track '{sourceName}' marking '{(string.IsNullOrWhiteSpace(id) ? $"index {index}" : id)}' " +
+                        $"was skipped: {exception.Message}",
+                };
+            }
+        }
+
+        return markings;
     }
 
     private static void ValidateRequiredShape(JsonElement root, string sourceName)
@@ -169,49 +208,53 @@ public static class TrackLoader
             throw ContractError(sourceName, "markings must be an array");
         }
 
+        var markingIds = new HashSet<string>(StringComparer.Ordinal);
         for (int markingIndex = 0; markingIndex < track.Markings.Length; markingIndex++)
         {
             MarkingDto? marking = track.Markings[markingIndex];
             if (marking is null)
             {
-                throw ContractError(sourceName, $"markings[{markingIndex}] must be an object");
-            }
-
-            if (marking.Points is null || marking.Points.Length < 2)
-            {
-                throw ContractError(sourceName, $"markings[{markingIndex}].points must contain at least two points");
-            }
-
-            if (marking.Type is not ("line" or "polyline"))
-            {
-                // Future marking geometries remain local rendering concerns.
                 continue;
             }
 
-            if (marking.Type == "line" && marking.Points.Length != 2)
+            if (!string.IsNullOrEmpty(marking.LoadError)) continue;
+            if (string.IsNullOrWhiteSpace(marking.Id))
             {
-                throw ContractError(sourceName, $"markings[{markingIndex}].line must contain exactly two points");
+                marking.LoadError =
+                    $"Track '{sourceName}' marking 'index {markingIndex}' was skipped: id must be non-empty.";
+                continue;
+            }
+
+            try
+            {
+                PathValidator.ValidateOrThrow(marking.Path, $"markings[{markingIndex}].path");
+            }
+            catch (InvalidDataException exception)
+            {
+                marking.LoadError =
+                    $"Track '{sourceName}' marking '{marking.Id}' was skipped: {exception.Message}";
+                continue;
             }
 
             if (!float.IsFinite(marking.WidthMeters) || marking.WidthMeters <= 0)
             {
-                throw ContractError(sourceName, $"markings[{markingIndex}].widthMeters must be a finite positive number");
+                marking.LoadError =
+                    $"Track '{sourceName}' marking '{marking.Id}' was skipped: widthMeters must be finite and positive.";
+                continue;
             }
 
-            for (int pointIndex = 0; pointIndex < marking.Points.Length; pointIndex++)
+            if (!MarkingGeometry.TryNormalizeColor(marking.Color, false, out string canonical) ||
+                canonical != marking.Color || !MarkingGeometry.IsSupportedStyle(marking.Style))
             {
-                Point2Dto? point = marking.Points[pointIndex];
-                if (point is null)
-                {
-                    throw ContractError(
-                        sourceName,
-                        $"markings[{markingIndex}].points[{pointIndex}] must be an object");
-                }
+                marking.LoadError =
+                    $"Track '{sourceName}' marking '{marking.Id}' was skipped: color or style is invalid.";
+                continue;
+            }
 
-                ValidatePoint(
-                    point,
-                    sourceName,
-                    $"markings[{markingIndex}].points[{pointIndex}]");
+            if (!markingIds.Add(marking.Id))
+            {
+                marking.LoadError =
+                    $"Track '{sourceName}' marking '{marking.Id}' was skipped: id is duplicated.";
             }
         }
 
@@ -255,13 +298,21 @@ public static class TrackLoader
         IEnumerable<string> ids = track.VenueObjects.Select(item => item.Id)
             .Concat(track.Elements?.Select(item => item.InstanceId) ?? [])
             .Concat(track.Cones.Select(item => item.Id))
-            .Concat(track.Markings.Select(item => item.Id))
             .Concat(track.Trajectory.Segments.Select(item => item.Id))
             .Concat(track.Checkpoints?.Select(item => item.Id) ?? []);
         foreach (string id in ids)
         {
             if (string.IsNullOrWhiteSpace(id) || !seen.Add(id))
                 throw ContractError(sourceName, $"exported id '{id}' is empty or duplicated");
+        }
+
+        foreach (MarkingDto marking in track.Markings.Where(item => string.IsNullOrEmpty(item.LoadError)))
+        {
+            if (string.IsNullOrWhiteSpace(marking.Id) || !seen.Add(marking.Id))
+            {
+                marking.LoadError =
+                    $"Track '{sourceName}' marking '{marking.Id}' was skipped: exported id is empty or duplicated.";
+            }
         }
     }
 

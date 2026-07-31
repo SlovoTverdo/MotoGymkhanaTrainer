@@ -767,9 +767,11 @@ public partial class ExerciseEditorCanvas : Control
             return false;
         }
 
-        for (int pointIndex = marking.Points.Length - 1; pointIndex >= 0; pointIndex--)
+        if (!PathEditing.IsAllLine(marking.Path)) return false;
+        Point2Dto[] vertices = PathEditing.GetVertices(marking.Path);
+        for (int pointIndex = vertices.Length - 1; pointIndex >= 0; pointIndex--)
         {
-            if (screenPosition.DistanceTo(DomainToScreen(marking.Points[pointIndex])) <= AnchorHitRadiusPixels)
+            if (screenPosition.DistanceTo(DomainToScreen(vertices[pointIndex])) <= AnchorHitRadiusPixels)
             {
                 SelectMarkingPoint(marking.Id, pointIndex);
                 return true;
@@ -789,12 +791,13 @@ public partial class ExerciseEditorCanvas : Control
             // Hit testing follows the persisted path, not temporary dash samples.
             // A user can therefore select a dashed/dotted marking even when the
             // pointer happens to be over one of its visual gaps.
-            for (int pointIndex = 0; pointIndex < marking.Points.Length - 1; pointIndex++)
+            Point2Dto[] points = PathSampler.Sample(marking.Path).Points;
+            for (int pointIndex = 0; pointIndex < points.Length - 1; pointIndex++)
             {
                 float distance = DistanceToScreenSegment(
                     screenPosition,
-                    DomainToScreen(marking.Points[pointIndex]),
-                    DomainToScreen(marking.Points[pointIndex + 1]));
+                    DomainToScreen(points[pointIndex]),
+                    DomainToScreen(points[pointIndex + 1]));
                 if (distance <= tolerance && distance < bestDistance)
                 {
                     bestDistance = distance;
@@ -895,7 +898,9 @@ public partial class ExerciseEditorCanvas : Control
             bool selected = SelectedMarkingId == marking.Id &&
                 SelectionKind is ExerciseSelectionKind.Marking or ExerciseSelectionKind.MarkingPoint;
             float widthPixels = MathF.Max(1.0f, marking.WidthMeters * _pixelsPerMeter);
-            foreach (MarkingStroke stroke in MarkingGeometry.CreateStrokes(marking.Points, marking.Style))
+            SampledPath sampled = PathSampler.Sample(marking.Path);
+            MarkingStyleGeometry geometry = MarkingGeometry.CreateStyleGeometry(sampled, marking.Style);
+            foreach (MarkingStroke stroke in geometry.Strokes)
             {
                 Vector2 start = DomainToScreen(stroke.Start);
                 Vector2 end = DomainToScreen(stroke.End);
@@ -906,15 +911,24 @@ public partial class ExerciseEditorCanvas : Control
 
                 DrawLine(start, end, color, widthPixels, true);
             }
+            foreach (Point2Dto dot in geometry.Dots)
+            {
+                float radius = MathF.Max(1.0f, widthPixels * 0.5f);
+                Vector2 center = DomainToScreen(dot);
+                if (selected) DrawCircle(center, radius + 2.5f, new Color(1, 1, 1, 0.55f));
+                DrawCircle(center, radius, color);
+            }
 
             if (!selected)
             {
                 continue;
             }
 
-            for (int pointIndex = 0; pointIndex < marking.Points.Length; pointIndex++)
+            if (!PathEditing.IsAllLine(marking.Path)) continue;
+            Point2Dto[] vertices = PathEditing.GetVertices(marking.Path);
+            for (int pointIndex = 0; pointIndex < vertices.Length; pointIndex++)
             {
-                Vector2 center = DomainToScreen(marking.Points[pointIndex]);
+                Vector2 center = DomainToScreen(vertices[pointIndex]);
                 bool pointSelected = SelectionKind == ExerciseSelectionKind.MarkingPoint &&
                     SelectedMarkingPointIndex == pointIndex;
                 DrawCircle(center, pointSelected ? 8.0f : 6.0f, pointSelected ? Colors.White : color);

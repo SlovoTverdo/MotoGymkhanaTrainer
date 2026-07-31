@@ -8,6 +8,7 @@ const DASHED_LENGTH_METERS := 0.75
 const DASHED_GAP_METERS := 0.4
 const DOTTED_LENGTH_METERS := 0.08
 const DOTTED_GAP_METERS := 0.24
+const DOTTED_SPACING_METERS := 0.32
 
 
 static func domain_to_godot(point: Dictionary, height: float = 0.0) -> Vector3:
@@ -95,6 +96,60 @@ static func create_marking_strokes(points: Array, style: String) -> Array:
 	return strokes
 
 
+static func create_marking_geometry(sampled: Dictionary, style: String) -> Dictionary:
+	var points: Array = sampled["points"]
+	var strokes: Array = []
+	var dots: Array = []
+	if points.size() < 2:
+		return {"strokes": strokes, "dots": dots}
+	if style == "solid":
+		for index in range(points.size() - 1):
+			strokes.append([_domain(points[index]), _domain(points[index + 1])])
+		return {"strokes": strokes, "dots": dots}
+	if style == "dotted":
+		var distance := 0.0
+		while distance <= float(sampled["totalLength"]) + 0.000001:
+			dots.append(_domain(_point_at_distance(sampled, distance)))
+			distance += DOTTED_SPACING_METERS
+		return {"strokes": strokes, "dots": dots}
+
+	var drawing := true
+	var remaining := DASHED_LENGTH_METERS
+	for index in range(points.size() - 1):
+		var start: Vector2 = points[index]
+		var end: Vector2 = points[index + 1]
+		var length := start.distance_to(end)
+		if length <= 0.000001: continue
+		var local := 0.0
+		while local < length - 0.000001:
+			var step := minf(remaining, length - local)
+			var next := local + step
+			if drawing and step > 0.000001:
+				strokes.append([_domain(start.lerp(end, local / length)), _domain(start.lerp(end, next / length))])
+			local = next
+			remaining -= step
+			if remaining <= 0.000001:
+				drawing = not drawing
+				remaining = DASHED_LENGTH_METERS if drawing else DASHED_GAP_METERS
+	return {"strokes": strokes, "dots": dots}
+
+
+static func _point_at_distance(sampled: Dictionary, distance: float) -> Vector2:
+	var points: Array = sampled["points"]
+	var cumulative: Array = sampled["cumulativeDistances"]
+	var clamped := clampf(distance, 0.0, float(sampled["totalLength"]))
+	for index in range(1, cumulative.size()):
+		if clamped <= float(cumulative[index]):
+			var span: float = float(cumulative[index]) - float(cumulative[index - 1])
+			var weight := 0.0 if span <= 0.000001 else (clamped - float(cumulative[index - 1])) / span
+			return (points[index - 1] as Vector2).lerp(points[index], weight)
+	return points[-1]
+
+
+static func _domain(point: Vector2) -> Dictionary:
+	return {"x": point.x, "y": point.y}
+
+
 static func create_path_segment(
 	name: String,
 	start: Vector3,
@@ -124,6 +179,47 @@ static func create_path_segment(
 	mesh.basis = Basis(right, adjusted_normal, forward)
 	mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return mesh
+
+
+static func create_projected_ribbon(
+	name: String,
+	strokes: Array,
+	width: float,
+	material: Material
+) -> MeshInstance3D:
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var triangle_count := 0
+	var half_width := width * 0.5
+	for points in strokes:
+		for index in range(points.size() - 1):
+			var start: Vector3 = points[index]["position"]
+			var end: Vector3 = points[index + 1]["position"]
+			var direction := end - start
+			var length := direction.length()
+			if length <= 0.000001: continue
+			var forward := direction / length
+			var normal: Vector3 = (points[index]["normal"] + points[index + 1]["normal"]).normalized()
+			if normal.length_squared() <= 0.00001 or absf(normal.dot(forward)) > 0.98:
+				normal = Vector3.UP
+			var right := normal.cross(forward).normalized() * half_width
+			var adjusted_normal := forward.cross(right.normalized()).normalized()
+			_add_ribbon_triangle(surface, adjusted_normal, start - right, start + right, end + right)
+			_add_ribbon_triangle(surface, adjusted_normal, start - right, end + right, end - right)
+			triangle_count += 2
+	if triangle_count == 0: return null
+	var instance := MeshInstance3D.new()
+	instance.name = name
+	instance.mesh = surface.commit()
+	instance.material_override = material
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return instance
+
+
+static func _add_ribbon_triangle(surface: SurfaceTool, normal: Vector3, a: Vector3, b: Vector3, c: Vector3) -> void:
+	for vertex in [a, b, c]:
+		surface.set_normal(normal)
+		surface.add_vertex(vertex)
 
 
 static func color_from_value(value: String, fallback: Color = Color.WHITE) -> Color:

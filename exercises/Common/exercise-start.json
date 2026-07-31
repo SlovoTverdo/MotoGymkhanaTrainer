@@ -1,78 +1,82 @@
 {
-  "formatVersion": 2,
-  "exercise": {
-    "id": "exercise-start",
-    "name": "\u0421\u0442\u0430\u0440\u0442",
-    "version": 1
-  },
-  "bounds": {
-    "width": 3,
-    "length": 4
-  },
-  "cones": [
-    {
-      "id": "cone-001",
-      "position": {
-        "x": -1,
-        "y": -2
-      },
-      "color": "yellow",
-      "type": "standard"
-    },
-    {
-      "id": "cone-003",
-      "position": {
-        "x": 1,
-        "y": 2
-      },
-      "color": "yellow",
-      "type": "standard"
-    },
-    {
-      "id": "cone-004",
-      "position": {
-        "x": -1,
-        "y": 2
-      },
-      "color": "yellow",
-      "type": "standard"
-    },
-    {
-      "id": "cone-002",
-      "position": {
-        "x": 1,
-        "y": -2
-      },
-      "color": "yellow",
-      "type": "standard"
-    }
-  ],
-  "markings": [],
-  "entryPoint": {
-    "x": -0,
-    "y": 0
-  },
-  "exitPoint": {
-    "x": -0,
-    "y": 2
-  },
-  "trajectory": {
-    "segments": [
-      {
-        "id": "trajectory-segment-001",
-        "type": "polyline",
-        "points": [
-          {
-            "x": -0,
-            "y": 0
-          },
-          {
-            "x": -0,
-            "y": 2
-          }
-        ]
-      }
-    ]
-  },
-  "checkpoints": []
+    "formatVersion":  3,
+    "exercise":  {
+                     "id":  "exercise-start",
+                     "name":  "Старт",
+                     "version":  1
+                 },
+    "bounds":  {
+                   "width":  3,
+                   "length":  4
+               },
+    "cones":  [
+                  {
+                      "id":  "cone-001",
+                      "position":  {
+                                       "x":  -1,
+                                       "y":  -2
+                                   },
+                      "color":  "yellow",
+                      "type":  "standard"
+                  },
+                  {
+                      "id":  "cone-003",
+                      "position":  {
+                                       "x":  1,
+                                       "y":  2
+                                   },
+                      "color":  "yellow",
+                      "type":  "standard"
+                  },
+                  {
+                      "id":  "cone-004",
+                      "position":  {
+                                       "x":  -1,
+                                       "y":  2
+                                   },
+                      "color":  "yellow",
+                      "type":  "standard"
+                  },
+                  {
+                      "id":  "cone-002",
+                      "position":  {
+                                       "x":  1,
+                                       "y":  -2
+                                   },
+                      "color":  "yellow",
+                      "type":  "standard"
+                  }
+              ],
+    "markings":  [
+
+                 ],
+    "entryPoint":  {
+                       "x":  0,
+                       "y":  0
+                   },
+    "exitPoint":  {
+                      "x":  0,
+                      "y":  2
+                  },
+    "trajectory":  {
+                       "segments":  [
+                                        {
+                                            "id":  "trajectory-segment-001",
+                                            "type":  "polyline",
+                                            "points":  [
+                                                           {
+                                                               "x":  0,
+                                                               "y":  0
+                                                           },
+                                                           {
+                                                               "x":  0,
+                                                               "y":  2
+                                                           }
+                                                       ]
+                                        }
+                                    ]
+                   },
+    "checkpoints":  [
+
+                    ]
 }

@@ -56,7 +56,7 @@ public sealed class TrackCompilationResult
     public bool CanExport => Snapshot is not null && Errors.Count == 0;
 }
 
-/// <summary>Compiles Track Project v3 plus resolved Venue and Exercises into Track v4.</summary>
+/// <summary>Compiles Track Project v3 plus resolved Venue and Exercises into Track v5.</summary>
 public static class TrackCompiler
 {
     public const float MinTransitionHandleLength = 0.5f;
@@ -181,7 +181,7 @@ public static class TrackCompiler
 
         TrackSnapshotDto candidate = new()
         {
-            FormatVersion = 4,
+            FormatVersion = 5,
             Track = new TrackMetadataDto
             {
                 Id = document.Project.Track.Id,
@@ -316,13 +316,13 @@ public static class TrackCompiler
 
         foreach (MarkingDto marking in venue.Markings)
         {
-            if (marking.Points.Any(point => VenueGeometry.IsOutsideArea(point, venue.Area)))
+            if (PathBoundsCalculator.Calculate(marking.Path, marking.WidthMeters)
+                .IsOutside(venue.Area.Width, venue.Area.Length))
                 warnings.Add(Warning($"Venue marking '{marking.Id}' extends outside Venue area."));
             markings.Add(new MarkingDto
             {
                 Id = $"venue--marking--{marking.Id}",
-                Type = marking.Type,
-                Points = marking.Points.Select(Copy).ToArray(),
+                Path = PathEditing.CopyPath(marking.Path),
                 Color = marking.Color,
                 WidthMeters = marking.WidthMeters,
                 Style = marking.Style,
@@ -345,7 +345,7 @@ public static class TrackCompiler
             return;
         }
 
-        if (definition.FormatVersion != 2 || definition.Exercise is null ||
+        if (definition.FormatVersion != 3 || definition.Exercise is null ||
             string.IsNullOrWhiteSpace(definition.Exercise.Id))
         {
             errors.Add(Error($"Instance '{instance.InstanceId}' has an unsupported or incomplete Exercise Definition."));
@@ -393,8 +393,7 @@ public static class TrackCompiler
         MarkingDto[] markings = definition.Markings.Select(marking => new MarkingDto
         {
             Id = ExportId(instance.InstanceId, marking.Id),
-            Type = marking.Type,
-            Points = marking.Points.Select(Transform).ToArray(),
+            Path = PathTransformService.Transform(marking.Path, Transform),
             Color = marking.Color,
             WidthMeters = marking.WidthMeters,
             Style = marking.Style,
@@ -407,7 +406,7 @@ public static class TrackCompiler
             instance.Position, instance.RotationDeg, instance.Scale);
 
         if (cones.Any(cone => !IsFinite(cone.Position)) ||
-            markings.SelectMany(marking => marking.Points).Any(point => !IsFinite(point)) ||
+            markings.Any(marking => !PathProducesFiniteGeometry(marking.Path)) ||
             segments.Any(segment => EnumerateGeometry(segment).Any(point => !IsFinite(point))) ||
             bounds.Any(point => !IsFinite(point)))
         {
@@ -459,13 +458,19 @@ public static class TrackCompiler
 
         foreach (MarkingDto marking in definition.Markings)
         {
-            bool pointsValid = marking.Points is { Length: >= 2 } &&
-                marking.Points.All(IsFinite) &&
-                (marking.Type != "line" || marking.Points.Length == 2);
             bool colorValid = MarkingGeometry.TryNormalizeColor(
                 marking.Color, allowLegacyNames: false, out string canonical) && canonical == marking.Color;
-            if (string.IsNullOrWhiteSpace(marking.Id) || marking.Type is not ("line" or "polyline") ||
-                !pointsValid || !colorValid || !float.IsFinite(marking.WidthMeters) ||
+            bool pathValid;
+            try
+            {
+                PathValidator.ValidateOrThrow(marking.Path, $"marking '{marking.Id}'.path");
+                pathValid = true;
+            }
+            catch (InvalidDataException)
+            {
+                pathValid = false;
+            }
+            if (string.IsNullOrWhiteSpace(marking.Id) || !pathValid || !colorValid || !float.IsFinite(marking.WidthMeters) ||
                 marking.WidthMeters <= 0 || !MarkingGeometry.IsSupportedStyle(marking.Style))
             {
                 errors.Add(Error($"Instance '{instanceId}' has invalid marking '{marking?.Id}'."));
@@ -840,8 +845,22 @@ public static class TrackCompiler
         IEnumerable<TrajectorySegmentDto> segments,
         VenueAreaDto area) =>
         cones.Any(cone => IsOutsideArea(cone.Position, area)) ||
-        markings.SelectMany(marking => marking.Points).Any(point => IsOutsideArea(point, area)) ||
+        markings.Any(marking => PathBoundsCalculator.Calculate(marking.Path, marking.WidthMeters)
+            .IsOutside(area.Width, area.Length)) ||
         segments.SelectMany(EnumerateRenderedGeometry).Any(point => IsOutsideArea(point, area));
+
+    private static bool PathProducesFiniteGeometry(PathDefinition path)
+    {
+        try
+        {
+            PathValidator.ValidateOrThrow(path, "path");
+            return true;
+        }
+        catch (InvalidDataException)
+        {
+            return false;
+        }
+    }
 
     private static bool BoundsOverlap(IReadOnlyList<Point2Dto> a, IReadOnlyList<Point2Dto> b)
     {

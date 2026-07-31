@@ -133,7 +133,7 @@ Venue Definition versioning независим от:
 
 ```json
 {
-  "formatVersion": 1,
+  "formatVersion": 2,
 
   "venue": {
     "id": "main-training-ground",
@@ -696,8 +696,8 @@ Venue marking использует общий Path contract.
 {
   "id": "venue-boundary-guide",
   "style": "solid",
-  "color": "#FFFFFFFF",
-  "thickness": 0.10,
+  "color": "#FFFFFF",
+  "widthMeters": 0.10,
   "visibleInViewer": true,
   "path": {
     "start": {
@@ -840,9 +840,9 @@ Venue Definition не сохраняет:
 
 ---
 
-# 16. Что не входит в formatVersion 1
+# 16. Что не входит в formatVersion 2
 
-Venue Definition version 1 не поддерживает:
+Venue Definition version 2 не поддерживает:
 
 * процедурный забор;
 * fence polyline;

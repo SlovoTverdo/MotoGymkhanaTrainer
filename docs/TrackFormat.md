@@ -42,7 +42,7 @@ Viewer получает готовую world geometry и ссылки на не�
 
 ```json
 {
-  "formatVersion": 4,
+  "formatVersion": 5,
 
   "track": {
     "id": "training-track-01",
@@ -336,8 +336,8 @@ Affine transform применяется непосредственно к:
     {
       "id": "exercise-instance-12/entry-guide",
       "style": "dashed",
-      "color": "#FFD000FF",
-      "thickness": 0.08,
+      "color": "#FFD10D",
+      "widthMeters": 0.08,
       "visibleInViewer": true,
       "path": {
         "start": {
@@ -379,6 +379,11 @@ Path validation
 ```
 
 Exported Track v5 не содержит старое `points`-представление marking.
+
+Viewer отклоняет неизвестный discriminator и другие ошибки на уровне конкретного
+marking: diagnostic содержит source и marking ID, повреждённый marking пропускается,
+а остальные данные Track продолжают загружаться. Ошибка `formatVersion` остаётся
+ошибкой всего документа.
 
 ## Compatibility
 
@@ -541,7 +546,7 @@ Warnings не блокируют export.
 
 # Runtime surface projection
 
-Exported Track formatVersion 4 хранит двумерную world geometry:
+Exported Track formatVersion 5 хранит двумерную world geometry:
 
 ```text
 Track X/Y
@@ -601,7 +606,7 @@ Projected Y coordinates:
 Отсутствие projection hit не должно приводить к падению Viewer.
 
 
-# 26. Что не входит в formatVersion 4
+# 26. Что не входит в formatVersion 5
 
 * встроенные asset bytes;
 * встроенные texture bytes;

@@ -31,10 +31,10 @@ web-viewer/
 
 * основной C# Viewer;
 * desktop-редакторы;
-* Exercise Definition formatVersion 2;
-* Venue Definition formatVersion 1;
+* Exercise Definition formatVersion 3;
+* Venue Definition formatVersion 2;
 * Track Project formatVersion 3;
-* Exported Track formatVersion 4;
+* Exported Track formatVersion 5;
 * структуру глобальной trajectory в JSON.
 
 ---

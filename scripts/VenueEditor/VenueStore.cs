@@ -8,7 +8,7 @@ namespace MotoGymkhanaTrainer.VenueEditor;
 /// <summary>A validated Venue Definition and its non-blocking diagnostics.</summary>
 public sealed record VenueLoadResult(VenueDefinitionDto Definition, IReadOnlyList<string> Warnings);
 
-/// <summary>Strict Venue Definition v1 serialization and validation.</summary>
+/// <summary>Strict Venue Definition v2 serialization and validation.</summary>
 public static class VenueStore
 {
     private static readonly HashSet<string> ConeColors = ["red", "blue", "yellow", "orange", "none"];
@@ -94,7 +94,8 @@ public static class VenueStore
             if (VenueGeometry.IsOutsideArea(cone.Position, definition.Area))
                 warnings.Add($"Cone '{cone.Id}' is outside the Venue area.");
         foreach (MarkingDto marking in definition.Markings)
-            if (marking.Points.Any(point => VenueGeometry.IsOutsideArea(point, definition.Area)))
+            if (PathBoundsCalculator.Calculate(marking.Path, marking.WidthMeters)
+                .IsOutside(definition.Area.Width, definition.Area.Length))
                 warnings.Add($"Marking '{marking.Id}' extends outside the Venue area.");
         return warnings;
     }
@@ -113,7 +114,7 @@ public static class VenueStore
 
     private static void Validate(VenueDefinitionDto definition, string source)
     {
-        if (definition.FormatVersion != 1) throw Error(source, $"unsupported formatVersion {definition.FormatVersion}; expected 1");
+        if (definition.FormatVersion != 2) throw Error(source, $"unsupported formatVersion {definition.FormatVersion}; expected 2");
         if (definition.Venue is null || string.IsNullOrWhiteSpace(definition.Venue.Id) || string.IsNullOrWhiteSpace(definition.Venue.Name))
             throw Error(source, "venue id and name must be non-empty");
         if (definition.Area is null || !Positive(definition.Area.Width) || !Positive(definition.Area.Length))
@@ -153,9 +154,14 @@ public static class VenueStore
         {
             MarkingDto marking = definition.Markings[index] ?? throw Error(source, $"markings[{index}] is null");
             if (string.IsNullOrWhiteSpace(marking.Id) || !ids.Add(marking.Id)) throw Error(source, $"markings[{index}] must have a unique id");
-            if (marking.Type is not ("line" or "polyline") || marking.Points is null || marking.Points.Length < 2 ||
-                (marking.Type == "line" && marking.Points.Length != 2)) throw Error(source, $"markings[{index}] has invalid type or point count");
-            foreach (Point2Dto point in marking.Points) ValidatePoint(point, source, $"markings[{index}].points");
+            try
+            {
+                PathValidator.ValidateOrThrow(marking.Path, $"markings[{index}].path");
+            }
+            catch (InvalidDataException exception)
+            {
+                throw Error(source, $"marking '{marking.Id}': {exception.Message}");
+            }
             if (!MarkingGeometry.TryNormalizeColor(marking.Color, false, out string canonical) || canonical != marking.Color)
                 throw Error(source, $"markings[{index}].color must be canonical #RRGGBB");
             if (!Positive(marking.WidthMeters) || !MarkingGeometry.IsSupportedStyle(marking.Style))

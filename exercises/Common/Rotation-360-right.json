@@ -1,197 +1,201 @@
 {
-  "formatVersion": 2,
-  "exercise": {
-    "id": "Rotation-360-right",
-    "name": "\u0412\u0440\u0430\u0449\u0435\u043D\u0438\u0435 360 \u043F\u0440\u0430\u0432\u043E\u0435",
-    "version": 1
-  },
-  "bounds": {
-    "width": 4,
-    "length": 4
-  },
-  "cones": [
-    {
-      "id": "cone-001",
-      "position": {
-        "x": -0,
-        "y": 0
-      },
-      "color": "red",
-      "type": "standard"
-    }
-  ],
-  "markings": [],
-  "entryPoint": {
-    "x": 0.25555557,
-    "y": 1.6013889
-  },
-  "exitPoint": {
-    "x": -0.26666668,
-    "y": 1.6125
-  },
-  "trajectory": {
-    "segments": [
-      {
-        "id": "trajectory-segment-001",
-        "type": "cubicBezier",
-        "start": {
-          "x": 0.25555557,
-          "y": 1.6013889
-        },
-        "control1": {
-          "x": 0.62777776,
-          "y": 1.5958333
-        },
-        "control2": {
-          "x": 0.89444447,
-          "y": 1.3791667
-        },
-        "end": {
-          "x": 1.1444445,
-          "y": 1.1291667
-        }
-      },
-      {
-        "id": "trajectory-segment-004",
-        "type": "cubicBezier",
-        "start": {
-          "x": 1.1444445,
-          "y": 1.1291667
-        },
-        "control1": {
-          "x": 1.3277777,
-          "y": 0.9236111
-        },
-        "control2": {
-          "x": 1.5111111,
-          "y": 0.49583337
-        },
-        "end": {
-          "x": 1.5,
-          "y": 0
-        }
-      },
-      {
-        "id": "trajectory-segment-005",
-        "type": "cubicBezier",
-        "start": {
-          "x": 1.5,
-          "y": 0
-        },
-        "control1": {
-          "x": 1.5222223,
-          "y": -0.59861106
-        },
-        "control2": {
-          "x": 1.3666667,
-          "y": -0.8263889
-        },
-        "end": {
-          "x": 1.1166667,
-          "y": -1.1263889
-        }
-      },
-      {
-        "id": "trajectory-segment-006",
-        "type": "cubicBezier",
-        "start": {
-          "x": 1.1166667,
-          "y": -1.1263889
-        },
-        "control1": {
-          "x": 0.8,
-          "y": -1.4208333
-        },
-        "control2": {
-          "x": 0.5,
-          "y": -1.5
-        },
-        "end": {
-          "x": 0,
-          "y": -1.5
-        }
-      },
-      {
-        "id": "trajectory-segment-007",
-        "type": "cubicBezier",
-        "start": {
-          "x": 0,
-          "y": -1.5
-        },
-        "control1": {
-          "x": -0.5,
-          "y": -1.5
-        },
-        "control2": {
-          "x": -0.86111116,
-          "y": -1.3430558
-        },
-        "end": {
-          "x": -1.1111112,
-          "y": -1.0930556
-        }
-      },
-      {
-        "id": "trajectory-segment-008",
-        "type": "cubicBezier",
-        "start": {
-          "x": -1.1111112,
-          "y": -1.0930556
-        },
-        "control1": {
-          "x": -1.3611112,
-          "y": -0.8430556
-        },
-        "control2": {
-          "x": -1.5,
-          "y": -0.25
-        },
-        "end": {
-          "x": -1.5,
-          "y": 0
-        }
-      },
-      {
-        "id": "trajectory-segment-009",
-        "type": "cubicBezier",
-        "start": {
-          "x": -1.5,
-          "y": 0
-        },
-        "control1": {
-          "x": -1.5,
-          "y": 0.5
-        },
-        "control2": {
-          "x": -1.3777778,
-          "y": 0.86249995
-        },
-        "end": {
-          "x": -1.1277778,
-          "y": 1.1125
-        }
-      },
-      {
-        "id": "trajectory-segment-010",
-        "type": "cubicBezier",
-        "start": {
-          "x": -1.1277778,
-          "y": 1.1125
-        },
-        "control1": {
-          "x": -0.8777778,
-          "y": 1.3625
-        },
-        "control2": {
-          "x": -0.62222236,
-          "y": 1.5458333
-        },
-        "end": {
-          "x": -0.26666668,
-          "y": 1.6125
-        }
-      }
-    ]
-  },
-  "checkpoints": []
+    "formatVersion":  3,
+    "exercise":  {
+                     "id":  "Rotation-360-right",
+                     "name":  "Вращение 360 правое",
+                     "version":  1
+                 },
+    "bounds":  {
+                   "width":  4,
+                   "length":  4
+               },
+    "cones":  [
+                  {
+                      "id":  "cone-001",
+                      "position":  {
+                                       "x":  0,
+                                       "y":  0
+                                   },
+                      "color":  "red",
+                      "type":  "standard"
+                  }
+              ],
+    "markings":  [
+
+                 ],
+    "entryPoint":  {
+                       "x":  0.25555557,
+                       "y":  1.6013889
+                   },
+    "exitPoint":  {
+                      "x":  -0.26666668,
+                      "y":  1.6125
+                  },
+    "trajectory":  {
+                       "segments":  [
+                                        {
+                                            "id":  "trajectory-segment-001",
+                                            "type":  "cubicBezier",
+                                            "start":  {
+                                                          "x":  0.25555557,
+                                                          "y":  1.6013889
+                                                      },
+                                            "control1":  {
+                                                             "x":  0.62777776,
+                                                             "y":  1.5958333
+                                                         },
+                                            "control2":  {
+                                                             "x":  0.89444447,
+                                                             "y":  1.3791667
+                                                         },
+                                            "end":  {
+                                                        "x":  1.1444445,
+                                                        "y":  1.1291667
+                                                    }
+                                        },
+                                        {
+                                            "id":  "trajectory-segment-004",
+                                            "type":  "cubicBezier",
+                                            "start":  {
+                                                          "x":  1.1444445,
+                                                          "y":  1.1291667
+                                                      },
+                                            "control1":  {
+                                                             "x":  1.3277777,
+                                                             "y":  0.9236111
+                                                         },
+                                            "control2":  {
+                                                             "x":  1.5111111,
+                                                             "y":  0.49583337
+                                                         },
+                                            "end":  {
+                                                        "x":  1.5,
+                                                        "y":  0
+                                                    }
+                                        },
+                                        {
+                                            "id":  "trajectory-segment-005",
+                                            "type":  "cubicBezier",
+                                            "start":  {
+                                                          "x":  1.5,
+                                                          "y":  0
+                                                      },
+                                            "control1":  {
+                                                             "x":  1.5222223,
+                                                             "y":  -0.59861106
+                                                         },
+                                            "control2":  {
+                                                             "x":  1.3666667,
+                                                             "y":  -0.8263889
+                                                         },
+                                            "end":  {
+                                                        "x":  1.1166667,
+                                                        "y":  -1.1263889
+                                                    }
+                                        },
+                                        {
+                                            "id":  "trajectory-segment-006",
+                                            "type":  "cubicBezier",
+                                            "start":  {
+                                                          "x":  1.1166667,
+                                                          "y":  -1.1263889
+                                                      },
+                                            "control1":  {
+                                                             "x":  0.8,
+                                                             "y":  -1.4208333
+                                                         },
+                                            "control2":  {
+                                                             "x":  0.5,
+                                                             "y":  -1.5
+                                                         },
+                                            "end":  {
+                                                        "x":  0,
+                                                        "y":  -1.5
+                                                    }
+                                        },
+                                        {
+                                            "id":  "trajectory-segment-007",
+                                            "type":  "cubicBezier",
+                                            "start":  {
+                                                          "x":  0,
+                                                          "y":  -1.5
+                                                      },
+                                            "control1":  {
+                                                             "x":  -0.5,
+                                                             "y":  -1.5
+                                                         },
+                                            "control2":  {
+                                                             "x":  -0.86111116,
+                                                             "y":  -1.3430558
+                                                         },
+                                            "end":  {
+                                                        "x":  -1.1111112,
+                                                        "y":  -1.0930556
+                                                    }
+                                        },
+                                        {
+                                            "id":  "trajectory-segment-008",
+                                            "type":  "cubicBezier",
+                                            "start":  {
+                                                          "x":  -1.1111112,
+                                                          "y":  -1.0930556
+                                                      },
+                                            "control1":  {
+                                                             "x":  -1.3611112,
+                                                             "y":  -0.8430556
+                                                         },
+                                            "control2":  {
+                                                             "x":  -1.5,
+                                                             "y":  -0.25
+                                                         },
+                                            "end":  {
+                                                        "x":  -1.5,
+                                                        "y":  0
+                                                    }
+                                        },
+                                        {
+                                            "id":  "trajectory-segment-009",
+                                            "type":  "cubicBezier",
+                                            "start":  {
+                                                          "x":  -1.5,
+                                                          "y":  0
+                                                      },
+                                            "control1":  {
+                                                             "x":  -1.5,
+                                                             "y":  0.5
+                                                         },
+                                            "control2":  {
+                                                             "x":  -1.3777778,
+                                                             "y":  0.86249995
+                                                         },
+                                            "end":  {
+                                                        "x":  -1.1277778,
+                                                        "y":  1.1125
+                                                    }
+                                        },
+                                        {
+                                            "id":  "trajectory-segment-010",
+                                            "type":  "cubicBezier",
+                                            "start":  {
+                                                          "x":  -1.1277778,
+                                                          "y":  1.1125
+                                                      },
+                                            "control1":  {
+                                                             "x":  -0.8777778,
+                                                             "y":  1.3625
+                                                         },
+                                            "control2":  {
+                                                             "x":  -0.62222236,
+                                                             "y":  1.5458333
+                                                         },
+                                            "end":  {
+                                                        "x":  -0.26666668,
+                                                        "y":  1.6125
+                                                    }
+                                        }
+                                    ]
+                   },
+    "checkpoints":  [
+
+                    ]
 }

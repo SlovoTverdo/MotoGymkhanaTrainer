@@ -22,11 +22,10 @@ public sealed class ExerciseDefinitionLoadResult
     public IReadOnlyList<string> Warnings { get; }
 }
 
-/// <summary>Serializes Exercise v2 and performs the small documented v1 migration.</summary>
+/// <summary>Strict Exercise Definition v3 serialization and validation.</summary>
 public static class ExerciseDefinitionStore
 {
-    private const int SupportedFormatVersion = 2;
-    private const int LegacyFormatVersion = 1;
+    private const int SupportedFormatVersion = 3;
     private const float EndpointToleranceMeters = 0.001f;
     private static readonly HashSet<string> SupportedColors =
         ["red", "blue", "yellow", "orange", "none"];
@@ -76,12 +75,9 @@ public static class ExerciseDefinitionStore
         {
             ExerciseDefinitionDto definition = JsonSerializer.Deserialize<ExerciseDefinitionDto>(json, ReadOptions)
                 ?? throw new InvalidDataException($"Exercise file '{sourceName}' contains no JSON object.");
-            int sourceVersion = definition.FormatVersion;
             var warnings = new List<string>();
-            MigrateToCurrentVersion(definition, sourceVersion, sourceName, warnings);
-            NormalizeCurrentMarkings(definition, sourceName, warnings);
             ValidateStructure(definition, sourceName);
-
+            DiagnoseMarkingBounds(definition, sourceName, warnings);
             SynchronizeEndpointsFromTrajectory(definition, sourceName, warnings);
             return new ExerciseDefinitionLoadResult(definition, warnings);
         }
@@ -175,24 +171,8 @@ public static class ExerciseDefinitionStore
                 throw ContractError(sourceName, $"{path} must have a unique non-empty id");
             }
 
-            int minimumPoints = marking.Type == "line" ? 2 : marking.Type == "polyline" ? 2 : int.MaxValue;
-            if (minimumPoints == int.MaxValue)
-            {
-                throw ContractError(sourceName, $"{path}.type must be 'line' or 'polyline'");
-            }
-
-            if (marking.Points is null || marking.Points.Length < minimumPoints ||
-                (marking.Type == "line" && marking.Points.Length != 2))
-            {
-                throw ContractError(
-                    sourceName,
-                    $"{path}.points must contain {(marking.Type == "line" ? "exactly" : "at least")} two points");
-            }
-
-            for (int pointIndex = 0; pointIndex < marking.Points.Length; pointIndex++)
-            {
-                ValidatePoint(marking.Points[pointIndex], sourceName, $"{path}.points[{pointIndex}]");
-            }
+            IReadOnlyList<string> pathErrors = PathValidator.Validate(marking.Path, $"{path}.path");
+            if (pathErrors.Count > 0) throw ContractError(sourceName, pathErrors[0]);
 
             if (!MarkingGeometry.TryNormalizeColor(marking.Color, allowLegacyNames: false, out string canonical) ||
                 canonical != marking.Color)
@@ -314,84 +294,18 @@ public static class ExerciseDefinitionStore
         definition.ExitPoint = CopyPoint(trajectoryExit);
     }
 
-    private static void MigrateToCurrentVersion(
-        ExerciseDefinitionDto definition,
-        int sourceVersion,
-        string sourceName,
-        ICollection<string> warnings)
-    {
-        if (sourceVersion == SupportedFormatVersion)
-        {
-            return;
-        }
-
-        if (sourceVersion != LegacyFormatVersion)
-        {
-            throw ContractError(
-                sourceName,
-                $"unsupported formatVersion {sourceVersion}; expected {LegacyFormatVersion} or {SupportedFormatVersion}");
-        }
-
-        foreach (MarkingDto? marking in definition.Markings ?? [])
-        {
-            if (marking is null)
-            {
-                continue;
-            }
-
-            // Version 1 had no style/visibility fields. Property defaults supply
-            // solid/true, and named legacy colors are canonicalized for a future v2 Save.
-            marking.Style = "solid";
-            marking.VisibleInViewer = true;
-            if (MarkingGeometry.TryNormalizeColor(marking.Color, allowLegacyNames: true, out string canonical))
-            {
-                marking.Color = canonical;
-            }
-        }
-
-        definition.FormatVersion = SupportedFormatVersion;
-        warnings.Add(
-            $"Exercise file '{sourceName}' was migrated in memory from formatVersion 1 to 2; " +
-            "markings default to solid and visibleInViewer=true. The source file was not changed.");
-    }
-
-    private static void NormalizeCurrentMarkings(
+    private static void DiagnoseMarkingBounds(
         ExerciseDefinitionDto definition,
         string sourceName,
         ICollection<string> warnings)
     {
-        MarkingDto[] markings = definition.Markings ?? [];
-        for (int markingIndex = 0; markingIndex < markings.Length; markingIndex++)
+        foreach (MarkingDto marking in definition.Markings)
         {
-            MarkingDto? marking = markings[markingIndex];
-            if (marking is null)
-            {
-                continue;
-            }
-            string path = $"markings[{markingIndex}]";
-
-            /*
-             * ExerciseFormat deliberately treats an unknown style as a local,
-             * recoverable problem. The editable DTO adopts solid in memory and a
-             * warning marks the document dirty; unrelated geometry remains usable.
-             */
-            if (!MarkingGeometry.IsSupportedStyle(marking.Style))
+            PathBounds bounds = PathBoundsCalculator.Calculate(marking.Path, marking.WidthMeters);
+            if (bounds.IsOutside(definition.Bounds.Width, definition.Bounds.Length))
             {
                 warnings.Add(
-                    $"Exercise file '{sourceName}' has unknown {path}.style '{marking.Style}'; " +
-                    "the in-memory solid fallback is used.");
-                marking.Style = "solid";
-            }
-
-            if (MarkingGeometry.TryNormalizeColor(
-                    marking.Color,
-                    allowLegacyNames: false,
-                    out string canonical) && canonical != marking.Color)
-            {
-                warnings.Add(
-                    $"Exercise file '{sourceName}' has non-canonical {path}.color '{marking.Color}'; " +
-                    $"'{canonical}' is used in memory and will be written only on explicit Save.");
-                marking.Color = canonical;
+                    $"Exercise file '{sourceName}' marking '{marking.Id}' extends outside exercise bounds.");
             }
         }
     }
