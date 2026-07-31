@@ -1032,3 +1032,32 @@ Adaptive sampling должен иметь верхнюю границу.
 * desktop build проходит;
 * Web export проходит.
 
+
+# Exercise Editor editing
+
+Интерактивное редактирование curved markings выполняется отдельной итерацией:
+
+```text
+docs/ExerciseEditorCurvedMarkingsPlan.md
+```
+
+Domain and Rendering Iteration предоставляет:
+
+* Path contract;
+* segment types;
+* sampling;
+* transforms;
+* serialization;
+* rendering.
+
+Exercise Editor Iteration добавляет:
+
+* создание Path;
+* segment tools;
+* handles;
+* hit testing;
+* structural edits;
+* Undo/Redo.
+
+Не смешивать editor transient state с сериализуемым Path contract.
+
