@@ -83,7 +83,7 @@ world point
 
 ```json
 {
-  "formatVersion": 2
+  "formatVersion": 3
 }
 ```
 
@@ -97,7 +97,7 @@ world point
 
 ```json
 {
-  "formatVersion": 1,
+  "formatVersion": 3,
 
   "exercise": {
     "id": "slalom-5",
@@ -328,69 +328,85 @@ Exercise Definition без конусов является допустимым,
 
 # 8. markings
 
-# Markings
+## FILE: docs/ExerciseFormat.md — REPLACE VERSION AND MARKINGS SECTION
 
-`markings[]` описывает визуальные линии и полосы, являющиеся частью упражнения.
+# Exercise Definition formatVersion 3
 
-Они могут представлять:
+## Markings
 
-* стартовые и финишные линии;
-* стоп-линии;
-* границы зон;
-* направляющую разметку;
-* служебные линии упражнения;
-* декоративные или информационные полосы.
-
-На текущем этапе поддерживаются:
-
-```text
-line
-polyline
-```
-
-Дуги, окружности и другие криволинейные формы пока не вводятся как отдельные типы.
-
-При необходимости они могут быть аппроксимированы:
-
-* polyline;
-* последовательностью spline-сегментов в тех случаях, где геометрия относится к trajectory.
-
----
-
-## Marking structure
-
-Пример:
+Exercise marking хранит визуальный стиль и геометрический Path.
 
 ```json
 {
-  "id": "marking-001",
-
-  "type": "polyline",
-
-  "points": [
-    {
+  "id": "entry-guide",
+  "style": "dashed",
+  "color": "#FFD000FF",
+  "thickness": 0.08,
+  "visibleInViewer": true,
+  "path": {
+    "start": {
       "x": -2.0,
       "y": 0.0
     },
-    {
-      "x": 0.0,
-      "y": 1.5
-    },
-    {
-      "x": 2.0,
-      "y": 0.0
-    }
-  ],
-
-  "color": "#FFD400",
-
-  "widthMeters": 0.10,
-
-  "style": "solid",
-
-  "visibleInViewer": true
+    "segments": [
+      {
+        "type": "line",
+        "end": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "type": "cubicBezier",
+        "control1": {
+          "x": 1.0,
+          "y": 0.0
+        },
+        "control2": {
+          "x": 2.0,
+          "y": 2.0
+        },
+        "end": {
+          "x": 4.0,
+          "y": 2.0
+        }
+      }
+    ]
+  }
 }
 ```
+
+### Supported segment types
+
+```text
+line
+cubicBezier
+```
+
+### Removed v2 geometry
+
+Exercise Definition v3 не использует старый массив `points` как основной контракт marking.
+
+Старые документы необходимо конвертировать до загрузки production application.
+
+### Coordinates
+
+Все точки Path находятся в локальной системе координат Exercise.
+
+При размещении Exercise instance к ним применяются:
+
+* scaleX;
+* scaleY;
+* rotation;
+* translation.
+
+### Thickness
+
+`thickness` задаётся в метрах и не зависит от scale Exercise instance.
+
+
+
+## Marking structure
 
 ---
 
@@ -406,49 +422,6 @@ marking-002
 ```
 
 ---
-
-## type
-
-В текущей версии поддерживаются:
-
-```text
-line
-polyline
-```
-
-### line
-
-Должен содержать ровно две точки.
-
-### polyline
-
-Должен содержать минимум две точки.
-
----
-
-## points
-
-`points[]` содержит локальные координаты Exercise Definition.
-
-Они используют ту же систему:
-
-```text
-local X / Y
-1 unit = 1 meter
-```
-
-При размещении ExerciseInstance Track Editor применяет к ним:
-
-```text
-scale X/Y
-    ↓
-rotation
-    ↓
-translation
-```
-
----
-
 ## color
 
 Цвет marking хранится как явное цветовое значение.
