@@ -23,8 +23,8 @@
       "instanceId": "exercise-instance-003",
       "exercisePath": "Common/Rotation-360-right.json",
       "position": {
-        "x": 20.5,
-        "y": -7.25
+        "x": 21,
+        "y": -7
       },
       "rotationDeg": 99,
       "scale": {
@@ -52,7 +52,7 @@
         "x": 31.5,
         "y": -4.5
       },
-      "rotationDeg": 0,
+      "rotationDeg": 3,
       "scale": {
         "x": 1,
         "y": 1
@@ -65,7 +65,7 @@
         "x": 34.25,
         "y": 5.25
       },
-      "rotationDeg": -47,
+      "rotationDeg": -34,
       "scale": {
         "x": 1,
         "y": 1
@@ -75,8 +75,8 @@
       "instanceId": "exercise-instance-005",
       "exercisePath": "Common/Rotation-360-right.json",
       "position": {
-        "x": 26.25,
-        "y": 8.5
+        "x": 27.25,
+        "y": 8.25
       },
       "rotationDeg": -217,
       "scale": {
@@ -283,8 +283,8 @@
       "instanceId": "exercise-instance-019",
       "exercisePath": "Common/route-point.json",
       "position": {
-        "x": 17.25,
-        "y": -5.25
+        "x": 19,
+        "y": -5.5
       },
       "rotationDeg": -92,
       "scale": {
