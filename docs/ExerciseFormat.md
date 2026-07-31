@@ -1046,3 +1046,23 @@ Exercise Definition и exported Track должны иметь отдельные
 * `MarkingData`.
 
 Не следует использовать один корневой DTO для двух разных форматов только из-за частичного совпадения вложенных структур.
+
+## Editor operations
+
+Exercise Definition v3 хранит только итоговую Path geometry.
+
+Следующие editor-only данные не сериализуются:
+
+* selected marking;
+* selected segment;
+* selected handle;
+* active tool;
+* transient segment preview;
+* drag origin;
+* snapping candidates;
+* Undo/Redo history.
+
+Line-to-cubic conversion создаёт controls в точках одной трети и двух третей segment chord.
+
+Cubic split использует алгоритм de Casteljau и сохраняет геометрическую форму исходной кривой.
+
