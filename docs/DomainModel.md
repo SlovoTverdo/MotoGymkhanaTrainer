@@ -1422,3 +1422,66 @@ Viewer только:
 * включает или отключает существующую collision.
 
 Viewer не является генератором collision geometry.
+
+# Geometric paths
+
+Разметка Exercise и Venue использует общий непрерывный Path.
+
+```text
+Path
+├─ start
+└─ segments[]
+   ├─ Line
+   └─ CubicBezier
+```
+
+Path не является trajectory, несмотря на сходную геометрию.
+
+Различия:
+
+```text
+Trajectory:
+маршрут движения по трассе
+
+Marking Path:
+визуальная разметка упражнения или площадки
+```
+
+Они могут использовать общие математические сервисы, но остаются разными domain types.
+
+## Path continuity
+
+Начало первого сегмента равно `Path.start`.
+
+Начало каждого следующего сегмента равно концу предыдущего.
+
+Сегменты не хранят отдельный `start`.
+
+## Path transforms
+
+Affine transform применяется к:
+
+* Path.start;
+* Line.end;
+* CubicBezier.control1;
+* CubicBezier.control2;
+* CubicBezier.end.
+
+После affine transform кубическая Bézier-кривая остаётся кубической Bézier-кривой.
+
+## Rendering pipeline
+
+```text
+Path contract
+→ transform control geometry
+→ adaptive sampling
+→ cumulative length
+→ style generation
+→ surface projection
+→ mesh generation
+```
+
+Для Exercise instance sampling выполняется после применения независимых scale X/Y.
+
+Толщина marking не масштабируется вместе с геометрией, если иное явно не задано проектным контрактом.
+
