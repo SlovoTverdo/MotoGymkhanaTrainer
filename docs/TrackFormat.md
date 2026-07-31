@@ -30,7 +30,7 @@ Viewer получает готовую world geometry и ссылки на не�
 
 ```json
 {
-  "formatVersion": 4
+  "formatVersion": 5
 }
 ```
 
@@ -306,40 +306,85 @@ Exercise ID:
 
 # 16. markings
 
-Итоговый массив содержит:
+# Exported Track formatVersion 5
 
-* Venue markings;
-* Exercise markings.
+Exported Track v5 поддерживает Path-based markings.
 
-Venue ID:
+## Venue markings
 
-```text
-venue--marking--{localId}
+Venue markings экспортируются в координатах итоговой сцены.
+
+## Exercise markings
+
+Exercise marking Path преобразуется из локальных Exercise coordinates в итоговые Track coordinates.
+
+Affine transform применяется непосредственно к:
+
+* path.start;
+* line.end;
+* cubicBezier.control1;
+* cubicBezier.control2;
+* cubicBezier.end.
+
+Тип сегмента сохраняется.
+
+Пример:
+
+```json
+{
+  "markings": [
+    {
+      "id": "exercise-instance-12/entry-guide",
+      "style": "dashed",
+      "color": "#FFD000FF",
+      "thickness": 0.08,
+      "visibleInViewer": true,
+      "path": {
+        "start": {
+          "x": 14.0,
+          "y": 8.0
+        },
+        "segments": [
+          {
+            "type": "cubicBezier",
+            "control1": {
+              "x": 15.0,
+              "y": 8.0
+            },
+            "control2": {
+              "x": 16.0,
+              "y": 10.0
+            },
+            "end": {
+              "x": 18.0,
+              "y": 10.0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
 ```
 
-Exercise ID:
+Web и desktop Viewer выполняют:
 
 ```text
-{instanceId}--{localId}
+Path validation
+→ adaptive sampling
+→ cumulative world-space length
+→ style generation
+→ surface projection
+→ rendering
 ```
 
-Marking содержит:
+Exported Track v5 не содержит старое `points`-представление marking.
 
-* id;
-* type;
-* points;
-* color;
-* widthMeters;
-* style;
-* visibleInViewer.
+## Compatibility
 
-Viewer не отображает marking при:
+Production Viewer не обязан загружать Exported Track v4 после перехода на v5.
 
-```text
-visibleInViewer = false
-```
-
----
+Все sample exports и `default-track.json` должны быть обновлены одновременно.
 
 # 17. trajectory
 
