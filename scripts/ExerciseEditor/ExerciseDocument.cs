@@ -17,7 +17,6 @@ public enum TrajectoryAnchorDeleteResult
 {
     Deleted,
     MinimumBlocked,
-    CubicAdjacentBlocked,
     InvalidSelection,
 }
 
@@ -426,8 +425,8 @@ public sealed class ExerciseDocument
     }
 
     /// <summary>
-    /// Inserts a midpoint after a conceptual anchor only when the following section
-    /// is persisted as a polyline. Bezier splitting is intentionally outside this MVP.
+    /// Inserts a midpoint after a conceptual anchor. Polyline sections receive a new
+    /// point, while a cubic is split exactly at t=0.5 with de Casteljau construction.
     /// </summary>
     public int InsertTrajectoryPointAfter(int anchorIndex)
     {
@@ -439,9 +438,33 @@ public sealed class ExerciseDocument
 
         TrajectorySectionLocation location = sections[anchorIndex];
         TrajectorySegmentDto segment = GetTrajectorySegment(location.SegmentIndex);
-        if (segment.Type != "polyline")
+        if (segment.Type == "cubicBezier")
         {
-            return -2;
+            Point2Dto startControl = Lerp(segment.Start!, segment.Control1!, 0.5f);
+            Point2Dto controlsMidpoint = Lerp(segment.Control1!, segment.Control2!, 0.5f);
+            Point2Dto endControl = Lerp(segment.Control2!, segment.End!, 0.5f);
+            Point2Dto leftControl = Lerp(startControl, controlsMidpoint, 0.5f);
+            Point2Dto rightControl = Lerp(controlsMidpoint, endControl, 0.5f);
+            Point2Dto midpoint = Lerp(leftControl, rightControl, 0.5f);
+
+            string rightId = CreateUniqueSegmentId();
+            ReplaceSegment(location.SegmentIndex,
+            [
+                CreateCubic(
+                    segment.Id,
+                    segment.Start!,
+                    startControl,
+                    leftControl,
+                    midpoint),
+                CreateCubic(
+                    rightId,
+                    midpoint,
+                    rightControl,
+                    endControl,
+                    segment.End!),
+            ]);
+            SynchronizeEndpointsFromTrajectory();
+            return anchorIndex + 1;
         }
 
         var points = segment.Points!.Select(CopyPoint).ToList();
@@ -457,7 +480,12 @@ public sealed class ExerciseDocument
         return anchorIndex + 1;
     }
 
-    /// <summary>Deletes an anchor only through continuity-preserving line operations.</summary>
+    /// <summary>
+    /// Deletes an anchor while keeping the remaining ordered sections connected.
+    /// Removing a join adjacent to a cubic preserves the outer endpoint derivatives
+    /// over two equally weighted sections. This also makes deletion the exact inverse
+    /// of the editor's midpoint split when no other edits occurred between them.
+    /// </summary>
     public TrajectoryAnchorDeleteResult DeleteTrajectoryPoint(int anchorIndex)
     {
         int anchorCount = TrajectoryPointCount;
@@ -471,22 +499,24 @@ public sealed class ExerciseDocument
             return TrajectoryAnchorDeleteResult.MinimumBlocked;
         }
 
-        IReadOnlyList<TrajectorySectionLocation> sections = GetTrajectorySections();
-        if ((anchorIndex > 0 && IsCubic(sections[anchorIndex - 1])) ||
-            (anchorIndex < sections.Count && IsCubic(sections[anchorIndex])))
-        {
-            return TrajectoryAnchorDeleteResult.CubicAdjacentBlocked;
-        }
-
         List<List<AnchorOccurrence>> bindings = BuildAnchorBindings();
         List<AnchorOccurrence> occurrences = bindings[anchorIndex];
-        if (occurrences.Count == 2)
+        if (occurrences.Count == 1)
         {
-            DeleteSharedPolylineAnchor(occurrences[0], occurrences[1]);
+            DeleteEndpointOrInternalPolylineAnchor(occurrences[0]);
         }
         else
         {
-            DeleteSinglePolylineAnchor(occurrences[0]);
+            TrajectorySegmentDto left = GetTrajectorySegment(occurrences[0].SegmentIndex);
+            TrajectorySegmentDto right = GetTrajectorySegment(occurrences[1].SegmentIndex);
+            if (left.Type == "polyline" && right.Type == "polyline")
+            {
+                DeleteSharedPolylineAnchor(occurrences[0], occurrences[1]);
+            }
+            else
+            {
+                DeleteSharedAnchorWithCubic(occurrences[0], occurrences[1]);
+            }
         }
 
         SynchronizeEndpointsFromTrajectory();
@@ -662,11 +692,6 @@ public sealed class ExerciseDocument
         }
     }
 
-    private bool IsCubic(TrajectorySectionLocation location)
-    {
-        return GetTrajectorySegment(location.SegmentIndex).Type == "cubicBezier";
-    }
-
     private void DeleteSharedPolylineAnchor(AnchorOccurrence previous, AnchorOccurrence next)
     {
         TrajectorySegmentDto left = GetTrajectorySegment(previous.SegmentIndex);
@@ -684,9 +709,17 @@ public sealed class ExerciseDocument
         Definition.Trajectory.Segments = [.. segments];
     }
 
-    private void DeleteSinglePolylineAnchor(AnchorOccurrence occurrence)
+    private void DeleteEndpointOrInternalPolylineAnchor(AnchorOccurrence occurrence)
     {
         TrajectorySegmentDto segment = GetTrajectorySegment(occurrence.SegmentIndex);
+        if (segment.Type == "cubicBezier")
+        {
+            var cubicSegments = Definition.Trajectory.Segments.ToList();
+            cubicSegments.RemoveAt(occurrence.SegmentIndex);
+            Definition.Trajectory.Segments = [.. cubicSegments];
+            return;
+        }
+
         var points = segment.Points!.Select(CopyPoint).ToList();
         if (points.Count > 2)
         {
@@ -699,6 +732,51 @@ public sealed class ExerciseDocument
         // neighbour becomes the new Entry/Exit. The global minimum was checked above.
         var segments = Definition.Trajectory.Segments.ToList();
         segments.RemoveAt(occurrence.SegmentIndex);
+        Definition.Trajectory.Segments = [.. segments];
+    }
+
+    private void DeleteSharedAnchorWithCubic(AnchorOccurrence previous, AnchorOccurrence next)
+    {
+        TrajectorySegmentDto left = GetTrajectorySegment(previous.SegmentIndex);
+        TrajectorySegmentDto right = GetTrajectorySegment(next.SegmentIndex);
+        Point2Dto start = GetSectionEndpoints(
+            new TrajectorySectionLocation(previous.SegmentIndex,
+                left.Type == "polyline" ? left.Points!.Length - 2 : 0)).Start;
+        Point2Dto deleted = GetSegmentEnd(left);
+        Point2Dto end = GetSectionEndpoints(
+            new TrajectorySectionLocation(next.SegmentIndex, 0)).End;
+
+        bool keepLeftPrefix = left.Type == "polyline" && left.Points!.Length > 2;
+        bool keepRightSuffix = right.Type == "polyline" && right.Points!.Length > 2;
+        string mergedId = !keepLeftPrefix
+            ? left.Id
+            : !keepRightSuffix
+                ? right.Id
+                : CreateUniqueSegmentId();
+        Point2Dto leftEndpointControl = left.Type == "cubicBezier"
+            ? left.Control1!
+            : Lerp(start, deleted, 1.0f / 3.0f);
+        Point2Dto rightEndpointControl = right.Type == "cubicBezier"
+            ? right.Control2!
+            : Lerp(deleted, end, 2.0f / 3.0f);
+        Point2Dto control1 = Lerp(start, leftEndpointControl, 2.0f);
+        Point2Dto control2 = Lerp(end, rightEndpointControl, 2.0f);
+
+        var replacements = new List<TrajectorySegmentDto>();
+        if (keepLeftPrefix)
+        {
+            replacements.Add(CreatePolyline(left.Id, left.Points!.Take(left.Points!.Length - 1)));
+        }
+
+        replacements.Add(CreateCubic(mergedId, start, control1, control2, end));
+        if (keepRightSuffix)
+        {
+            replacements.Add(CreatePolyline(right.Id, right.Points!.Skip(1)));
+        }
+
+        var segments = Definition.Trajectory.Segments.ToList();
+        segments.RemoveRange(previous.SegmentIndex, next.SegmentIndex - previous.SegmentIndex + 1);
+        segments.InsertRange(previous.SegmentIndex, replacements);
         Definition.Trajectory.Segments = [.. segments];
     }
 
@@ -803,6 +881,24 @@ public sealed class ExerciseDocument
             Start = CopyPoint(start),
             Control1 = Lerp(start, end, 1.0f / 3.0f),
             Control2 = Lerp(start, end, 2.0f / 3.0f),
+            End = CopyPoint(end),
+        };
+    }
+
+    private static TrajectorySegmentDto CreateCubic(
+        string segmentId,
+        Point2Dto start,
+        Point2Dto control1,
+        Point2Dto control2,
+        Point2Dto end)
+    {
+        return new TrajectorySegmentDto
+        {
+            Id = string.IsNullOrWhiteSpace(segmentId) ? DefaultTrajectoryId : segmentId,
+            Type = "cubicBezier",
+            Start = CopyPoint(start),
+            Control1 = CopyPoint(control1),
+            Control2 = CopyPoint(control2),
             End = CopyPoint(end),
         };
     }

@@ -197,14 +197,78 @@ AssertTrue(splineBuild.Definition.Trajectory.Segments.All(segment => segment.Typ
     "new trajectory sections default directly to persisted cubicBezier geometry");
 TrajectorySegmentDto firstBuiltSpline = splineBuild.Definition.Trajectory.Segments[0];
 TrajectorySegmentDto secondBuiltSpline = splineBuild.Definition.Trajectory.Segments[1];
+Point2Dto firstSplineControl1 = new() { X = firstBuiltSpline.Control1!.X, Y = firstBuiltSpline.Control1.Y };
+Point2Dto firstSplineControl2 = new() { X = firstBuiltSpline.Control2!.X, Y = firstBuiltSpline.Control2.Y };
 AssertEqual(2, appendedSplineAnchor, "appended spline returns its final conceptual anchor");
 AssertTrue(MathF.Abs((firstBuiltSpline.End!.X - firstBuiltSpline.Control2!.X) -
                      (secondBuiltSpline.Control1!.X - secondBuiltSpline.Start!.X)) < 0.0001f &&
            MathF.Abs((firstBuiltSpline.End.Y - firstBuiltSpline.Control2.Y) -
                      (secondBuiltSpline.Control1.Y - secondBuiltSpline.Start.Y)) < 0.0001f,
     "adjacent construction splines have matching derivatives at their shared anchor");
+int insertedSplineAnchor = splineBuild.InsertTrajectoryPointAfter(0);
+AssertEqual(1, insertedSplineAnchor, "a point can be inserted into a newly constructed cubic trajectory");
+AssertEqual(3, splineBuild.Definition.Trajectory.Segments.Length,
+    "splitting a cubic adds one persisted segment");
+AssertEqual(4, splineBuild.TrajectoryPointCount, "splitting a cubic adds one conceptual anchor");
+AssertEqual(splineBuild.GetTrajectorySegment(0).End!.X, splineBuild.GetTrajectorySegment(1).Start!.X,
+    "split cubic sections share the inserted anchor");
+AssertTrue(
+    splineBuild.DeleteTrajectoryPoint(insertedSplineAnchor) == TrajectoryAnchorDeleteResult.Deleted,
+    "an anchor between cubic sections can be deleted");
+AssertEqual(2, splineBuild.Definition.Trajectory.Segments.Length,
+    "deleting the inserted cubic anchor restores the segment count");
+AssertEqual(firstSplineControl1.X, splineBuild.GetTrajectorySegment(0).Control1!.X,
+    "midpoint split followed by delete restores cubic control1");
+AssertEqual(firstSplineControl1.Y, splineBuild.GetTrajectorySegment(0).Control1!.Y,
+    "midpoint split followed by delete restores cubic control1 Y");
+AssertEqual(firstSplineControl2.X, splineBuild.GetTrajectorySegment(0).Control2!.X,
+    "midpoint split followed by delete restores cubic control2 X");
+AssertEqual(firstSplineControl2.Y, splineBuild.GetTrajectorySegment(0).Control2!.Y,
+    "midpoint split followed by delete restores cubic control2");
 AssertTrue(splineBuild.ConvertCubicToLine(1) is not null,
     "a newly constructed spline can still be converted back to a line");
+
+ExerciseDocument endpointSpline = ExerciseDocument.CreateNew("endpoint-spline", "Endpoint Spline");
+endpointSpline.StartSplineTrajectoryAt(new Point2Dto { X = 0.0f, Y = 0.0f });
+endpointSpline.SetInitialTrajectorySplineEnd(new Point2Dto { X = 2.0f, Y = 0.0f });
+endpointSpline.AppendTrajectorySpline(new Point2Dto { X = 4.0f, Y = 1.0f });
+endpointSpline.AppendTrajectorySpline(new Point2Dto { X = 6.0f, Y = 0.0f });
+AssertTrue(endpointSpline.DeleteTrajectoryPoint(0) == TrajectoryAnchorDeleteResult.Deleted,
+    "the first anchor of a multi-section cubic trajectory can be deleted");
+AssertEqual(2.0f, endpointSpline.Definition.EntryPoint.X,
+    "deleting the first cubic anchor promotes the next anchor to EntryPoint");
+AssertTrue(
+    endpointSpline.DeleteTrajectoryPoint(endpointSpline.TrajectoryPointCount - 1) ==
+    TrajectoryAnchorDeleteResult.Deleted,
+    "the last anchor of a multi-section cubic trajectory can be deleted");
+AssertEqual(4.0f, endpointSpline.Definition.ExitPoint.X,
+    "deleting the last cubic anchor promotes the preceding anchor to ExitPoint");
+
+ExerciseDocument mixedTrajectory = ExerciseDocument.CreateNew("mixed-delete", "Mixed Delete");
+mixedTrajectory.StartTrajectoryAt(new Point2Dto { X = -4.0f, Y = 0.0f });
+mixedTrajectory.MoveTrajectoryPoint(1, new Point2Dto { X = -2.0f, Y = 0.0f });
+mixedTrajectory.AppendTrajectoryPoint(new Point2Dto { X = 0.0f, Y = 1.0f });
+mixedTrajectory.AppendTrajectoryPoint(new Point2Dto { X = 2.0f, Y = 0.0f });
+mixedTrajectory.AppendTrajectoryPoint(new Point2Dto { X = 4.0f, Y = 0.0f });
+AssertTrue(
+    mixedTrajectory.ConvertSectionToCubic(new TrajectorySectionLocation(0, 1)) is not null,
+    "mixed deletion fixture contains polyline-cubic-polyline sections");
+AssertTrue(mixedTrajectory.DeleteTrajectoryPoint(1) == TrajectoryAnchorDeleteResult.Deleted,
+    "an anchor at a polyline-to-cubic join can be deleted");
+AssertEqual(
+    mixedTrajectory.GetTrajectorySegment(0).End!.X,
+    mixedTrajectory.GetTrajectorySegment(1).Points![0].X,
+    "polyline-to-cubic deletion keeps the following polyline connected");
+AssertTrue(mixedTrajectory.DeleteTrajectoryPoint(1) == TrajectoryAnchorDeleteResult.Deleted,
+    "an anchor at a cubic-to-multi-point-polyline join can be deleted");
+AssertEqual(
+    mixedTrajectory.GetTrajectorySegment(0).End!.X,
+    mixedTrajectory.GetTrajectorySegment(1).Points![0].X,
+    "cubic-to-polyline deletion keeps the retained polyline suffix connected");
+AssertEqual(
+    mixedTrajectory.TrajectorySegmentCount,
+    mixedTrajectory.Definition.Trajectory.Segments.Select(segment => segment.Id).Distinct().Count(),
+    "mixed cubic deletion keeps trajectory segment ids unique");
 AssertEqual(5, exercise.TrajectoryPointCount, "a five-point polyline can be constructed");
 AssertEqual(-5.0f, exercise.Definition.EntryPoint.Y, "first trajectory point is the EntryPoint source");
 AssertEqual(5.0f, exercise.Definition.ExitPoint.Y, "last trajectory point is the ExitPoint source");
@@ -270,12 +334,6 @@ AssertEqual(cubic.End!.X, exercise.GetTrajectorySegment(2).Points![0].X,
     "moving the other shared anchor keeps Bezier end and right polyline synchronized");
 AssertEqual(control2BeforeAnchorMove.X - 0.5f, cubic.Control2.X,
     "moving Bezier end translates control2 by the same delta");
-AssertTrue(
-    exercise.DeleteTrajectoryPoint(1) == TrajectoryAnchorDeleteResult.CubicAdjacentBlocked,
-    "deleting an anchor adjacent to cubicBezier is safely blocked");
-AssertEqual(-2, exercise.InsertTrajectoryPointAfter(1),
-    "inserting directly into cubicBezier is blocked with a distinct result");
-
 TrajectorySectionLocation? convertedBack = exercise.ConvertCubicToLine(1);
 AssertTrue(convertedBack is not null, "cubicBezier converts back to a line");
 AssertEqual(1, exercise.TrajectorySegmentCount, "adjacent polylines normalize into one segment");
@@ -616,6 +674,14 @@ try
     AssertEqual(0.25f,
         EditorCanvasMath.Snap(new Point2Dto { X = 0.31f, Y = -0.37f }, 0.25f).X,
         "Track drag reuses the common 0.25 m snap utility");
+    Point2Dto snappedDrag = EditorCanvasMath.ResolveDragPosition(
+        new Point2Dto { X = 0.31f, Y = -0.37f }, 0.25f, bypassSnap: false);
+    AssertEqual(0.25f, snappedDrag.X, "Exercise drag snaps X when Ctrl is not held");
+    AssertEqual(-0.25f, snappedDrag.Y, "Exercise drag snaps Y when Ctrl is not held");
+    Point2Dto preciseDrag = EditorCanvasMath.ResolveDragPosition(
+        new Point2Dto { X = 0.31f, Y = -0.37f }, 0.25f, bypassSnap: true);
+    AssertEqual(0.31f, preciseDrag.X, "Exercise drag preserves exact X while Ctrl is held");
+    AssertEqual(-0.37f, preciseDrag.Y, "Exercise drag preserves exact Y while Ctrl is held");
 
     AssertTrue(trackDocument.MoveUp(thirdInstance), "Route Order Move Up changes instances[] order");
     AssertEqual(thirdInstance, trackDocument.Project.Instances[1].InstanceId,

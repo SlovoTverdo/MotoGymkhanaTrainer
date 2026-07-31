@@ -69,6 +69,17 @@ public static class EditorCanvasMath
     }
 
     /// <summary>
+    /// Resolves a drag position with the editor grid enabled normally and bypassed
+    /// while the user holds the precision modifier.
+    /// </summary>
+    public static Point2Dto ResolveDragPosition(Point2Dto point, float stepMeters, bool bypassSnap)
+    {
+        return bypassSnap
+            ? new Point2Dto { X = point.X, Y = point.Y }
+            : Snap(point, stepMeters);
+    }
+
+    /// <summary>
     /// Returns the adjusted pan that keeps the domain point under the mouse fixed
     /// while pixels-per-metre changes.
     /// </summary>

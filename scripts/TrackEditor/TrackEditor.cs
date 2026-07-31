@@ -454,7 +454,19 @@ public partial class TrackEditor : Control
         _newTrackVenue = new OptionButton { Name = "NewTrackVenue", SizeFlagsHorizontal = SizeFlags.ExpandFill };
         _newTrackId = new LineEdit { Name = "NewTrackId", Text = "new-track" };
         _newTrackName = new LineEdit { Name = "NewTrackName", Text = "New Track" };
-        var newTrackFields = new VBoxContainer { Name = "NewTrackFields" };
+        var newTrackFields = new VBoxContainer
+        {
+            Name = "NewTrackFields",
+            CustomMinimumSize = new Vector2(560, 126),
+            AnchorRight = 1.0f,
+            AnchorBottom = 1.0f,
+            OffsetLeft = 20.0f,
+            OffsetTop = 20.0f,
+            OffsetRight = -20.0f,
+            OffsetBottom = -70.0f,
+        };
+        newTrackFields.AddThemeConstantOverride("separation", 8);
+        newTrackFields.AddChild(new Label { Text = "Select a Venue before entering Track metadata." });
         newTrackFields.AddChild(Row("1. Venue", _newTrackVenue));
         newTrackFields.AddChild(Row("2. Track ID", _newTrackId));
         newTrackFields.AddChild(Row("3. Track Name", _newTrackName));
@@ -462,10 +474,13 @@ public partial class TrackEditor : Control
         {
             Name = "NewTrackDialog",
             Title = "New Track Project v3",
-            DialogText = "Select a Venue before entering Track metadata.",
+            DialogText = string.Empty,
             OkButtonText = "Create Track",
-            Size = new Vector2I(620, 270),
+            Size = new Vector2I(620, 320),
         };
+        // ConfirmationDialog does not expose its content VBox in the 4.7.1 C# API.
+        // Reserve an anchored rectangle above the built-in action row and keep the
+        // explanatory label in the same layout as the fields so they cannot overlap.
         _newTrackDialog.AddChild(newTrackFields);
         _newTrackDialog.Confirmed += CreateNewTrack;
         AddChild(_newTrackDialog);

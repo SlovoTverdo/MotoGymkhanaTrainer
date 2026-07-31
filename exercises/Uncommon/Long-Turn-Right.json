@@ -13,8 +13,8 @@
     {
       "id": "cone-001",
       "position": {
-        "x": 4,
-        "y": 2
+        "x": 3.929,
+        "y": 2.2022586
       },
       "color": "red",
       "type": "standard"
@@ -31,8 +31,8 @@
     {
       "id": "cone-003",
       "position": {
-        "x": -4,
-        "y": 2
+        "x": -3.9383094,
+        "y": 2.2106726
       },
       "color": "red",
       "type": "standard"
@@ -40,8 +40,8 @@
     {
       "id": "cone-004",
       "position": {
-        "x": 3.75,
-        "y": 1
+        "x": 3.7186441,
+        "y": 1.3692492
       },
       "color": "red",
       "type": "standard"
@@ -49,8 +49,8 @@
     {
       "id": "cone-005",
       "position": {
-        "x": 3.25,
-        "y": 0
+        "x": 3.4493887,
+        "y": 0.41002655
       },
       "color": "red",
       "type": "standard"
@@ -67,8 +67,8 @@
     {
       "id": "cone-007",
       "position": {
-        "x": 2.75,
-        "y": -1
+        "x": 2.885635,
+        "y": -0.4734681
       },
       "color": "red",
       "type": "standard"
@@ -76,8 +76,8 @@
     {
       "id": "cone-008",
       "position": {
-        "x": -2.75,
-        "y": -1
+        "x": -2.7687309,
+        "y": -0.6333386
       },
       "color": "red",
       "type": "standard"
@@ -85,8 +85,8 @@
     {
       "id": "cone-009",
       "position": {
-        "x": -3.75,
-        "y": 1
+        "x": -3.7616105,
+        "y": 1.2262073
       },
       "color": "red",
       "type": "standard"
@@ -94,8 +94,8 @@
     {
       "id": "cone-010",
       "position": {
-        "x": -3.25,
-        "y": 0
+        "x": -3.3408988,
+        "y": 0.4016123
       },
       "color": "red",
       "type": "standard"
@@ -112,8 +112,8 @@
     {
       "id": "cone-012",
       "position": {
-        "x": 2,
-        "y": -1.5
+        "x": 2.0778685,
+        "y": -1.2728205
       },
       "color": "red",
       "type": "standard"
@@ -121,8 +121,8 @@
     {
       "id": "cone-013",
       "position": {
-        "x": -2,
-        "y": -1.5
+        "x": -2.0114496,
+        "y": -1.3317201
       },
       "color": "red",
       "type": "standard"
@@ -148,35 +148,15 @@
         },
         "control1": {
           "x": 4.5,
-          "y": 2.3333333
+          "y": 1.5
         },
         "control2": {
-          "x": 4.5,
-          "y": 2
-        },
-        "end": {
-          "x": 4.25,
-          "y": 1.25
-        }
-      },
-      {
-        "id": "trajectory-segment-002",
-        "type": "cubicBezier",
-        "start": {
-          "x": 4.25,
-          "y": 1.25
-        },
-        "control1": {
-          "x": 4.25,
-          "y": 1.25
-        },
-        "control2": {
-          "x": 4,
-          "y": 0.14999998
+          "x": 4.2234983,
+          "y": 0.6540393
         },
         "end": {
           "x": 4,
-          "y": 0.25
+          "y": 0
         }
       },
       {
@@ -184,94 +164,14 @@
         "type": "cubicBezier",
         "start": {
           "x": 4,
-          "y": 0.25
+          "y": 0
         },
         "control1": {
-          "x": 3.75,
-          "y": -0.6
+          "x": 3.390489,
+          "y": -1.365377
         },
         "control2": {
-          "x": 3.8333335,
-          "y": -0.25
-        },
-        "end": {
-          "x": 3.75,
-          "y": -0.5
-        }
-      },
-      {
-        "id": "trajectory-segment-004",
-        "type": "cubicBezier",
-        "start": {
-          "x": 3.75,
-          "y": -0.5
-        },
-        "control1": {
-          "x": 3.75,
-          "y": -0.5
-        },
-        "control2": {
-          "x": 3.75,
-          "y": -0.5
-        },
-        "end": {
-          "x": 3.75,
-          "y": -0.51
-        }
-      },
-      {
-        "id": "trajectory-segment-005",
-        "type": "cubicBezier",
-        "start": {
-          "x": 3.75,
-          "y": -0.51
-        },
-        "control1": {
-          "x": 3.5833333,
-          "y": -0.83333325
-        },
-        "control2": {
-          "x": 3.25,
-          "y": -1.1666667
-        },
-        "end": {
-          "x": 3,
-          "y": -1.5
-        }
-      },
-      {
-        "id": "trajectory-segment-006",
-        "type": "cubicBezier",
-        "start": {
-          "x": 3,
-          "y": -1.5
-        },
-        "control1": {
-          "x": 2.5,
-          "y": -1.75
-        },
-        "control2": {
-          "x": 2.25,
-          "y": -2
-        },
-        "end": {
-          "x": 1.5,
-          "y": -2.25
-        }
-      },
-      {
-        "id": "trajectory-segment-007",
-        "type": "cubicBezier",
-        "start": {
-          "x": 1.5,
-          "y": -2.25
-        },
-        "control1": {
-          "x": 1.0833335,
-          "y": -2.4166667
-        },
-        "control2": {
-          "x": 0.5,
+          "x": 2,
           "y": -2.5
         },
         "end": {
@@ -287,92 +187,32 @@
           "y": -2.5
         },
         "control1": {
-          "x": -0.5,
+          "x": -2,
           "y": -2.5
         },
         "control2": {
-          "x": -1,
-          "y": -2.5
+          "x": -3.3072417,
+          "y": -1.2391635
         },
         "end": {
-          "x": -1.5,
-          "y": -2.25
-        }
-      },
-      {
-        "id": "trajectory-segment-009",
-        "type": "cubicBezier",
-        "start": {
-          "x": -1.5,
-          "y": -2.25
-        },
-        "control1": {
-          "x": -1.75,
-          "y": -2.25
-        },
-        "control2": {
-          "x": -2.75,
-          "y": -1.5
-        },
-        "end": {
-          "x": -3,
-          "y": -1.25
-        }
-      },
-      {
-        "id": "trajectory-segment-010",
-        "type": "cubicBezier",
-        "start": {
-          "x": -3,
-          "y": -1.25
-        },
-        "control1": {
-          "x": -3.25,
-          "y": -1
-        },
-        "control2": {
-          "x": -3.25,
-          "y": -1
-        },
-        "end": {
-          "x": -3.5,
-          "y": -0.5
+          "x": -3.9803805,
+          "y": -0.0022709484
         }
       },
       {
         "id": "trajectory-segment-011",
         "type": "cubicBezier",
         "start": {
-          "x": -3.5,
-          "y": -0.5
+          "x": -3.9803805,
+          "y": -0.0022709484
         },
         "control1": {
-          "x": -3.75,
-          "y": -0.08333337
+          "x": -4.308536,
+          "y": 0.83073825
         },
         "control2": {
-          "x": -4,
-          "y": 0.25
-        },
-        "end": {
-          "x": -4.25,
-          "y": 1
-        }
-      },
-      {
-        "id": "trajectory-segment-012",
-        "type": "cubicBezier",
-        "start": {
-          "x": -4.25,
-          "y": 1
-        },
-        "control1": {
           "x": -4.5,
           "y": 1.5
-        },
-        "control2": {
-          "x": -4.5,
-          "y": 2
         },
         "end": {
           "x": -4.5,

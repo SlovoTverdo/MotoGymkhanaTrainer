@@ -4322,10 +4322,10 @@
       "definitionId": "Long-Turn-Right",
       "exercisePath": "Uncommon/Long-Turn-Right.json",
       "position": {
-        "x": 21.25,
-        "y": 0
+        "x": 21.5,
+        "y": 0.5
       },
-      "rotationDeg": -154,
+      "rotationDeg": -162,
       "scale": {
         "x": 1,
         "y": 1
@@ -4368,6 +4368,20 @@
         "y": 8.5
       },
       "rotationDeg": -140,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-023",
+      "definitionId": "route-point",
+      "exercisePath": "Common/route-point.json",
+      "position": {
+        "x": 22.75,
+        "y": 6.75
+      },
+      "rotationDeg": 0,
       "scale": {
         "x": 1,
         "y": 1
@@ -4424,6 +4438,20 @@
         "y": -0
       },
       "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-024",
+      "definitionId": "route-point",
+      "exercisePath": "Common/route-point.json",
+      "position": {
+        "x": 1.25,
+        "y": 6.5
+      },
+      "rotationDeg": -91,
       "scale": {
         "x": 1,
         "y": 1
@@ -4528,14 +4556,28 @@
       }
     },
     {
-      "instanceId": "exercise-instance-017",
-      "definitionId": "Rotation-360-left",
-      "exercisePath": "Common/Rotation-360-left.json",
+      "instanceId": "exercise-instance-022",
+      "definitionId": "route-point",
+      "exercisePath": "Common/route-point.json",
       "position": {
-        "x": 13.25,
-        "y": 4.75
+        "x": 10.5,
+        "y": -5.5
       },
-      "rotationDeg": 6,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-017",
+      "definitionId": "turn-left",
+      "exercisePath": "Common/turn-left.json",
+      "position": {
+        "x": 11.25,
+        "y": 6
+      },
+      "rotationDeg": 0,
       "scale": {
         "x": 1,
         "y": 1
@@ -4546,8 +4588,8 @@
       "definitionId": "Rotation-360-right",
       "exercisePath": "Common/Rotation-360-right.json",
       "position": {
-        "x": 11.75,
-        "y": -7.5
+        "x": 14,
+        "y": -7.75
       },
       "rotationDeg": 0,
       "scale": {
@@ -4560,12 +4602,12 @@
       "definitionId": "route-point",
       "exercisePath": "Common/route-point.json",
       "position": {
-        "x": 23,
-        "y": -5.75
+        "x": 20,
+        "y": -5
       },
       "rotationDeg": -106,
       "scale": {
-        "x": 1,
+        "x": 0.90000004,
         "y": 1
       }
     },
@@ -4633,8 +4675,8 @@
     {
       "id": "exercise-instance-021--cone-001",
       "position": {
-        "x": 18.531567,
-        "y": -3.5510726
+        "x": 18.443834,
+        "y": -2.8086004
       },
       "color": "red",
       "type": "standard"
@@ -4642,8 +4684,8 @@
     {
       "id": "exercise-instance-021--cone-002",
       "position": {
-        "x": 20.373259,
-        "y": 1.7975881
+        "x": 20.881966,
+        "y": 2.402113
       },
       "color": "red",
       "type": "standard"
@@ -4651,8 +4693,8 @@
     {
       "id": "exercise-instance-021--cone-003",
       "position": {
-        "x": 25.721918,
-        "y": -0.044103622
+        "x": 25.92869,
+        "y": -0.3854698
       },
       "color": "red",
       "type": "standard"
@@ -4660,8 +4702,8 @@
     {
       "id": "exercise-instance-021--cone-004",
       "position": {
-        "x": 18.317894,
-        "y": -2.5426857
+        "x": 18.38648,
+        "y": -1.9513578
       },
       "color": "red",
       "type": "standard"
@@ -4669,8 +4711,8 @@
     {
       "id": "exercise-instance-021--cone-005",
       "position": {
-        "x": 18.328918,
-        "y": -1.4247061
+        "x": 18.346142,
+        "y": -0.95587826
       },
       "color": "red",
       "type": "standard"
@@ -4678,8 +4720,8 @@
     {
       "id": "exercise-instance-021--cone-006",
       "position": {
-        "x": 19.584057,
-        "y": 1.1345184
+        "x": 20.008163,
+        "y": 1.8553318
       },
       "color": "red",
       "type": "standard"
@@ -4687,8 +4729,8 @@
     {
       "id": "exercise-instance-021--cone-007",
       "position": {
-        "x": 18.339945,
-        "y": -0.30672657
+        "x": 18.60929,
+        "y": 0.05858457
       },
       "color": "red",
       "type": "standard"
@@ -4696,8 +4738,8 @@
     {
       "id": "exercise-instance-021--cone-008",
       "position": {
-        "x": 23.283312,
-        "y": 2.1043148
+        "x": 23.937508,
+        "y": 1.9579258
       },
       "color": "red",
       "type": "standard"
@@ -4705,8 +4747,8 @@
     {
       "id": "exercise-instance-021--cone-009",
       "position": {
-        "x": 25.05885,
-        "y": 0.74509764
+        "x": 25.456423,
+        "y": 0.49620926
       },
       "color": "red",
       "type": "standard"
@@ -4714,8 +4756,8 @@
     {
       "id": "exercise-instance-021--cone-010",
       "position": {
-        "x": 24.171082,
-        "y": 1.4247061
+        "x": 24.801489,
+        "y": 1.1504387
       },
       "color": "red",
       "type": "standard"
@@ -4723,8 +4765,8 @@
     {
       "id": "exercise-instance-021--cone-011",
       "position": {
-        "x": 21.381645,
-        "y": 2.0112607
+        "x": 21.910276,
+        "y": 2.4733658
       },
       "color": "red",
       "type": "standard"
@@ -4732,8 +4774,8 @@
     {
       "id": "exercise-instance-021--cone-012",
       "position": {
-        "x": 18.794855,
-        "y": 0.47144878
+        "x": 19.130507,
+        "y": 1.0684274
       },
       "color": "red",
       "type": "standard"
@@ -4741,8 +4783,8 @@
     {
       "id": "exercise-instance-021--cone-013",
       "position": {
-        "x": 22.390032,
-        "y": 2.2249331
+        "x": 23.001478,
+        "y": 2.3881133
       },
       "color": "red",
       "type": "standard"
@@ -4750,8 +4792,8 @@
     {
       "id": "exercise-instance-002--cone-001",
       "position": {
-        "x": 31.5,
-        "y": -6.5
+        "x": 31.49461,
+        "y": -6.3564367
       },
       "color": "blue",
       "type": "standard"
@@ -4759,8 +4801,8 @@
     {
       "id": "exercise-instance-002--cone-002",
       "position": {
-        "x": 35.5,
-        "y": -2.5
+        "x": 35.339916,
+        "y": -2.2082198
       },
       "color": "blue",
       "type": "standard"
@@ -4768,8 +4810,8 @@
     {
       "id": "exercise-instance-002--cone-003",
       "position": {
-        "x": 27.5,
-        "y": -2.5
+        "x": 27.691376,
+        "y": -2.1493201
       },
       "color": "blue",
       "type": "standard"
@@ -4777,8 +4819,8 @@
     {
       "id": "exercise-instance-002--cone-004",
       "position": {
-        "x": 27.75,
-        "y": -3.5
+        "x": 27.75869,
+        "y": -3.1085427
       },
       "color": "blue",
       "type": "standard"
@@ -4786,8 +4828,8 @@
     {
       "id": "exercise-instance-002--cone-005",
       "position": {
-        "x": 28,
-        "y": -4.5
+        "x": 28.011116,
+        "y": -4.1350794
       },
       "color": "blue",
       "type": "standard"
@@ -4795,8 +4837,8 @@
     {
       "id": "exercise-instance-002--cone-006",
       "position": {
-        "x": 28.5,
-        "y": -5.5
+        "x": 28.532799,
+        "y": -5.1195445
       },
       "color": "blue",
       "type": "standard"
@@ -4806,15 +4848,6 @@
       "position": {
         "x": 30.5,
         "y": -6.25
-      },
-      "color": "blue",
-      "type": "standard"
-    },
-    {
-      "id": "exercise-instance-002--cone-008",
-      "position": {
-        "x": 29.5,
-        "y": -6
       },
       "color": "blue",
       "type": "standard"
@@ -4831,8 +4864,8 @@
     {
       "id": "exercise-instance-002--cone-010",
       "position": {
-        "x": 33.5,
-        "y": -6
+        "x": 33.522438,
+        "y": -5.8347545
       },
       "color": "blue",
       "type": "standard"
@@ -4840,8 +4873,8 @@
     {
       "id": "exercise-instance-002--cone-011",
       "position": {
-        "x": 34.5,
-        "y": -5.5
+        "x": 34.490078,
+        "y": -5.1447873
       },
       "color": "blue",
       "type": "standard"
@@ -4849,8 +4882,8 @@
     {
       "id": "exercise-instance-002--cone-012",
       "position": {
-        "x": 35,
-        "y": -4.5
+        "x": 35.01176,
+        "y": -4.2528787
       },
       "color": "blue",
       "type": "standard"
@@ -4858,8 +4891,17 @@
     {
       "id": "exercise-instance-002--cone-013",
       "position": {
-        "x": 35.25,
-        "y": -3.5
+        "x": 35.2137,
+        "y": -3.2599988
+      },
+      "color": "blue",
+      "type": "standard"
+    },
+    {
+      "id": "exercise-instance-002--cone-008",
+      "position": {
+        "x": 29.441536,
+        "y": -5.82634
       },
       "color": "blue",
       "type": "standard"
@@ -5551,8 +5593,8 @@
     {
       "id": "exercise-instance-017--cone-001",
       "position": {
-        "x": 13.25,
-        "y": 4.75
+        "x": 11.25,
+        "y": 5.75
       },
       "color": "blue",
       "type": "standard"
@@ -5560,8 +5602,8 @@
     {
       "id": "exercise-instance-018--cone-001",
       "position": {
-        "x": 11.75,
-        "y": -7.5
+        "x": 14,
+        "y": -7.75
       },
       "color": "red",
       "type": "standard"
@@ -5629,91 +5671,51 @@
         },
         "control1": {
           "x": 20,
-          "y": -11.381808
+          "y": -11.001624
         },
         "control2": {
-          "x": 18.09244,
-          "y": -10.177671
+          "x": 18.180595,
+          "y": -9.298465
         },
         "end": {
-          "x": 18.035965,
-          "y": -8.560465
+          "x": 18.140667,
+          "y": -7.3004875
         }
       },
       {
         "id": "exercise-instance-003--trajectory-segment-001",
         "type": "cubicBezier",
         "start": {
-          "x": 18.035965,
-          "y": -8.560465
+          "x": 18.140667,
+          "y": -7.3004875
         },
         "control1": {
-          "x": 18.018517,
-          "y": -8.060769
+          "x": 18.13323,
+          "y": -6.9282985
         },
         "control2": {
-          "x": 18.268364,
-          "y": -8.052045
+          "x": 18.340458,
+          "y": -6.6542325
         },
         "end": {
-          "x": 18.250914,
-          "y": -7.552349
-        }
-      },
-      {
-        "id": "exercise-instance-003--trajectory-segment-002",
-        "type": "cubicBezier",
-        "start": {
-          "x": 18.250914,
-          "y": -7.552349
-        },
-        "control1": {
-          "x": 18.24219,
-          "y": -7.3025017
-        },
-        "control2": {
-          "x": 18.268364,
-          "y": -8.052045
-        },
-        "end": {
-          "x": 18.250914,
-          "y": -7.552349
-        }
-      },
-      {
-        "id": "exercise-instance-003--trajectory-segment-003",
-        "type": "cubicBezier",
-        "start": {
-          "x": 18.250914,
-          "y": -7.552349
-        },
-        "control1": {
-          "x": 18.22474,
-          "y": -6.802806
-        },
-        "control2": {
-          "x": 18.465862,
-          "y": -6.5442333
-        },
-        "end": {
-          "x": 18.706985,
-          "y": -6.2856607
+          "x": 18.581581,
+          "y": -6.39566
         }
       },
       {
         "id": "exercise-instance-003--trajectory-segment-004",
         "type": "cubicBezier",
         "start": {
-          "x": 18.706985,
-          "y": -6.2856607
+          "x": 18.581581,
+          "y": -6.39566
         },
         "control1": {
-          "x": 19.197956,
-          "y": -6.0183635
+          "x": 18.780613,
+          "y": -6.2052646
         },
         "control2": {
-          "x": 19.447803,
-          "y": -6.009639
+          "x": 19.201733,
+          "y": -6.0071135
         },
         "end": {
           "x": 19.69765,
@@ -5728,28 +5730,28 @@
           "y": -6.0009136
         },
         "control1": {
-          "x": 19.947498,
-          "y": -5.992189
+          "x": 20.295122,
+          "y": -5.9578137
         },
         "control2": {
-          "x": 20.36682,
-          "y": -6.0609303
+          "x": 20.528189,
+          "y": -6.105325
         },
         "end": {
-          "x": 20.705767,
-          "y": -6.2158623
+          "x": 20.836731,
+          "y": -6.344703
         }
       },
       {
         "id": "exercise-instance-003--trajectory-segment-006",
         "type": "cubicBezier",
         "start": {
-          "x": 20.705767,
-          "y": -6.2158623
+          "x": 20.836731,
+          "y": -6.344703
         },
         "control1": {
-          "x": 21.044714,
-          "y": -6.370794
+          "x": 21.142048,
+          "y": -6.650901
         },
         "control2": {
           "x": 21.231636,
@@ -5772,24 +5774,24 @@
           "y": -7.947346
         },
         "control2": {
-          "x": 21.034138,
-          "y": -8.455767
+          "x": 21.12229,
+          "y": -8.313715
         },
         "end": {
-          "x": 20.793015,
-          "y": -8.714339
+          "x": 20.881166,
+          "y": -8.572288
         }
       },
       {
         "id": "exercise-instance-003--trajectory-segment-008",
         "type": "cubicBezier",
         "start": {
-          "x": 20.793015,
-          "y": -8.714339
+          "x": 20.881166,
+          "y": -8.572288
         },
         "control1": {
-          "x": 20.551893,
-          "y": -8.972912
+          "x": 20.640043,
+          "y": -8.83086
         },
         "control2": {
           "x": 20.052197,
@@ -5812,331 +5814,151 @@
           "y": -9.016536
         },
         "control2": {
-          "x": 18.794233,
-          "y": -8.784138
+          "x": 18.93611,
+          "y": -8.90704
         },
         "end": {
-          "x": 18.535662,
-          "y": -8.5430155
+          "x": 18.677536,
+          "y": -8.665916
         }
       },
       {
         "id": "exercise-instance-003--trajectory-segment-010",
         "type": "cubicBezier",
         "start": {
-          "x": 18.535662,
-          "y": -8.5430155
+          "x": 18.677536,
+          "y": -8.665916
         },
         "control1": {
-          "x": 18.277088,
-          "y": -8.301892
+          "x": 18.418964,
+          "y": -8.424793
         },
         "control2": {
-          "x": 18.268364,
-          "y": -8.052045
+          "x": 18.226824,
+          "y": -8.175792
         },
         "end": {
-          "x": 18.250914,
-          "y": -7.552349
-        }
-      },
-      {
-        "id": "exercise-instance-003--trajectory-segment-011",
-        "type": "cubicBezier",
-        "start": {
-          "x": 18.250914,
-          "y": -7.552349
-        },
-        "control1": {
-          "x": 18.233463,
-          "y": -7.052654
-        },
-        "control2": {
-          "x": 17.983616,
-          "y": -7.0613785
-        },
-        "end": {
-          "x": 17.966167,
-          "y": -6.561683
+          "x": 18.147789,
+          "y": -7.8227797
         }
       },
       {
         "id": "transition--exercise-instance-003--exercise-instance-021",
         "type": "cubicBezier",
         "start": {
-          "x": 17.966167,
-          "y": -6.561683
+          "x": 18.147789,
+          "y": -7.8227797
         },
         "control1": {
-          "x": 17.938644,
-          "y": -5.773533
+          "x": 17.815907,
+          "y": -6.340411
         },
         "control2": {
-          "x": 18.647066,
-          "y": -4.9284716
+          "x": 18.462206,
+          "y": -4.7129354
         },
         "end": {
-          "x": 18.301353,
-          "y": -4.219655
+          "x": 17.992788,
+          "y": -3.2682178
         }
       },
       {
         "id": "exercise-instance-021--trajectory-segment-001",
         "type": "cubicBezier",
         "start": {
-          "x": 18.301353,
-          "y": -4.219655
+          "x": 17.992788,
+          "y": -3.2682178
         },
         "control1": {
-          "x": 18.228292,
-          "y": -4.069856
+          "x": 17.683771,
+          "y": -2.3171613
         },
         "control2": {
-          "x": 18.082169,
-          "y": -3.7702582
+          "x": 17.685324,
+          "y": -1.4271612
         },
         "end": {
-          "x": 17.978088,
-          "y": -2.98657
-        }
-      },
-      {
-        "id": "exercise-instance-021--trajectory-segment-002",
-        "type": "cubicBezier",
-        "start": {
-          "x": 17.978088,
-          "y": -2.98657
-        },
-        "control1": {
-          "x": 17.978088,
-          "y": -2.98657
-        },
-        "control2": {
-          "x": 17.72058,
-          "y": -1.8883035
-        },
-        "end": {
-          "x": 17.764416,
-          "y": -1.978183
+          "x": 17.695774,
+          "y": -0.7360681
         }
       },
       {
         "id": "exercise-instance-021--trajectory-segment-003",
         "type": "cubicBezier",
         "start": {
-          "x": 17.764416,
-          "y": -1.978183
+          "x": 17.695774,
+          "y": -0.7360681
         },
         "control1": {
-          "x": 17.616499,
-          "y": -1.1046152
+          "x": 17.853529,
+          "y": 0.7508317
         },
         "control2": {
-          "x": 17.69503,
-          "y": -1.4557241
+          "x": 18.825344,
+          "y": 2.259607
         },
         "end": {
-          "x": 17.660337,
-          "y": -1.1944947
-        }
-      },
-      {
-        "id": "exercise-instance-021--trajectory-segment-004",
-        "type": "cubicBezier",
-        "start": {
-          "x": 17.660337,
-          "y": -1.1944947
-        },
-        "control1": {
-          "x": 17.660337,
-          "y": -1.1944947
-        },
-        "control2": {
-          "x": 17.660337,
-          "y": -1.1944947
-        },
-        "end": {
-          "x": 17.655952,
-          "y": -1.1855067
-        }
-      },
-      {
-        "id": "exercise-instance-021--trajectory-segment-005",
-        "type": "cubicBezier",
-        "start": {
-          "x": 17.655952,
-          "y": -1.1855067
-        },
-        "control1": {
-          "x": 17.664013,
-          "y": -0.8218349
-        },
-        "control2": {
-          "x": 17.817486,
-          "y": -0.37611294
-        },
-        "end": {
-          "x": 17.89606,
-          "y": 0.033077717
-        }
-      },
-      {
-        "id": "exercise-instance-021--trajectory-segment-006",
-        "type": "cubicBezier",
-        "start": {
-          "x": 17.89606,
-          "y": 0.033077717
-        },
-        "control1": {
-          "x": 18.235865,
-          "y": 0.47696173
-        },
-        "control2": {
-          "x": 18.350971,
-          "y": 0.8112531
-        },
-        "end": {
-          "x": 18.915474,
-          "y": 1.36473
-        }
-      },
-      {
-        "id": "exercise-instance-021--trajectory-segment-007",
-        "type": "cubicBezier",
-        "start": {
-          "x": 18.915474,
-          "y": 1.36473
-        },
-        "control1": {
-          "x": 19.21691,
-          "y": 1.6971836
-        },
-        "control2": {
-          "x": 19.704676,
-          "y": 2.0277996
-        },
-        "end": {
-          "x": 20.154072,
-          "y": 2.2469852
+          "x": 20.727457,
+          "y": 2.8776412
         }
       },
       {
         "id": "exercise-instance-021--trajectory-segment-008",
         "type": "cubicBezier",
         "start": {
-          "x": 20.154072,
-          "y": 2.2469852
+          "x": 20.727457,
+          "y": 2.8776412
         },
         "control1": {
-          "x": 20.60347,
-          "y": 2.4661708
+          "x": 22.62957,
+          "y": 3.4956753
         },
         "control2": {
-          "x": 21.052866,
-          "y": 2.6853564
+          "x": 24.262451,
+          "y": 2.7005086
         },
         "end": {
-          "x": 21.611856,
-          "y": 2.6798434
-        }
-      },
-      {
-        "id": "exercise-instance-021--trajectory-segment-009",
-        "type": "cubicBezier",
-        "start": {
-          "x": 21.611856,
-          "y": 2.6798434
-        },
-        "control1": {
-          "x": 21.836555,
-          "y": 2.789436
-        },
-        "control2": {
-          "x": 23.064127,
-          "y": 2.5537117
-        },
-        "end": {
-          "x": 23.398418,
-          "y": 2.4386058
-        }
-      },
-      {
-        "id": "exercise-instance-021--trajectory-segment-010",
-        "type": "cubicBezier",
-        "start": {
-          "x": 23.398418,
-          "y": 2.4386058
-        },
-        "control1": {
-          "x": 23.73271,
-          "y": 2.3235002
-        },
-        "control2": {
-          "x": 23.73271,
-          "y": 2.3235002
-        },
-        "end": {
-          "x": 24.176594,
-          "y": 1.983696
+          "x": 25.284864,
+          "y": 1.7321652
         }
       },
       {
         "id": "exercise-instance-021--trajectory-segment-011",
         "type": "cubicBezier",
         "start": {
-          "x": 24.176594,
-          "y": 1.983696
+          "x": 25.284864,
+          "y": 1.7321652
         },
         "control1": {
-          "x": 24.583946,
-          "y": 1.7187912
+          "x": 25.854374,
+          "y": 1.041332
         },
         "control2": {
-          "x": 24.95477,
-          "y": 1.528786
+          "x": 26.243279,
+          "y": 0.46399188
         },
         "end": {
-          "x": 25.508245,
-          "y": 0.9642832
-        }
-      },
-      {
-        "id": "exercise-instance-021--trajectory-segment-012",
-        "type": "cubicBezier",
-        "start": {
-          "x": 25.508245,
-          "y": 0.9642832
-        },
-        "control1": {
-          "x": 25.95213,
-          "y": 0.62447906
-        },
-        "control2": {
-          "x": 26.171316,
-          "y": 0.17508197
-        },
-        "end": {
-          "x": 26.390501,
-          "y": -0.27431512
+          "x": 26.552296,
+          "y": -0.4870646
         }
       },
       {
         "id": "transition--exercise-instance-021--exercise-instance-002",
         "type": "cubicBezier",
         "start": {
-          "x": 26.390501,
-          "y": -0.27431512
+          "x": 26.552296,
+          "y": -0.4870646
         },
         "control1": {
-          "x": 26.67221,
-          "y": -0.85190463
+          "x": 26.714817,
+          "y": -0.9872529
         },
         "control2": {
-          "x": 27.25,
-          "y": -1.3573728
+          "x": 27,
+          "y": -1.4740709
         },
         "end": {
-          "x": 27.25,
+          "x": 27,
           "y": -2
         }
       },
@@ -6144,36 +5966,16 @@
         "id": "exercise-instance-002--trajectory-segment-001",
         "type": "cubicBezier",
         "start": {
-          "x": 27.25,
+          "x": 27,
           "y": -2
         },
         "control1": {
-          "x": 27.25,
-          "y": -2.25
-        },
-        "control2": {
-          "x": 27.25,
+          "x": 27,
           "y": -2.5
         },
-        "end": {
-          "x": 27.25,
-          "y": -3
-        }
-      },
-      {
-        "id": "exercise-instance-002--trajectory-segment-002",
-        "type": "cubicBezier",
-        "start": {
-          "x": 27.25,
-          "y": -3
-        },
-        "control1": {
-          "x": 27.25,
-          "y": -3.5
-        },
         "control2": {
-          "x": 27.25,
-          "y": -3.75
+          "x": 27.220179,
+          "y": -3.6722963
         },
         "end": {
           "x": 27.5,
@@ -6188,32 +5990,12 @@
           "y": -4.5
         },
         "control1": {
-          "x": 27.75,
-          "y": -5.25
+          "x": 27.817589,
+          "y": -5.102716
         },
         "control2": {
-          "x": 27.75,
-          "y": -5.25
-        },
-        "end": {
-          "x": 28,
-          "y": -5.5
-        }
-      },
-      {
-        "id": "exercise-instance-002--trajectory-segment-004",
-        "type": "cubicBezier",
-        "start": {
-          "x": 28,
-          "y": -5.5
-        },
-        "control1": {
-          "x": 28.166666,
-          "y": -5.833333
-        },
-        "control2": {
-          "x": 28.5,
-          "y": -6
+          "x": 28.103674,
+          "y": -5.6664696
         },
         "end": {
           "x": 29,
@@ -6228,31 +6010,11 @@
           "y": -6.25
         },
         "control1": {
-          "x": 29.5,
-          "y": -6.5
+          "x": 29.693964,
+          "y": -6.709835
         },
         "control2": {
-          "x": 29.916666,
-          "y": -6.583333
-        },
-        "end": {
-          "x": 30.25,
-          "y": -6.75
-        }
-      },
-      {
-        "id": "exercise-instance-002--trajectory-segment-006",
-        "type": "cubicBezier",
-        "start": {
-          "x": 30.25,
-          "y": -6.75
-        },
-        "control1": {
-          "x": 30.583334,
-          "y": -6.916667
-        },
-        "control2": {
-          "x": 31.166666,
+          "x": 30.5,
           "y": -7
         },
         "end": {
@@ -6268,32 +6030,12 @@
           "y": -7
         },
         "control1": {
-          "x": 32,
+          "x": 32.5,
           "y": -7
         },
         "control2": {
-          "x": 32,
-          "y": -7
-        },
-        "end": {
-          "x": 32.75,
-          "y": -6.75
-        }
-      },
-      {
-        "id": "exercise-instance-002--trajectory-segment-008",
-        "type": "cubicBezier",
-        "start": {
-          "x": 32.75,
-          "y": -6.75
-        },
-        "control1": {
-          "x": 33.5,
-          "y": -6.5
-        },
-        "control2": {
-          "x": 33.5,
-          "y": -6.5
+          "x": 33.396225,
+          "y": -6.6004496
         },
         "end": {
           "x": 34,
@@ -6308,32 +6050,12 @@
           "y": -6.25
         },
         "control1": {
-          "x": 34.75,
-          "y": -5.75
+          "x": 34.801403,
+          "y": -5.767441
         },
         "control2": {
-          "x": 34.5,
-          "y": -6
-        },
-        "end": {
-          "x": 35,
-          "y": -5.5
-        }
-      },
-      {
-        "id": "exercise-instance-002--trajectory-segment-010",
-        "type": "cubicBezier",
-        "start": {
-          "x": 35,
-          "y": -5.5
-        },
-        "control1": {
-          "x": 35.5,
-          "y": -4.75
-        },
-        "control2": {
-          "x": 35.25,
-          "y": -5.25
+          "x": 35.188457,
+          "y": -5.085888
         },
         "end": {
           "x": 35.5,
@@ -6348,35 +6070,15 @@
           "y": -4.5
         },
         "control1": {
-          "x": 35.75,
-          "y": -3.75
+          "x": 35.676483,
+          "y": -4.01728
         },
         "control2": {
-          "x": 35.75,
-          "y": -3.5
-        },
-        "end": {
-          "x": 35.75,
-          "y": -3
-        }
-      },
-      {
-        "id": "exercise-instance-002--trajectory-segment-012",
-        "type": "cubicBezier",
-        "start": {
-          "x": 35.75,
-          "y": -3
-        },
-        "control1": {
-          "x": 35.75,
+          "x": 36,
           "y": -2.5
         },
-        "control2": {
-          "x": 35.75,
-          "y": -2.25
-        },
         "end": {
-          "x": 35.75,
+          "x": 36,
           "y": -2
         }
       },
@@ -6384,72 +6086,52 @@
         "id": "transition--exercise-instance-002--exercise-instance-004",
         "type": "cubicBezier",
         "start": {
-          "x": 35.75,
+          "x": 36,
           "y": -2
         },
         "control1": {
-          "x": 35.75,
-          "y": 0.5753205
+          "x": 36,
+          "y": 0.8397732
         },
         "control2": {
-          "x": 38.625122,
-          "y": 4.8129864
+          "x": 37.695454,
+          "y": 5.0279536
         },
         "end": {
-          "x": 36.21187,
-          "y": 5.7121434
+          "x": 35.259197,
+          "y": 6.48705
         }
       },
       {
         "id": "exercise-instance-004--trajectory-segment-001",
         "type": "cubicBezier",
         "start": {
-          "x": 36.21187,
-          "y": 5.7121434
+          "x": 35.259197,
+          "y": 6.48705
         },
         "control1": {
-          "x": 35.68803,
-          "y": 5.9073205
+          "x": 35.00603,
+          "y": 6.6386743
         },
         "control2": {
-          "x": 35.68803,
-          "y": 5.9073205
+          "x": 34.684784,
+          "y": 6.809778
         },
         "end": {
-          "x": 35.34703,
-          "y": 6.2729974
-        }
-      },
-      {
-        "id": "exercise-instance-004--trajectory-segment-002",
-        "type": "cubicBezier",
-        "start": {
-          "x": 35.34703,
-          "y": 6.2729974
-        },
-        "control1": {
-          "x": 35.176533,
-          "y": 6.455836
-        },
-        "control2": {
-          "x": 34.835533,
-          "y": 6.8215127
-        },
-        "end": {
-          "x": 34.482193,
-          "y": 6.833852
+          "x": 34.331448,
+          "y": 6.822117
         }
       },
       {
         "id": "exercise-instance-004--trajectory-segment-003",
         "type": "cubicBezier",
         "start": {
-          "x": 34.482193,
-          "y": 6.833852
+          "x": 34.331448,
+          "y": 6.822117
         },
         "control1": {
-          "x": 34.128857,
-          "y": 6.8461905
+          "x": 33.978107,
+          "y": 6.8344555
         },
         "control2": {
           "x": 33.592678,
@@ -6472,24 +6154,24 @@
           "y": 6.0060315
         },
         "control2": {
-          "x": 32.861324,
-          "y": 6.0060315
+          "x": 32.709057,
+          "y": 5.6130657
         },
         "end": {
-          "x": 32.66615,
-          "y": 5.482194
+          "x": 32.710278,
+          "y": 5.310354
         }
       },
       {
         "id": "exercise-instance-004--trajectory-segment-005",
         "type": "cubicBezier",
         "start": {
-          "x": 32.66615,
-          "y": 5.482194
+          "x": 32.710278,
+          "y": 5.310354
         },
         "control1": {
-          "x": 32.65381,
-          "y": 5.1288557
+          "x": 32.69794,
+          "y": 4.957016
         },
         "control2": {
           "x": 32.81197,
@@ -6508,28 +6190,28 @@
           "y": 4.2270026
         },
         "control1": {
-          "x": 33.323467,
-          "y": 4.044164
+          "x": 33.49397,
+          "y": 3.8613257
         },
         "control2": {
-          "x": 33.664467,
-          "y": 3.6784873
+          "x": 33.91148,
+          "y": 3.6882393
         },
         "end": {
-          "x": 34.017807,
-          "y": 3.6661484
+          "x": 34.201454,
+          "y": 3.6623902
         }
       },
       {
         "id": "exercise-instance-004--trajectory-segment-007",
         "type": "cubicBezier",
         "start": {
-          "x": 34.017807,
-          "y": 3.6661484
+          "x": 34.201454,
+          "y": 3.6623902
         },
         "control1": {
-          "x": 34.541645,
-          "y": 3.470971
+          "x": 34.823128,
+          "y": 3.6799884
         },
         "control2": {
           "x": 35.09016,
@@ -6552,148 +6234,88 @@
           "y": 4.4939685
         },
         "control2": {
-          "x": 35.821514,
-          "y": 4.6644683
+          "x": 35.771294,
+          "y": 4.830038
         },
         "end": {
-          "x": 35.83385,
-          "y": 5.017806
+          "x": 35.784184,
+          "y": 5.19908
         }
       },
       {
         "id": "exercise-instance-004--trajectory-segment-009",
         "type": "cubicBezier",
         "start": {
-          "x": 35.83385,
-          "y": 5.017806
+          "x": 35.784184,
+          "y": 5.19908
         },
         "control1": {
-          "x": 35.84619,
-          "y": 5.3711443
+          "x": 35.759182,
+          "y": 5.6087527
         },
         "control2": {
-          "x": 35.68803,
-          "y": 5.9073205
+          "x": 35.63065,
+          "y": 5.952563
         },
         "end": {
-          "x": 35.34703,
-          "y": 6.2729974
-        }
-      },
-      {
-        "id": "exercise-instance-004--trajectory-segment-010",
-        "type": "cubicBezier",
-        "start": {
-          "x": 35.34703,
-          "y": 6.2729974
-        },
-        "control1": {
-          "x": 35.00603,
-          "y": 6.6386743
-        },
-        "control2": {
-          "x": 35.00603,
-          "y": 6.6386743
-        },
-        "end": {
-          "x": 34.84787,
-          "y": 7.174851
+          "x": 35.520084,
+          "y": 6.190994
         }
       },
       {
         "id": "transition--exercise-instance-004--exercise-instance-005",
         "type": "cubicBezier",
         "start": {
-          "x": 34.84787,
-          "y": 7.174851
+          "x": 35.520084,
+          "y": 6.190994
         },
         "control1": {
-          "x": 34.212585,
-          "y": 9.328516
+          "x": 34.330055,
+          "y": 8.757265
         },
         "control2": {
-          "x": 29.861006,
-          "y": 9.245529
+          "x": 29.277441,
+          "y": 8.89475
         },
         "end": {
-          "x": 28.140923,
-          "y": 7.8022094
+          "x": 27.083586,
+          "y": 7.108997
         }
       },
       {
         "id": "exercise-instance-005--trajectory-segment-001",
         "type": "cubicBezier",
         "start": {
-          "x": 28.140923,
-          "y": 7.8022094
+          "x": 27.083586,
+          "y": 7.108997
         },
         "control1": {
-          "x": 27.7579,
-          "y": 7.480816
+          "x": 26.794876,
+          "y": 6.873993
         },
         "control2": {
-          "x": 27.597204,
-          "y": 7.672327
+          "x": 26.451326,
+          "y": 6.868559
         },
         "end": {
-          "x": 27.214182,
-          "y": 7.350933
-        }
-      },
-      {
-        "id": "exercise-instance-005--trajectory-segment-002",
-        "type": "cubicBezier",
-        "start": {
-          "x": 27.214182,
-          "y": 7.350933
-        },
-        "control1": {
-          "x": 27.02267,
-          "y": 7.190236
-        },
-        "control2": {
-          "x": 27.597204,
-          "y": 7.672327
-        },
-        "end": {
-          "x": 27.214182,
-          "y": 7.350933
-        }
-      },
-      {
-        "id": "exercise-instance-005--trajectory-segment-003",
-        "type": "cubicBezier",
-        "start": {
-          "x": 27.214182,
-          "y": 7.350933
-        },
-        "control1": {
-          "x": 26.639648,
-          "y": 6.8688426
-        },
-        "control2": {
-          "x": 26.28744,
-          "y": 6.899657
-        },
-        "end": {
-          "x": 25.935232,
-          "y": 6.930471
+          "x": 26.09912,
+          "y": 6.899373
         }
       },
       {
         "id": "exercise-instance-005--trajectory-segment-004",
         "type": "cubicBezier",
         "start": {
-          "x": 25.935232,
-          "y": 6.930471
+          "x": 26.09912,
+          "y": 6.899373
         },
         "control1": {
-          "x": 25.422327,
-          "y": 7.1527967
+          "x": 25.82655,
+          "y": 6.938994
         },
         "control2": {
-          "x": 25.26163,
-          "y": 7.344308
+          "x": 25.411137,
+          "y": 7.148846
         },
         "end": {
           "x": 25.100933,
@@ -6708,28 +6330,28 @@
           "y": 7.535819
         },
         "control1": {
-          "x": 24.940237,
-          "y": 7.72733
+          "x": 24.699131,
+          "y": 7.9800973
         },
         "control2": {
-          "x": 24.736244,
-          "y": 8.1000805
+          "x": 24.67188,
+          "y": 8.254575
         },
         "end": {
-          "x": 24.649656,
-          "y": 8.462561
+          "x": 24.670555,
+          "y": 8.645084
         }
       },
       {
         "id": "exercise-instance-005--trajectory-segment-006",
         "type": "cubicBezier",
         "start": {
-          "x": 24.649656,
-          "y": 8.462561
+          "x": 24.670555,
+          "y": 8.645084
         },
         "control1": {
-          "x": 24.563068,
-          "y": 8.82504
+          "x": 24.723871,
+          "y": 9.074192
         },
         "control2": {
           "x": 24.902796,
@@ -6752,24 +6374,24 @@
           "y": 9.970461
         },
         "control2": {
-          "x": 26.21256,
-          "y": 10.100344
+          "x": 26.04635,
+          "y": 10.082352
         },
         "end": {
-          "x": 26.564768,
-          "y": 10.069529
+          "x": 26.398558,
+          "y": 10.0515375
         }
       },
       {
         "id": "exercise-instance-005--trajectory-segment-008",
         "type": "cubicBezier",
         "start": {
-          "x": 26.564768,
-          "y": 10.069529
+          "x": 26.398558,
+          "y": 10.0515375
         },
         "control1": {
-          "x": 26.916977,
-          "y": 10.038714
+          "x": 26.750767,
+          "y": 10.020723
         },
         "control2": {
           "x": 27.23837,
@@ -6792,68 +6414,88 @@
           "y": 9.081159
         },
         "control2": {
-          "x": 27.850344,
-          "y": 8.537439
+          "x": 27.859844,
+          "y": 8.724905
         },
         "end": {
-          "x": 27.819529,
-          "y": 8.185232
+          "x": 27.82903,
+          "y": 8.372697
         }
       },
       {
         "id": "exercise-instance-005--trajectory-segment-010",
         "type": "cubicBezier",
         "start": {
-          "x": 27.819529,
-          "y": 8.185232
+          "x": 27.82903,
+          "y": 8.372697
         },
         "control1": {
-          "x": 27.788715,
-          "y": 7.8330235
+          "x": 27.798214,
+          "y": 8.020489
         },
         "control2": {
-          "x": 27.597204,
-          "y": 7.672327
+          "x": 27.720293,
+          "y": 7.7157793
         },
         "end": {
-          "x": 27.214182,
-          "y": 7.350933
+          "x": 27.490774,
+          "y": 7.436163
         }
       },
       {
-        "id": "exercise-instance-005--trajectory-segment-011",
+        "id": "transition--exercise-instance-005--exercise-instance-023",
         "type": "cubicBezier",
         "start": {
-          "x": 27.214182,
-          "y": 7.350933
+          "x": 27.490774,
+          "y": 7.436163
         },
         "control1": {
-          "x": 26.83116,
-          "y": 7.029539
+          "x": 26.477707,
+          "y": 6.2019734
         },
         "control2": {
-          "x": 26.991856,
-          "y": 6.838028
+          "x": 22.75,
+          "y": 5.1532755
         },
         "end": {
-          "x": 26.608833,
-          "y": 6.5166345
+          "x": 22.75,
+          "y": 6.75
         }
       },
       {
-        "id": "transition--exercise-instance-005--exercise-instance-006",
+        "id": "exercise-instance-023--trajectory-segment-001",
         "type": "cubicBezier",
         "start": {
-          "x": 26.608833,
-          "y": 6.5166345
+          "x": 22.75,
+          "y": 6.75
         },
         "control1": {
-          "x": 17.25,
-          "y": 8.75
+          "x": 22.75,
+          "y": 6.9166665
         },
         "control2": {
-          "x": 29,
-          "y": 13.75
+          "x": 22.75,
+          "y": 6.5833335
+        },
+        "end": {
+          "x": 22.75,
+          "y": 6.75
+        }
+      },
+      {
+        "id": "transition--exercise-instance-023--exercise-instance-006",
+        "type": "cubicBezier",
+        "start": {
+          "x": 22.75,
+          "y": 6.75
+        },
+        "control1": {
+          "x": 22.75,
+          "y": 9.168103
+        },
+        "control2": {
+          "x": 25.418104,
+          "y": 14.000001
         },
         "end": {
           "x": 23,
@@ -7148,92 +6790,32 @@
           "y": 10.999999
         },
         "control1": {
-          "x": -9.107227,
+          "x": -9.476,
           "y": 10.999999
         },
         "control2": {
-          "x": -12.717535,
-          "y": 15.2949505
+          "x": -13.459319,
+          "y": 14.071223
         },
         "end": {
-          "x": -16.772053,
-          "y": 14.639045
+          "x": -17.870981,
+          "y": 14.827408
         }
       },
       {
         "id": "exercise-instance-007--trajectory-segment-001",
         "type": "cubicBezier",
         "start": {
-          "x": -16.772053,
-          "y": 14.639045
+          "x": -17.870981,
+          "y": 14.827408
         },
         "control1": {
-          "x": -16.959824,
-          "y": 14.608668
+          "x": -18.6036,
+          "y": 14.952983
         },
         "control2": {
-          "x": -17.147594,
-          "y": 14.578293
-        },
-        "end": {
-          "x": -17.335365,
-          "y": 14.547917
-        }
-      },
-      {
-        "id": "exercise-instance-007--trajectory-segment-002",
-        "type": "cubicBezier",
-        "start": {
-          "x": -17.335365,
-          "y": 14.547917
-        },
-        "control1": {
-          "x": -17.523136,
-          "y": 14.517541
-        },
-        "control2": {
-          "x": -17.701674,
-          "y": 14.610704
-        },
-        "end": {
-          "x": -18.067984,
-          "y": 14.673492
-        }
-      },
-      {
-        "id": "exercise-instance-007--trajectory-segment-003",
-        "type": "cubicBezier",
-        "start": {
-          "x": -18.067984,
-          "y": 14.673492
-        },
-        "control1": {
-          "x": -18.631296,
-          "y": 14.582364
-        },
-        "control2": {
-          "x": -18.443525,
-          "y": 14.6127405
-        },
-        "end": {
-          "x": -18.631296,
-          "y": 14.582364
-        }
-      },
-      {
-        "id": "exercise-instance-007--trajectory-segment-004",
-        "type": "cubicBezier",
-        "start": {
-          "x": -18.631296,
-          "y": 14.582364
-        },
-        "control1": {
-          "x": -18.819067,
-          "y": 14.551989
-        },
-        "control2": {
-          "x": -19.391611,
-          "y": 14.337321
+          "x": -18.997606,
+          "y": 14.645152
         },
         "end": {
           "x": -19.588614,
@@ -7248,92 +6830,32 @@
           "y": 14.183406
         },
         "control1": {
-          "x": -19.982618,
-          "y": 13.875575
+          "x": -20.179623,
+          "y": 13.72166
         },
         "control2": {
-          "x": -19.982618,
-          "y": 13.875575
+          "x": -20.573627,
+          "y": 13.413829
         },
         "end": {
-          "x": -20.207317,
-          "y": 13.351042
-        }
-      },
-      {
-        "id": "exercise-instance-007--trajectory-segment-006",
-        "type": "cubicBezier",
-        "start": {
-          "x": -20.207317,
-          "y": 13.351042
-        },
-        "control1": {
-          "x": -20.432016,
-          "y": 12.826508
-        },
-        "control2": {
-          "x": -20.357117,
-          "y": 13.001352
-        },
-        "end": {
-          "x": -20.432016,
-          "y": 12.826508
-        }
-      },
-      {
-        "id": "exercise-instance-007--trajectory-segment-007",
-        "type": "cubicBezier",
-        "start": {
-          "x": -20.432016,
-          "y": 12.826508
-        },
-        "control1": {
-          "x": -20.506916,
-          "y": 12.651663
-        },
-        "control2": {
-          "x": -20.468945,
-          "y": 12.33235
-        },
-        "end": {
-          "x": -20.487408,
-          "y": 12.085271
-        }
-      },
-      {
-        "id": "exercise-instance-007--trajectory-segment-008",
-        "type": "cubicBezier",
-        "start": {
-          "x": -20.487408,
-          "y": 12.085271
-        },
-        "control1": {
-          "x": -20.50587,
-          "y": 11.838192
-        },
-        "control2": {
-          "x": -20.637207,
-          "y": 11.735582
-        },
-        "end": {
-          "x": -20.712107,
-          "y": 11.560738
+          "x": -20.629019,
+          "y": 12.672592
         }
       },
       {
         "id": "transition--exercise-instance-007--exercise-instance-008",
         "type": "cubicBezier",
         "start": {
-          "x": -20.712107,
-          "y": 11.560738
+          "x": -20.629019,
+          "y": 12.672592
         },
         "control1": {
-          "x": -21.825851,
-          "y": 8.960827
+          "x": -20.86655,
+          "y": 9.493998
         },
         "control2": {
           "x": -19,
-          "y": 6.0784206
+          "y": 6.437457
         },
         "end": {
           "x": -19,
@@ -7521,23 +7043,63 @@
         }
       },
       {
-        "id": "transition--exercise-instance-009--exercise-instance-010",
+        "id": "transition--exercise-instance-009--exercise-instance-024",
         "type": "cubicBezier",
         "start": {
           "x": -8.25,
           "y": 0
         },
         "control1": {
-          "x": -2.75,
-          "y": 11.5
+          "x": -8.25,
+          "y": 3.8369548
         },
         "control2": {
-          "x": 8.5,
+          "x": -2.5863707,
+          "y": 6.566964
+        },
+        "end": {
+          "x": 1.25,
+          "y": 6.5
+        }
+      },
+      {
+        "id": "exercise-instance-024--trajectory-segment-001",
+        "type": "cubicBezier",
+        "start": {
+          "x": 1.25,
+          "y": 6.5
+        },
+        "control1": {
+          "x": 1.4166412,
+          "y": 6.4970913
+        },
+        "control2": {
+          "x": 1.0833588,
+          "y": 6.5029087
+        },
+        "end": {
+          "x": 1.25,
+          "y": 6.5
+        }
+      },
+      {
+        "id": "transition--exercise-instance-024--exercise-instance-010",
+        "type": "cubicBezier",
+        "start": {
+          "x": 1.25,
+          "y": 6.5
+        },
+        "control1": {
+          "x": 6,
           "y": 6.25
+        },
+        "control2": {
+          "x": 7,
+          "y": 3.9999998
         },
         "end": {
           "x": 7,
-          "y": -0.75000024
+          "y": -1.7500002
         }
       },
       {
@@ -7545,115 +7107,15 @@
         "type": "cubicBezier",
         "start": {
           "x": 7,
-          "y": -0.75000024
-        },
-        "control1": {
-          "x": 6.9166665,
-          "y": -1.0833336
-        },
-        "control2": {
-          "x": 7.0833335,
-          "y": -1.416667
-        },
-        "end": {
-          "x": 7,
-          "y": -1.7500002
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-002",
-        "type": "cubicBezier",
-        "start": {
-          "x": 7,
           "y": -1.7500002
         },
         "control1": {
           "x": 7,
-          "y": -2.5000002
+          "y": -5.7500005
         },
         "control2": {
-          "x": 6.5,
-          "y": -3.2500002
-        },
-        "end": {
-          "x": 6,
-          "y": -3.2500002
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-003",
-        "type": "cubicBezier",
-        "start": {
-          "x": 6,
-          "y": -3.2500002
-        },
-        "control1": {
-          "x": 5.75,
-          "y": -3.2500002
-        },
-        "control2": {
-          "x": 4.25,
-          "y": -3
-        },
-        "end": {
-          "x": 4,
-          "y": -3
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-004",
-        "type": "cubicBezier",
-        "start": {
-          "x": 4,
-          "y": -3
-        },
-        "control1": {
-          "x": 4,
-          "y": -3
-        },
-        "control2": {
-          "x": 4,
-          "y": -3
-        },
-        "end": {
-          "x": 4.1,
-          "y": -3
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-005",
-        "type": "cubicBezier",
-        "start": {
-          "x": 4.1,
-          "y": -3
-        },
-        "control1": {
-          "x": 4,
-          "y": -3
-        },
-        "control2": {
-          "x": 4,
-          "y": -3
-        },
-        "end": {
-          "x": 4,
-          "y": -3
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-006",
-        "type": "cubicBezier",
-        "start": {
-          "x": 4,
-          "y": -3
-        },
-        "control1": {
-          "x": 3.25,
-          "y": -2.75
-        },
-        "control2": {
-          "x": 2.5,
-          "y": -2.25
+          "x": 3,
+          "y": -1.7500001
         },
         "end": {
           "x": 2,
@@ -7668,51 +7130,11 @@
           "y": -2.75
         },
         "control1": {
-          "x": 1.5,
-          "y": -3.25
+          "x": 0.99999994,
+          "y": -3.75
         },
         "control2": {
-          "x": 1.9999999,
-          "y": -4
-        },
-        "end": {
-          "x": 2.25,
-          "y": -4.75
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-008",
-        "type": "cubicBezier",
-        "start": {
-          "x": 2.25,
-          "y": -4.75
-        },
-        "control1": {
-          "x": 2.5,
-          "y": -5.75
-        },
-        "control2": {
-          "x": 2.4999998,
-          "y": -6
-        },
-        "end": {
-          "x": 2.4999998,
-          "y": -6.75
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-009",
-        "type": "cubicBezier",
-        "start": {
-          "x": 2.4999998,
-          "y": -6.75
-        },
-        "control1": {
-          "x": 2.2499998,
-          "y": -7.75
-        },
-        "control2": {
-          "x": 1.2499998,
+          "x": 5,
           "y": -7.75
         },
         "end": {
@@ -7728,52 +7150,12 @@
           "y": -7.75
         },
         "control1": {
-          "x": -2.3841858E-07,
+          "x": -3.0000005,
           "y": -7.75
         },
         "control2": {
-          "x": -0.50000024,
-          "y": -7.25
-        },
-        "end": {
-          "x": -0.50000024,
-          "y": -6.75
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-011",
-        "type": "cubicBezier",
-        "start": {
-          "x": -0.50000024,
-          "y": -6.75
-        },
-        "control1": {
-          "x": -0.50000024,
-          "y": -6
-        },
-        "control2": {
-          "x": -0.3333335,
-          "y": -5.4166665
-        },
-        "end": {
-          "x": -0.25000012,
-          "y": -4.75
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-012",
-        "type": "cubicBezier",
-        "start": {
-          "x": -0.25000012,
-          "y": -4.75
-        },
-        "control1": {
-          "x": -0.16666675,
-          "y": -4.0833335
-        },
-        "control2": {
-          "x": 0.24999994,
-          "y": -3.25
+          "x": 0.99999994,
+          "y": -3.75
         },
         "end": {
           "x": 0,
@@ -7788,52 +7170,12 @@
           "y": -2.75
         },
         "control1": {
-          "x": -0.5,
-          "y": -2.5
-        },
-        "control2": {
-          "x": -1.3333335,
-          "y": -2.9166665
-        },
-        "end": {
-          "x": -2,
-          "y": -3
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-014",
-        "type": "cubicBezier",
-        "start": {
-          "x": -2,
-          "y": -3
-        },
-        "control1": {
-          "x": -2.6666665,
-          "y": -3.0833333
-        },
-        "control2": {
-          "x": -3.3333335,
-          "y": -3.1666665
-        },
-        "end": {
-          "x": -4,
-          "y": -3.2499998
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-015",
-        "type": "cubicBezier",
-        "start": {
-          "x": -4,
-          "y": -3.2499998
-        },
-        "control1": {
-          "x": -4.6666665,
-          "y": -3.333333
+          "x": -1,
+          "y": -1.7499999
         },
         "control2": {
           "x": -5,
-          "y": -2.4999998
+          "y": -5.75
         },
         "end": {
           "x": -5,
@@ -7849,51 +7191,11 @@
         },
         "control1": {
           "x": -5,
-          "y": -0.74999976
+          "y": 2.2500005
         },
         "control2": {
-          "x": -4.5,
-          "y": -0.24999976
-        },
-        "end": {
-          "x": -4,
-          "y": -0.24999976
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-017",
-        "type": "cubicBezier",
-        "start": {
-          "x": -4,
-          "y": -0.24999976
-        },
-        "control1": {
-          "x": -3.25,
-          "y": -0.24999976
-        },
-        "control2": {
-          "x": -2.6666665,
-          "y": -0.4166665
-        },
-        "end": {
-          "x": -2,
-          "y": -0.49999988
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-018",
-        "type": "cubicBezier",
-        "start": {
-          "x": -2,
-          "y": -0.49999988
-        },
-        "control1": {
-          "x": -1.3333335,
-          "y": -0.58333325
-        },
-        "control2": {
-          "x": -0.5,
-          "y": -0.99999994
+          "x": -1,
+          "y": -1.7499999
         },
         "end": {
           "x": 5.9604645E-08,
@@ -7908,51 +7210,11 @@
           "y": -0.75
         },
         "control1": {
-          "x": 0.50000006,
-          "y": -0.25
-        },
-        "control2": {
-          "x": 5.9604645E-08,
+          "x": 1.0000001,
           "y": 0.25
         },
-        "end": {
-          "x": -0.24999988,
-          "y": 1.25
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-020",
-        "type": "cubicBezier",
-        "start": {
-          "x": -0.24999988,
-          "y": 1.25
-        },
-        "control1": {
-          "x": -0.33333325,
-          "y": 1.9166665
-        },
         "control2": {
-          "x": -0.4166664,
-          "y": 2.5833335
-        },
-        "end": {
-          "x": -0.49999976,
-          "y": 3.25
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-021",
-        "type": "cubicBezier",
-        "start": {
-          "x": -0.49999976,
-          "y": 3.25
-        },
-        "control1": {
-          "x": -0.58333313,
-          "y": 3.9166665
-        },
-        "control2": {
-          "x": 0.50000024,
+          "x": -2.9999998,
           "y": 4.25
         },
         "end": {
@@ -7968,52 +7230,12 @@
           "y": 4.25
         },
         "control1": {
-          "x": 1.5000002,
+          "x": 5.0000005,
           "y": 4.25
         },
         "control2": {
-          "x": 2.5000002,
-          "y": 3.75
-        },
-        "end": {
-          "x": 2.5000002,
-          "y": 3.25
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-023",
-        "type": "cubicBezier",
-        "start": {
-          "x": 2.5000002,
-          "y": 3.25
-        },
-        "control1": {
-          "x": 2.5000002,
-          "y": 2.75
-        },
-        "control2": {
-          "x": 2.3333335,
-          "y": 1.9166665
-        },
-        "end": {
-          "x": 2.25,
-          "y": 1.25
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-024",
-        "type": "cubicBezier",
-        "start": {
-          "x": 2.25,
-          "y": 1.25
-        },
-        "control1": {
-          "x": 2.1666667,
-          "y": 0.5833335
-        },
-        "control2": {
-          "x": 1.75,
-          "y": -0.25
+          "x": 1.0000001,
+          "y": 0.25
         },
         "end": {
           "x": 2,
@@ -8028,76 +7250,16 @@
           "y": -0.75000006
         },
         "control1": {
-          "x": 2.5,
-          "y": -1.25
-        },
-        "control2": {
-          "x": 3.25,
-          "y": -0.7500001
-        },
-        "end": {
-          "x": 4,
-          "y": -0.5000001
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-026",
-        "type": "cubicBezier",
-        "start": {
-          "x": 4,
-          "y": -0.5000001
-        },
-        "control1": {
-          "x": 4.6666665,
-          "y": -0.41666675
-        },
-        "control2": {
-          "x": 5.3333335,
-          "y": -0.3333336
-        },
-        "end": {
-          "x": 6,
-          "y": -0.25000024
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-027",
-        "type": "cubicBezier",
-        "start": {
-          "x": 6,
-          "y": -0.25000024
-        },
-        "control1": {
-          "x": 6.6666665,
-          "y": -0.16666687
+          "x": 3,
+          "y": -1.7500001
         },
         "control2": {
           "x": 7,
-          "y": -1.2500002
+          "y": 2.2499998
         },
         "end": {
           "x": 7,
           "y": -1.7500002
-        }
-      },
-      {
-        "id": "exercise-instance-010--trajectory-segment-028",
-        "type": "cubicBezier",
-        "start": {
-          "x": 7,
-          "y": -1.7500002
-        },
-        "control1": {
-          "x": 7,
-          "y": -2.2500002
-        },
-        "control2": {
-          "x": 7,
-          "y": -2.5000002
-        },
-        "end": {
-          "x": 7,
-          "y": -2.7500002
         }
       },
       {
@@ -8105,15 +7267,15 @@
         "type": "cubicBezier",
         "start": {
           "x": 7,
-          "y": -2.7500002
+          "y": -1.7500002
         },
         "control1": {
           "x": 7,
-          "y": -5.873611
+          "y": -5.113406
         },
         "control2": {
-          "x": 3.3731353,
-          "y": -9.304515
+          "x": 3.6128938,
+          "y": -9.3087
         },
         "end": {
           "x": 0.25,
@@ -8312,87 +7474,27 @@
           "y": -8.677061
         },
         "control2": {
-          "x": -13,
+          "x": -11.25,
           "y": -9
         },
         "end": {
-          "x": -11,
-          "y": -9.25
+          "x": -10.25,
+          "y": -10
         }
       },
       {
         "id": "exercise-instance-016--trajectory-segment-001",
         "type": "cubicBezier",
         "start": {
-          "x": -11,
-          "y": -9.25
-        },
-        "control1": {
-          "x": -10.833333,
-          "y": -9.333333
-        },
-        "control2": {
-          "x": -10.666667,
-          "y": -9.416667
-        },
-        "end": {
-          "x": -10.5,
-          "y": -9.5
-        }
-      },
-      {
-        "id": "exercise-instance-016--trajectory-segment-002",
-        "type": "cubicBezier",
-        "start": {
-          "x": -10.5,
-          "y": -9.5
-        },
-        "control1": {
-          "x": -10.333333,
-          "y": -9.583333
-        },
-        "control2": {
           "x": -10.25,
-          "y": -9.75
-        },
-        "end": {
-          "x": -10,
-          "y": -10
-        }
-      },
-      {
-        "id": "exercise-instance-016--trajectory-segment-003",
-        "type": "cubicBezier",
-        "start": {
-          "x": -10,
           "y": -10
         },
         "control1": {
-          "x": -9.5,
-          "y": -10.25
+          "x": -9.75,
+          "y": -10.5
         },
         "control2": {
-          "x": -9.666667,
-          "y": -10.166667
-        },
-        "end": {
-          "x": -9.5,
-          "y": -10.25
-        }
-      },
-      {
-        "id": "exercise-instance-016--trajectory-segment-004",
-        "type": "cubicBezier",
-        "start": {
-          "x": -9.5,
-          "y": -10.25
-        },
-        "control1": {
-          "x": -9.333333,
-          "y": -10.333333
-        },
-        "control2": {
-          "x": -8.75,
+          "x": -9.25,
           "y": -10.5
         },
         "end": {
@@ -8408,592 +7510,352 @@
           "y": -10.5
         },
         "control1": {
-          "x": -8,
+          "x": -7.75,
           "y": -10.5
         },
         "control2": {
-          "x": -8,
+          "x": -7.25,
           "y": -10.5
         },
         "end": {
-          "x": -7.5,
-          "y": -10.25
-        }
-      },
-      {
-        "id": "exercise-instance-016--trajectory-segment-006",
-        "type": "cubicBezier",
-        "start": {
-          "x": -7.5,
-          "y": -10.25
-        },
-        "control1": {
-          "x": -7,
-          "y": -10
-        },
-        "control2": {
-          "x": -7.1666665,
-          "y": -10.083333
-        },
-        "end": {
-          "x": -7,
+          "x": -6.75,
           "y": -10
         }
       },
       {
-        "id": "exercise-instance-016--trajectory-segment-007",
+        "id": "transition--exercise-instance-016--exercise-instance-022",
         "type": "cubicBezier",
         "start": {
-          "x": -7,
+          "x": -6.75,
           "y": -10
         },
         "control1": {
-          "x": -6.8333335,
-          "y": -9.916667
+          "x": -2.5480657,
+          "y": -5.7980657
         },
         "control2": {
-          "x": -6.6666665,
-          "y": -9.666667
+          "x": 10.5,
+          "y": -11.442432
         },
         "end": {
-          "x": -6.5,
-          "y": -9.5
+          "x": 10.5,
+          "y": -5.5
         }
       },
       {
-        "id": "exercise-instance-016--trajectory-segment-008",
+        "id": "exercise-instance-022--trajectory-segment-001",
         "type": "cubicBezier",
         "start": {
-          "x": -6.5,
-          "y": -9.5
+          "x": 10.5,
+          "y": -5.5
         },
         "control1": {
-          "x": -6.3333335,
-          "y": -9.333333
+          "x": 10.5,
+          "y": -5.3333335
         },
         "control2": {
-          "x": -6.166667,
-          "y": -9.333333
+          "x": 10.5,
+          "y": -5.6666665
         },
         "end": {
-          "x": -6,
-          "y": -9.25
+          "x": 10.5,
+          "y": -5.5
         }
       },
       {
-        "id": "transition--exercise-instance-016--exercise-instance-017",
+        "id": "transition--exercise-instance-022--exercise-instance-017",
         "type": "cubicBezier",
         "start": {
-          "x": -6,
-          "y": -9.25
+          "x": 10.5,
+          "y": -5.5
         },
         "control1": {
-          "x": 14.75,
-          "y": -15.25
+          "x": 10.5,
+          "y": -2.5
         },
         "control2": {
-          "x": 21.282326,
-          "y": 10.205305
+          "x": 12,
+          "y": 1.7993994
         },
         "end": {
-          "x": 14.061597,
-          "y": 6.5949416
+          "x": 12,
+          "y": 5.5
         }
       },
       {
         "id": "exercise-instance-017--trajectory-segment-001",
         "type": "cubicBezier",
         "start": {
-          "x": 14.061597,
-          "y": 6.5949416
+          "x": 12,
+          "y": 5.5
         },
         "control1": {
-          "x": 13.590468,
-          "y": 6.2940474
+          "x": 12,
+          "y": 6
         },
         "control2": {
-          "x": 13.590468,
-          "y": 6.2940474
+          "x": 11.751619,
+          "y": 6.270954
         },
         "end": {
-          "x": 13.093207,
-          "y": 6.241783
+          "x": 11.251619,
+          "y": 6.270954
         }
       },
       {
         "id": "exercise-instance-017--trajectory-segment-002",
         "type": "cubicBezier",
         "start": {
-          "x": 13.093207,
-          "y": 6.241783
+          "x": 11.251619,
+          "y": 6.270954
         },
         "control1": {
-          "x": 12.844577,
-          "y": 6.2156506
+          "x": 10.751619,
+          "y": 6.270954
         },
         "control2": {
-          "x": 12.347316,
-          "y": 6.1633863
+          "x": 10.5,
+          "y": 6
         },
         "end": {
-          "x": 12.124818,
-          "y": 5.888624
-        }
-      },
-      {
-        "id": "exercise-instance-017--trajectory-segment-003",
-        "type": "cubicBezier",
-        "start": {
-          "x": 12.124818,
-          "y": 5.888624
-        },
-        "control1": {
-          "x": 11.902319,
-          "y": 5.613861
-        },
-        "control2": {
-          "x": 11.705953,
-          "y": 5.0904684
-        },
-        "end": {
-          "x": 11.758217,
-          "y": 4.5932074
-        }
-      },
-      {
-        "id": "exercise-instance-017--trajectory-segment-004",
-        "type": "cubicBezier",
-        "start": {
-          "x": 11.758217,
-          "y": 4.5932074
-        },
-        "control1": {
-          "x": 11.810481,
-          "y": 4.0959463
-        },
-        "control2": {
-          "x": 11.810481,
-          "y": 4.0959463
-        },
-        "end": {
-          "x": 12.111376,
-          "y": 3.6248174
-        }
-      },
-      {
-        "id": "exercise-instance-017--trajectory-segment-005",
-        "type": "cubicBezier",
-        "start": {
-          "x": 12.111376,
-          "y": 3.6248174
-        },
-        "control1": {
-          "x": 12.386139,
-          "y": 3.4023192
-        },
-        "control2": {
-          "x": 12.909532,
-          "y": 3.205953
-        },
-        "end": {
-          "x": 13.406793,
-          "y": 3.258217
-        }
-      },
-      {
-        "id": "exercise-instance-017--trajectory-segment-006",
-        "type": "cubicBezier",
-        "start": {
-          "x": 13.406793,
-          "y": 3.258217
-        },
-        "control1": {
-          "x": 13.655423,
-          "y": 3.2843492
-        },
-        "control2": {
-          "x": 14.152684,
-          "y": 3.3366134
-        },
-        "end": {
-          "x": 14.375182,
-          "y": 3.611376
-        }
-      },
-      {
-        "id": "exercise-instance-017--trajectory-segment-007",
-        "type": "cubicBezier",
-        "start": {
-          "x": 14.375182,
-          "y": 3.611376
-        },
-        "control1": {
-          "x": 14.846312,
-          "y": 3.9122708
-        },
-        "control2": {
-          "x": 14.767915,
-          "y": 4.658162
-        },
-        "end": {
-          "x": 14.741783,
-          "y": 4.9067926
-        }
-      },
-      {
-        "id": "exercise-instance-017--trajectory-segment-008",
-        "type": "cubicBezier",
-        "start": {
-          "x": 14.741783,
-          "y": 4.9067926
-        },
-        "control1": {
-          "x": 14.689519,
-          "y": 5.4040537
-        },
-        "control2": {
-          "x": 14.663386,
-          "y": 5.652684
-        },
-        "end": {
-          "x": 14.388624,
-          "y": 5.8751826
-        }
-      },
-      {
-        "id": "exercise-instance-017--trajectory-segment-009",
-        "type": "cubicBezier",
-        "start": {
-          "x": 14.388624,
-          "y": 5.8751826
-        },
-        "control1": {
-          "x": 14.113861,
-          "y": 6.097681
-        },
-        "control2": {
-          "x": 13.590468,
-          "y": 6.2940474
-        },
-        "end": {
-          "x": 13.093207,
-          "y": 6.241783
-        }
-      },
-      {
-        "id": "exercise-instance-017--trajectory-segment-010",
-        "type": "cubicBezier",
-        "start": {
-          "x": 13.093207,
-          "y": 6.241783
-        },
-        "control1": {
-          "x": 12.595946,
-          "y": 6.189519
-        },
-        "control2": {
-          "x": 12.595946,
-          "y": 6.189519
-        },
-        "end": {
-          "x": 12.072554,
-          "y": 6.385885
+          "x": 10.5,
+          "y": 5.5
         }
       },
       {
         "id": "transition--exercise-instance-017--exercise-instance-018",
         "type": "cubicBezier",
         "start": {
-          "x": 12.072554,
-          "y": 6.385885
+          "x": 10.5,
+          "y": 5.5
         },
         "control1": {
-          "x": 8.262625,
-          "y": 7.8152914
+          "x": 10.5,
+          "y": 1.4203167
         },
         "control2": {
-          "x": 6.680754,
-          "y": -5.75
+          "x": 10.176327,
+          "y": -6.087726
         },
         "end": {
-          "x": 10.75,
-          "y": -5.75
+          "x": 14.255555,
+          "y": -6.148611
         }
       },
       {
         "id": "exercise-instance-018--trajectory-segment-001",
         "type": "cubicBezier",
         "start": {
-          "x": 10.75,
-          "y": -5.75
+          "x": 14.255555,
+          "y": -6.148611
         },
         "control1": {
-          "x": 11.25,
-          "y": -5.75
+          "x": 14.627778,
+          "y": -6.1541667
         },
         "control2": {
-          "x": 11.25,
-          "y": -6
+          "x": 14.894444,
+          "y": -6.3708334
         },
         "end": {
-          "x": 11.75,
-          "y": -6
-        }
-      },
-      {
-        "id": "exercise-instance-018--trajectory-segment-002",
-        "type": "cubicBezier",
-        "start": {
-          "x": 11.75,
-          "y": -6
-        },
-        "control1": {
-          "x": 12,
-          "y": -6
-        },
-        "control2": {
-          "x": 11.25,
-          "y": -6
-        },
-        "end": {
-          "x": 11.75,
-          "y": -6
-        }
-      },
-      {
-        "id": "exercise-instance-018--trajectory-segment-003",
-        "type": "cubicBezier",
-        "start": {
-          "x": 11.75,
-          "y": -6
-        },
-        "control1": {
-          "x": 12.5,
-          "y": -6
-        },
-        "control2": {
-          "x": 12.75,
-          "y": -6.25
-        },
-        "end": {
-          "x": 13,
-          "y": -6.5
+          "x": 15.144444,
+          "y": -6.6208334
         }
       },
       {
         "id": "exercise-instance-018--trajectory-segment-004",
         "type": "cubicBezier",
         "start": {
-          "x": 13,
-          "y": -6.5
+          "x": 15.144444,
+          "y": -6.6208334
         },
         "control1": {
-          "x": 13.25,
-          "y": -7
+          "x": 15.327778,
+          "y": -6.826389
         },
         "control2": {
-          "x": 13.25,
-          "y": -7.25
+          "x": 15.511111,
+          "y": -7.2541666
         },
         "end": {
-          "x": 13.25,
-          "y": -7.5
+          "x": 15.5,
+          "y": -7.75
         }
       },
       {
         "id": "exercise-instance-018--trajectory-segment-005",
         "type": "cubicBezier",
         "start": {
-          "x": 13.25,
-          "y": -7.5
-        },
-        "control1": {
-          "x": 13.25,
+          "x": 15.5,
           "y": -7.75
         },
+        "control1": {
+          "x": 15.5222225,
+          "y": -8.348611
+        },
         "control2": {
-          "x": 13.166667,
-          "y": -8.166667
+          "x": 15.366667,
+          "y": -8.576389
         },
         "end": {
-          "x": 13,
-          "y": -8.5
+          "x": 15.116667,
+          "y": -8.876389
         }
       },
       {
         "id": "exercise-instance-018--trajectory-segment-006",
         "type": "cubicBezier",
         "start": {
-          "x": 13,
-          "y": -8.5
+          "x": 15.116667,
+          "y": -8.876389
         },
         "control1": {
-          "x": 12.833333,
-          "y": -8.833333
+          "x": 14.8,
+          "y": -9.170834
         },
         "control2": {
-          "x": 12.25,
-          "y": -9
+          "x": 14.5,
+          "y": -9.25
         },
         "end": {
-          "x": 11.75,
-          "y": -9
+          "x": 14,
+          "y": -9.25
         }
       },
       {
         "id": "exercise-instance-018--trajectory-segment-007",
         "type": "cubicBezier",
         "start": {
-          "x": 11.75,
-          "y": -9
+          "x": 14,
+          "y": -9.25
         },
         "control1": {
-          "x": 11.25,
-          "y": -9
+          "x": 13.5,
+          "y": -9.25
         },
         "control2": {
-          "x": 10.75,
-          "y": -8.75
+          "x": 13.138889,
+          "y": -9.093056
         },
         "end": {
-          "x": 10.5,
-          "y": -8.5
+          "x": 12.888889,
+          "y": -8.843056
         }
       },
       {
         "id": "exercise-instance-018--trajectory-segment-008",
         "type": "cubicBezier",
         "start": {
-          "x": 10.5,
-          "y": -8.5
+          "x": 12.888889,
+          "y": -8.843056
         },
         "control1": {
-          "x": 10.25,
-          "y": -8.25
+          "x": 12.638889,
+          "y": -8.593056
         },
         "control2": {
-          "x": 10.25,
-          "y": -7.75
+          "x": 12.5,
+          "y": -8
         },
         "end": {
-          "x": 10.25,
-          "y": -7.5
+          "x": 12.5,
+          "y": -7.75
         }
       },
       {
         "id": "exercise-instance-018--trajectory-segment-009",
         "type": "cubicBezier",
         "start": {
-          "x": 10.25,
-          "y": -7.5
+          "x": 12.5,
+          "y": -7.75
         },
         "control1": {
-          "x": 10.25,
-          "y": -7
+          "x": 12.5,
+          "y": -7.25
         },
         "control2": {
-          "x": 10.5,
-          "y": -6.5
+          "x": 12.622222,
+          "y": -6.8875
         },
         "end": {
-          "x": 10.75,
-          "y": -6.25
+          "x": 12.872222,
+          "y": -6.6375
         }
       },
       {
         "id": "exercise-instance-018--trajectory-segment-010",
         "type": "cubicBezier",
         "start": {
-          "x": 10.75,
-          "y": -6.25
+          "x": 12.872222,
+          "y": -6.6375
         },
         "control1": {
-          "x": 11,
-          "y": -6
+          "x": 13.122222,
+          "y": -6.3875
         },
         "control2": {
-          "x": 11.25,
-          "y": -6
+          "x": 13.377778,
+          "y": -6.2041664
         },
         "end": {
-          "x": 11.75,
-          "y": -6
-        }
-      },
-      {
-        "id": "exercise-instance-018--trajectory-segment-011",
-        "type": "cubicBezier",
-        "start": {
-          "x": 11.75,
-          "y": -6
-        },
-        "control1": {
-          "x": 12.25,
-          "y": -6
-        },
-        "control2": {
-          "x": 12.25,
-          "y": -5.75
-        },
-        "end": {
-          "x": 12.75,
-          "y": -5.75
+          "x": 13.733334,
+          "y": -6.1375
         }
       },
       {
         "id": "transition--exercise-instance-018--exercise-instance-019",
         "type": "cubicBezier",
         "start": {
-          "x": 12.75,
-          "y": -5.75
+          "x": 13.733334,
+          "y": -6.1375
         },
         "control1": {
-          "x": 16.166666,
-          "y": -5.75
+          "x": 15.819993,
+          "y": -5.7462516
         },
         "control2": {
-          "x": 19.715689,
-          "y": -4.808239
+          "x": 17.95922,
+          "y": -4.414816
         },
         "end": {
-          "x": 23,
-          "y": -5.75
+          "x": 20,
+          "y": -5
         }
       },
       {
         "id": "exercise-instance-019--trajectory-segment-001",
         "type": "cubicBezier",
         "start": {
-          "x": 23,
-          "y": -5.75
+          "x": 20,
+          "y": -5
         },
         "control1": {
-          "x": 23.16021,
-          "y": -5.7959394
+          "x": 20.16021,
+          "y": -5.0459394
         },
         "control2": {
-          "x": 22.83979,
-          "y": -5.7040606
+          "x": 19.83979,
+          "y": -4.9540606
         },
         "end": {
-          "x": 23,
-          "y": -5.75
+          "x": 20,
+          "y": -5
         }
       },
       {
         "id": "transition--exercise-instance-019--exercise-instance-020",
         "type": "cubicBezier",
         "start": {
-          "x": 23,
-          "y": -5.75
+          "x": 20,
+          "y": -5
         },
         "control1": {
-          "x": 25.32305,
-          "y": -6.416124
+          "x": 22.737675,
+          "y": -5.7850156
         },
         "control2": {
           "x": 23,
-          "y": -10.583333
+          "y": -10.1519985
         },
         "end": {
           "x": 23,

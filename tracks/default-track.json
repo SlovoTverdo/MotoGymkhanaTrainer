@@ -36,10 +36,10 @@
       "instanceId": "exercise-instance-021",
       "exercisePath": "Uncommon/Long-Turn-Right.json",
       "position": {
-        "x": 21.25,
-        "y": 0
+        "x": 21.5,
+        "y": 0.5
       },
-      "rotationDeg": -154,
+      "rotationDeg": -162,
       "scale": {
         "x": 1,
         "y": 1
@@ -79,6 +79,19 @@
         "y": 8.5
       },
       "rotationDeg": -140,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-023",
+      "exercisePath": "Common/route-point.json",
+      "position": {
+        "x": 22.75,
+        "y": 6.75
+      },
+      "rotationDeg": 0,
       "scale": {
         "x": 1,
         "y": 1
@@ -131,6 +144,19 @@
         "y": -0
       },
       "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-024",
+      "exercisePath": "Common/route-point.json",
+      "position": {
+        "x": 1.25,
+        "y": 6.5
+      },
+      "rotationDeg": -91,
       "scale": {
         "x": 1,
         "y": 1
@@ -228,13 +254,26 @@
       }
     },
     {
-      "instanceId": "exercise-instance-017",
-      "exercisePath": "Common/Rotation-360-left.json",
+      "instanceId": "exercise-instance-022",
+      "exercisePath": "Common/route-point.json",
       "position": {
-        "x": 13.25,
-        "y": 4.75
+        "x": 10.5,
+        "y": -5.5
       },
-      "rotationDeg": 6,
+      "rotationDeg": 0,
+      "scale": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "instanceId": "exercise-instance-017",
+      "exercisePath": "Common/turn-left.json",
+      "position": {
+        "x": 11.25,
+        "y": 6
+      },
+      "rotationDeg": 0,
       "scale": {
         "x": 1,
         "y": 1
@@ -244,8 +283,8 @@
       "instanceId": "exercise-instance-018",
       "exercisePath": "Common/Rotation-360-right.json",
       "position": {
-        "x": 11.75,
-        "y": -7.5
+        "x": 14,
+        "y": -7.75
       },
       "rotationDeg": 0,
       "scale": {
@@ -257,12 +296,12 @@
       "instanceId": "exercise-instance-019",
       "exercisePath": "Common/route-point.json",
       "position": {
-        "x": 23,
-        "y": -5.75
+        "x": 20,
+        "y": -5
       },
       "rotationDeg": -106,
       "scale": {
-        "x": 1,
+        "x": 0.90000004,
         "y": 1
       }
     },
@@ -286,8 +325,8 @@
       "fromInstanceId": "exercise-instance-005",
       "toInstanceId": "exercise-instance-006",
       "control1Offset": {
-        "x": -9.358833,
-        "y": 2.2333655
+        "x": -6.740774,
+        "y": -5.186163
       },
       "control2Offset": {
         "x": 6,
@@ -299,11 +338,11 @@
       "fromInstanceId": "exercise-instance-009",
       "toInstanceId": "exercise-instance-010",
       "control1Offset": {
-        "x": 5.5,
-        "y": 11.5
+        "x": 1.75,
+        "y": 12.75
       },
       "control2Offset": {
-        "x": 1.5,
+        "x": 0,
         "y": 7
       }
     },
@@ -342,8 +381,8 @@
         "y": 0.07293892
       },
       "control2Offset": {
-        "x": -2,
-        "y": 0.25
+        "x": -1,
+        "y": 1
       }
     },
     {
@@ -351,12 +390,38 @@
       "fromInstanceId": "exercise-instance-016",
       "toInstanceId": "exercise-instance-017",
       "control1Offset": {
-        "x": 20.75,
-        "y": -6
+        "x": 0.75,
+        "y": 0.75
       },
       "control2Offset": {
-        "x": 7.220728,
-        "y": 3.610364
+        "x": 0,
+        "y": -2.25
+      }
+    },
+    {
+      "transitionId": "transition--exercise-instance-022--exercise-instance-017",
+      "fromInstanceId": "exercise-instance-022",
+      "toInstanceId": "exercise-instance-017",
+      "control1Offset": {
+        "x": 0,
+        "y": 3
+      },
+      "control2Offset": {
+        "x": 0,
+        "y": -3.7006006
+      }
+    },
+    {
+      "transitionId": "transition--exercise-instance-024--exercise-instance-010",
+      "fromInstanceId": "exercise-instance-024",
+      "toInstanceId": "exercise-instance-010",
+      "control1Offset": {
+        "x": 4.75,
+        "y": -0.25
+      },
+      "control2Offset": {
+        "x": 0,
+        "y": 5.75
       }
     }
   ]

@@ -32,7 +32,6 @@ public enum SelectionDeleteResult
     DeletedCone,
     DeletedTrajectoryPoint,
     TrajectoryMinimumBlocked,
-    CubicAdjacentBlocked,
     DeletedMarking,
     DeletedMarkingPoint,
     MarkingPointDeleteBlocked,
@@ -273,11 +272,6 @@ public partial class ExerciseEditorCanvas : Control
             return SelectionDeleteResult.TrajectoryMinimumBlocked;
         }
 
-        if (result == TrajectoryAnchorDeleteResult.CubicAdjacentBlocked)
-        {
-            return SelectionDeleteResult.CubicAdjacentBlocked;
-        }
-
         if (result != TrajectoryAnchorDeleteResult.Deleted)
         {
             return SelectionDeleteResult.NothingSelected;
@@ -297,14 +291,6 @@ public partial class ExerciseEditorCanvas : Control
         }
 
         int insertedIndex = _document.InsertTrajectoryPointAfter(SelectedTrajectoryPointIndex);
-        if (insertedIndex == -2)
-        {
-            MessageRequested?.Invoke(
-                "Cannot insert directly into cubicBezier. Convert the curve to a line first.",
-                true);
-            return false;
-        }
-
         if (insertedIndex < 0)
         {
             MessageRequested?.Invoke("The Exit point has no following section.", true);
@@ -631,24 +617,28 @@ public partial class ExerciseEditorCanvas : Control
             return;
         }
 
-        // Handles use the same always-on 0.25 m snap as anchors and cones. This is
-        // deliberately simple and makes drag and numeric editing agree.
-        Point2Dto snapped = Snap(ScreenToDomain(motion.Position));
+        /*
+         * Every movable coordinate follows one drag policy. Ctrl is read from each
+         * motion event, so it can be pressed or released without restarting the drag.
+         * Construction clicks remain snapped; this modifier affects movement only.
+         */
+        Point2Dto dragged = EditorCanvasMath.ResolveDragPosition(
+            ScreenToDomain(motion.Position), SnapStepMeters, motion.CtrlPressed);
         if (SelectionKind == ExerciseSelectionKind.Cone)
         {
-            _document!.MoveCone(SelectedConeId, snapped);
+            _document!.MoveCone(SelectedConeId, dragged);
         }
         else if (SelectionKind == ExerciseSelectionKind.TrajectoryPoint)
         {
-            _document!.MoveTrajectoryPoint(SelectedTrajectoryPointIndex, snapped);
+            _document!.MoveTrajectoryPoint(SelectedTrajectoryPointIndex, dragged);
         }
         else if (SelectionKind == ExerciseSelectionKind.BezierControl)
         {
-            _document!.MoveBezierControl(SelectedTrajectorySegmentIndex, SelectedBezierControl, snapped);
+            _document!.MoveBezierControl(SelectedTrajectorySegmentIndex, SelectedBezierControl, dragged);
         }
         else if (SelectionKind == ExerciseSelectionKind.MarkingPoint)
         {
-            _document!.MoveMarkingPoint(SelectedMarkingId, SelectedMarkingPointIndex, snapped);
+            _document!.MoveMarkingPoint(SelectedMarkingId, SelectedMarkingPointIndex, dragged);
         }
 
         DocumentChanged?.Invoke();

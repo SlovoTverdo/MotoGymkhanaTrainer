@@ -413,6 +413,7 @@ public partial class ExerciseEditor : Control
 
         _markingWidthEdit = CreateCoordinateSpinBox("MarkingWidth", 0.001, 10.0);
         _markingWidthEdit.Step = 0.01;
+        _markingWidthEdit.CustomArrowStep = 0.01;
         _markingWidthEdit.ValueChanged += _ => OnMarkingPropertiesEdited();
         _markingProperties.AddChild(CreateLabeledControl("Width", _markingWidthEdit));
 
@@ -451,7 +452,7 @@ public partial class ExerciseEditor : Control
         var help = new Label
         {
             Name = "CanvasHelp",
-            Text = "Wheel: zoom\nMiddle mouse: pan\nDrag: 0.25 m snap for cones, anchors and handles\n" +
+            Text = "Wheel: zoom\nMiddle mouse: pan\nDrag: 0.25 m snap; hold Ctrl for precise movement\n" +
                 "Polyline marking: right-click or Finish Marking\nDelete: remove selected object or permitted anchor",
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
@@ -974,14 +975,6 @@ public partial class ExerciseEditor : Control
             return true;
         }
 
-        if (result == SelectionDeleteResult.CubicAdjacentBlocked)
-        {
-            SetStatus(
-                "Cannot delete this anchor while a cubicBezier is adjacent. Convert the curve to a line first.",
-                true);
-            return true;
-        }
-
         if (result == SelectionDeleteResult.MarkingPointDeleteBlocked)
         {
             SetStatus(
@@ -1363,7 +1356,11 @@ public partial class ExerciseEditor : Control
             Name = name,
             MinValue = minimum,
             MaxValue = maximum,
-            Step = 0.25,
+            // Zero disables Range quantization so a later edit of the other axis
+            // cannot overwrite a precise Ctrl-drag coordinate. Arrow buttons still
+            // retain the normal grid-sized editing increment.
+            Step = 0.0,
+            CustomArrowStep = 0.25,
             AllowGreater = false,
             AllowLesser = false,
             Suffix = " m",
