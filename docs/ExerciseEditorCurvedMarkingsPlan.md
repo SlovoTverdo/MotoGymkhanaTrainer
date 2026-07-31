@@ -1,5 +1,3 @@
-## FILE: docs/ExerciseEditorCurvedMarkingsPlan.md
-
 # Exercise Editor Curved Markings Plan
 
 # Curved Markings Exercise Editor Iteration 2
