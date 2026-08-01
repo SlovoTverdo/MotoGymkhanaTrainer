@@ -206,3 +206,19 @@ ambiguous implementation and final review.
 * Exercise Definition v3, Venue Definition v2 and Exported Track v5 must not serialize the removed legacy marking points representation.
 * Runtime backward compatibility is not required; update fixtures, samples and fallback Track together.
 * Curved Markings Iteration 1 adds domain, export and rendering support only. Do not add Bézier control-point editing UI in this iteration.
+
+### Exercise Editor curved markings
+* `docs/ExerciseEditorCurvedMarkingsPlan.md` — интерактивное создание и редактирование Path-разметки в Exercise Editor.
+
+### Exercise Editor curved-marking constraints
+
+* Editor selection must distinguish a marking, segment, endpoint and Bézier control point.
+* Segment starts are implicit and must not be duplicated in the serialized model.
+* Moving a segment endpoint also moves the implicit start of the next segment.
+* Line-to-cubic conversion must preserve shape by placing controls at one-third and two-thirds of the chord.
+* Cubic splitting must use de Casteljau and preserve the original curve.
+* Dragging a handle must create one Undo/Redo transaction, not one command per mouse-motion event.
+* Editor transient creation and drag state must never be serialized into Exercise Definition.
+* Control handles are editor overlays and must not become Viewer geometry.
+* Dashed and dotted markings must be selectable through their complete centerline, including visual gaps.
+* Exercise Editor Iteration 2 must not add Venue Editor curved-segment editing or change JSON format versions.
