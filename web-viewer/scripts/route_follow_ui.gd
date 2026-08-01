@@ -11,10 +11,19 @@ signal speed_down_requested
 signal speed_up_requested
 signal look_forward_requested
 
+const SAFE_MARGIN := 16.0
+const COMPACT_BREAKPOINT := 560.0
+const DESKTOP_PANEL_WIDTH := 520.0
+const DESKTOP_PANEL_HEIGHT := 164.0
+const COMPACT_PANEL_WIDTH := 450.0
+const COMPACT_PANEL_HEIGHT := 194.0
+const PORTRAIT_PANEL_HEIGHT := 292.0
+
 var _controller: RouteFollowController
 var _mode := WebViewerCharacter.MODE_WALK
 var _touch_controls_visible := false
 var _route_available := false
+var _compact_layout := false
 
 @onready var _desktop_entry: Button = $DesktopEntryButton
 @onready var _mobile_entry: Button = $MobileEntryButton
@@ -96,10 +105,11 @@ func _update_visibility() -> void:
 	if not is_instance_valid(_desktop_entry):
 		return
 	var following := _mode == WebViewerCharacter.MODE_FOLLOW
-	_desktop_entry.visible = not following and not _touch_controls_visible
-	_mobile_entry.visible = not following and _touch_controls_visible
-	_desktop_panel.visible = following and not _touch_controls_visible
-	_mobile_panel.visible = following and _touch_controls_visible
+	var use_compact_controls := _touch_controls_visible or _compact_layout
+	_desktop_entry.visible = not following and not use_compact_controls
+	_mobile_entry.visible = not following and use_compact_controls
+	_desktop_panel.visible = following and not use_compact_controls
+	_mobile_panel.visible = following and use_compact_controls
 
 
 func _update_state() -> void:
@@ -121,14 +131,30 @@ func _update_state() -> void:
 	_mobile_finished.visible = _controller.route_finished
 
 
-func _apply_responsive_layout() -> void:
+func _apply_responsive_layout(layout_size := Vector2.ZERO) -> void:
 	if not is_instance_valid(_mobile_panel):
 		return
-	var portrait := get_viewport_rect().size.y > get_viewport_rect().size.x
+	var viewport_size := get_viewport_rect().size if layout_size.is_zero_approx() else layout_size
+	var portrait := viewport_size.y > viewport_size.x
+	_compact_layout = viewport_size.x < COMPACT_BREAKPOINT
 	var primary_buttons := $MobilePanel/Margin/Layout/Primary.get_children()
-	if portrait:
+	var very_narrow := viewport_size.x < 350.0
+	$MobilePanel/Margin/Layout/Primary.columns = 3 if portrait else 5
+	$MobilePanel/Margin/Layout/Secondary.columns = 2 if portrait else 4
+	if portrait and very_narrow:
+		for button in primary_buttons:
+			button.custom_minimum_size = Vector2(48.0, 52.0)
+		$MobilePanel/Margin/Layout/Primary.add_theme_constant_override("separation", 4)
+		$MobilePanel/Margin/Layout/Secondary.add_theme_constant_override("separation", 4)
+		$MobilePanel/Margin/Layout/Secondary/SpeedDown.custom_minimum_size = Vector2(48.0, 52.0)
+		$MobilePanel/Margin/Layout/Secondary/Speed.custom_minimum_size = Vector2(60.0, 52.0)
+		$MobilePanel/Margin/Layout/Secondary/SpeedUp.custom_minimum_size = Vector2(48.0, 52.0)
+		$MobilePanel/Margin/Layout/Secondary/LookForward.custom_minimum_size = Vector2(84.0, 52.0)
+	elif portrait:
 		for button in primary_buttons:
 			button.custom_minimum_size = Vector2(56.0, 56.0)
+		$MobilePanel/Margin/Layout/Primary.add_theme_constant_override("separation", 6)
+		$MobilePanel/Margin/Layout/Secondary.add_theme_constant_override("separation", 6)
 		$MobilePanel/Margin/Layout/Secondary/SpeedDown.custom_minimum_size = Vector2(56.0, 56.0)
 		$MobilePanel/Margin/Layout/Secondary/Speed.custom_minimum_size = Vector2(72.0, 56.0)
 		$MobilePanel/Margin/Layout/Secondary/SpeedUp.custom_minimum_size = Vector2(56.0, 56.0)
@@ -137,13 +163,45 @@ func _apply_responsive_layout() -> void:
 		var primary_widths := [68.0, 76.0, 68.0, 84.0, 68.0]
 		for index in range(primary_buttons.size()):
 			primary_buttons[index].custom_minimum_size = Vector2(primary_widths[index], 54.0)
+		$MobilePanel/Margin/Layout/Primary.add_theme_constant_override("separation", 6)
+		$MobilePanel/Margin/Layout/Secondary.add_theme_constant_override("separation", 6)
 		$MobilePanel/Margin/Layout/Secondary/SpeedDown.custom_minimum_size = Vector2(82.0, 50.0)
 		$MobilePanel/Margin/Layout/Secondary/Speed.custom_minimum_size = Vector2(112.0, 50.0)
 		$MobilePanel/Margin/Layout/Secondary/SpeedUp.custom_minimum_size = Vector2(82.0, 50.0)
 		$MobilePanel/Margin/Layout/Secondary/LookForward.custom_minimum_size = Vector2(116.0, 50.0)
-	_mobile_panel.anchor_left = 0.02 if portrait else 0.12
-	_mobile_panel.anchor_right = 0.98 if portrait else 0.88
-	_mobile_panel.offset_left = 0.0
-	_mobile_panel.offset_right = 0.0
-	_mobile_panel.offset_top = -252.0 if portrait else -194.0
-	_mobile_panel.offset_bottom = -12.0
+	# Follow UI deliberately occupies the lower-left corner instead of the
+	# trajectory's central vanishing area. Portrait uses all available width;
+	# landscape keeps a bounded panel so most of the route remains unobscured.
+	_set_bottom_left_rect(_desktop_entry, 204.0, 48.0)
+	_set_bottom_left_rect(_mobile_entry, 224.0, 58.0)
+	_set_bottom_left_rect(_desktop_panel, DESKTOP_PANEL_WIDTH, DESKTOP_PANEL_HEIGHT)
+	if portrait or viewport_size.x < COMPACT_PANEL_WIDTH + SAFE_MARGIN * 2.0:
+		_mobile_panel.anchor_left = 0.0
+		_mobile_panel.anchor_right = 1.0
+		_mobile_panel.offset_left = SAFE_MARGIN
+		_mobile_panel.offset_right = -SAFE_MARGIN
+		_mobile_panel.offset_top = -SAFE_MARGIN - PORTRAIT_PANEL_HEIGHT
+		_mobile_panel.offset_bottom = -SAFE_MARGIN
+	else:
+		_set_bottom_left_rect(_mobile_panel, COMPACT_PANEL_WIDTH, COMPACT_PANEL_HEIGHT)
+	_unavailable_label.anchor_left = 0.0
+	_unavailable_label.anchor_right = 0.0
+	_unavailable_label.anchor_top = 1.0
+	_unavailable_label.anchor_bottom = 1.0
+	_unavailable_label.offset_left = SAFE_MARGIN
+	_unavailable_label.offset_right = SAFE_MARGIN + COMPACT_PANEL_WIDTH
+	_unavailable_label.offset_top = -148.0
+	_unavailable_label.offset_bottom = -84.0
+	_unavailable_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_update_visibility()
+
+
+func _set_bottom_left_rect(control: Control, width: float, height: float) -> void:
+	control.anchor_left = 0.0
+	control.anchor_top = 1.0
+	control.anchor_right = 0.0
+	control.anchor_bottom = 1.0
+	control.offset_left = SAFE_MARGIN
+	control.offset_top = -SAFE_MARGIN - height
+	control.offset_right = SAFE_MARGIN + width
+	control.offset_bottom = -SAFE_MARGIN

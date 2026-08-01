@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://scripts/web_viewer.gd" id="1_root"]
 [ext_resource type="Script" path="res://scripts/viewer_character.gd" id="2_character"]
@@ -72,6 +72,66 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_follow_button_normal"]
+bg_color = Color(0.055, 0.12, 0.19, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52, 0.84, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_follow_button_hover"]
+bg_color = Color(0.09, 0.28, 0.43, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.72, 0.93, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_follow_button_pressed"]
+bg_color = Color(0.04, 0.48, 0.63, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.88, 0.98, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_follow_button_disabled"]
+bg_color = Color(0.06, 0.075, 0.09, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.42, 0.48, 0.8)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="Theme" id="Theme_follow_controls"]
+Button/colors/font_color = Color(0.94, 0.98, 1, 1)
+Button/colors/font_hover_color = Color(1, 1, 1, 1)
+Button/colors/font_pressed_color = Color(1, 1, 1, 1)
+Button/colors/font_disabled_color = Color(0.58, 0.64, 0.7, 1)
+Button/constants/outline_size = 3
+Button/colors/font_outline_color = Color(0.01, 0.02, 0.03, 1)
+Button/styles/normal = SubResource("StyleBox_follow_button_normal")
+Button/styles/hover = SubResource("StyleBox_follow_button_hover")
+Button/styles/pressed = SubResource("StyleBox_follow_button_pressed")
+Button/styles/disabled = SubResource("StyleBox_follow_button_disabled")
 
 [node name="WebViewerRoot" type="Node3D"]
 script = ExtResource("1_root")
@@ -460,71 +520,61 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+theme = SubResource("Theme_follow_controls")
 script = ExtResource("4_follow_ui")
 
 [node name="DesktopEntryButton" type="Button" parent="UI/RouteFollowUI"]
 layout_mode = 1
-anchors_preset = 2
-anchor_left = 1.0
-anchor_top = 0.0
-anchor_right = 1.0
-anchor_bottom = 0.0
-offset_left = -220.0
-offset_top = 54.0
-offset_right = -16.0
-offset_bottom = 102.0
-grow_horizontal = 0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -64.0
+offset_right = 220.0
+offset_bottom = -16.0
+grow_vertical = 0
 theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("StyleBox_mobile_button")
 text = "Следовать по трассе"
 
 [node name="MobileEntryButton" type="Button" parent="UI/RouteFollowUI"]
 visible = false
 layout_mode = 1
-anchors_preset = 10
-anchor_left = 0.5
-anchor_top = 0.0
-anchor_right = 0.5
-anchor_bottom = 0.0
-offset_left = -112.0
-offset_top = 88.0
-offset_right = 112.0
-offset_bottom = 146.0
-grow_horizontal = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -74.0
+offset_right = 240.0
+offset_bottom = -16.0
+grow_vertical = 0
 theme_override_font_sizes/font_size = 17
-theme_override_styles/normal = SubResource("StyleBox_mobile_button")
 text = "Следовать по трассе"
 
 [node name="UnavailableLabel" type="Label" parent="UI/RouteFollowUI"]
 visible = false
 layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 180.0
-offset_top = 154.0
-offset_right = -180.0
-offset_bottom = 210.0
-grow_horizontal = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -148.0
+offset_right = 466.0
+offset_bottom = -84.0
+grow_vertical = 0
 theme_override_colors/font_color = Color(1, 0.65, 0.28, 1)
 theme_override_colors/font_outline_color = Color(0.03, 0.04, 0.05, 1)
 theme_override_constants/outline_size = 4
 text = "Follow недоступен"
-horizontal_alignment = 1
+horizontal_alignment = 0
 autowrap_mode = 2
 mouse_filter = 2
 
 [node name="DesktopPanel" type="PanelContainer" parent="UI/RouteFollowUI"]
 visible = false
 layout_mode = 1
-anchors_preset = 12
 anchor_top = 1.0
-anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 18.0
-offset_top = -122.0
-offset_right = -18.0
+offset_left = 16.0
+offset_top = -180.0
+offset_right = 536.0
 offset_bottom = -16.0
-grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBox_panel")
 
@@ -539,9 +589,9 @@ theme_override_constants/margin_bottom = 8
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Actions" type="HBoxContainer" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout"]
+[node name="Actions" type="GridContainer" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout"]
 layout_mode = 2
-alignment = 1
+columns = 4
 theme_override_constants/separation = 7
 
 [node name="Exit" type="Button" parent="UI/RouteFollowUI/DesktopPanel/Margin/Layout/Actions"]
@@ -592,13 +642,12 @@ text = "Finished"
 [node name="MobilePanel" type="PanelContainer" parent="UI/RouteFollowUI"]
 visible = false
 layout_mode = 1
-anchor_left = 0.12
 anchor_top = 1.0
-anchor_right = 0.88
 anchor_bottom = 1.0
+offset_left = 16.0
 offset_top = -194.0
-offset_bottom = -12.0
-grow_horizontal = 2
+offset_right = 466.0
+offset_bottom = -16.0
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBox_panel")
 
@@ -613,9 +662,9 @@ theme_override_constants/margin_bottom = 8
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Primary" type="HBoxContainer" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout"]
+[node name="Primary" type="GridContainer" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout"]
 layout_mode = 2
-alignment = 1
+columns = 5
 theme_override_constants/separation = 6
 
 [node name="Exit" type="Button" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout/Primary"]
@@ -639,9 +688,9 @@ custom_minimum_size = Vector2(68, 54)
 layout_mode = 2
 text = "+1 m"
 
-[node name="Secondary" type="HBoxContainer" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout"]
+[node name="Secondary" type="GridContainer" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout"]
 layout_mode = 2
-alignment = 1
+columns = 4
 theme_override_constants/separation = 6
 
 [node name="SpeedDown" type="Button" parent="UI/RouteFollowUI/MobilePanel/Margin/Layout/Secondary"]

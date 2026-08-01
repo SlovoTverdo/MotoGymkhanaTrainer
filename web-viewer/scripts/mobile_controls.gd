@@ -263,9 +263,12 @@ func _apply_responsive_layout() -> void:
 	_look_area.anchor_right = 1.0
 	_look_area.anchor_bottom = 1.0
 	_look_area.offset_left = 0.0
-	_look_area.offset_top = 220.0 if visible else 0.0
+	_look_area.offset_top = 0.0 if following else (220.0 if visible else 0.0)
 	_look_area.offset_right = 0.0
-	_look_area.offset_bottom = (-260.0 if portrait else -202.0) if following else 0.0
+	# RouteFollowUI is drawn after MobileControls and its buttons consume their
+	# own touches. Keeping the Follow look area full-height avoids a dead strip
+	# across the bottom now that the compact panel occupies only the left side.
+	_look_area.offset_bottom = 0.0
 	if portrait:
 		_top_buttons.anchor_left = 0.0
 		_top_buttons.anchor_right = 1.0
@@ -296,13 +299,13 @@ func _set_joystick_rect(control_size: float, margin: float) -> void:
 	# and can leave a non-container Control with a zero/off-screen hit rectangle.
 	_joystick.custom_minimum_size = Vector2(control_size, control_size)
 	_joystick.anchor_left = 0.0
-	_joystick.anchor_top = 1.0
+	_joystick.anchor_top = 0.5
 	_joystick.anchor_right = 0.0
-	_joystick.anchor_bottom = 1.0
+	_joystick.anchor_bottom = 0.5
 	_joystick.offset_left = margin
-	_joystick.offset_top = -margin - control_size
+	_joystick.offset_top = -control_size * 0.5
 	_joystick.offset_right = margin + control_size
-	_joystick.offset_bottom = -margin
+	_joystick.offset_bottom = control_size * 0.5
 
 
 func _on_fullscreen_pressed() -> void:
