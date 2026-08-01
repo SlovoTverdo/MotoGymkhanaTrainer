@@ -20,6 +20,27 @@ public sealed record SampledPath(
 /// <summary>Adaptively samples line/cubic marking paths in domain metres.</summary>
 public static class PathSampler
 {
+    /// <summary>Evaluates the standard cubic Bézier polynomial without rounding.</summary>
+    public static Point2Dto EvaluateCubic(
+        Point2Dto start,
+        Point2Dto control1,
+        Point2Dto control2,
+        Point2Dto end,
+        float parameter)
+    {
+        float t = Math.Clamp(parameter, 0.0f, 1.0f);
+        float inverse = 1.0f - t;
+        float w0 = inverse * inverse * inverse;
+        float w1 = 3.0f * inverse * inverse * t;
+        float w2 = 3.0f * inverse * t * t;
+        float w3 = t * t * t;
+        return new Point2Dto
+        {
+            X = w0 * start.X + w1 * control1.X + w2 * control2.X + w3 * end.X,
+            Y = w0 * start.Y + w1 * control1.Y + w2 * control2.Y + w3 * end.Y,
+        };
+    }
+
     /// <summary>
     /// Samples an already transformed Path. Calling this after an Exercise affine
     /// transform makes tolerance and cumulative length world-space quantities.

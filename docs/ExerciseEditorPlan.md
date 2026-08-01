@@ -29,3 +29,12 @@ end предыдущего segment
 
 Следующий segment не хранит отдельную копию start.
 
+Инструменты marking явно отображаются в toolbar: `Create Marking`, `Append Line`,
+`Append Curve` и `Split`. `V`, `L`, `B` выбирают Select/Append Line/Append Curve;
+`Enter` завершает построение, `Escape` отменяет transient operation и возвращает
+Select. `Ctrl+Z`/`Ctrl+Y` используют общую snapshot history редактора, при этом
+drag добавляет только одну revision после отпускания кнопки мыши.
+
+Path start до появления первого segment является только editor preview и не
+добавляется в Exercise Definition. Handles и selection также не сериализуются.
+

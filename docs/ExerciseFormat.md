@@ -572,8 +572,10 @@ do not render
 Editor должен проверять:
 
 * уникальный `id`;
-* известный `type`;
-* минимум допустимого количества points;
+* непустой `Path.segments`;
+* известный discriminator `type` каждого segment;
+* конечные координаты `start`, `end` и cubic control points;
+* ненулевую usable geometry каждого segment;
 * валидный цвет;
 * `widthMeters > 0`;
 * известный `style`.

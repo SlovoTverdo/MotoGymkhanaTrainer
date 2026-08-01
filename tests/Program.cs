@@ -1623,6 +1623,168 @@ PathDefinition scaledPatternPath = PathTransformService.Transform(joinedDashPath
 AssertTrue(MarkingGeometry.CreateStyleGeometry(PathSampler.Sample(scaledPatternPath), "dashed").Strokes.Count > joinedDash.Strokes.Count,
     "non-uniform scale generates marking style pattern from transformed world length");
 
+// Curved Markings Exercise Editor Iteration 2: pure editing operations are
+// verified without constructing native Godot canvas nodes.
+var editablePath = new PathDefinition
+{
+    Start = new Point2Dto { X = 0, Y = 0 },
+    Segments = [new LinePathSegmentDefinition { End = new Point2Dto { X = 3, Y = 0 } }],
+};
+AssertTrue(PathEditing.ConvertLineToCubic(editablePath, 0), "line converts to cubic");
+var convertedCurve = (CubicBezierPathSegmentDefinition)editablePath.Segments[0];
+AssertTrue(convertedCurve.Control1.X == 1 && convertedCurve.Control2.X == 2,
+    "line to cubic uses one-third and two-thirds controls");
+AssertTrue(Enumerable.Range(0, 11).All(step =>
+    MathF.Abs(PathEditing.Evaluate(editablePath, 0, step / 10.0f).Y) < 0.000001f &&
+    MathF.Abs(PathEditing.Evaluate(editablePath, 0, step / 10.0f).X - 3 * step / 10.0f) < 0.00001f),
+    "converted cubic exactly matches its line");
+AssertTrue(PathEditing.ConvertCubicToLine(editablePath, 0) && editablePath.Segments[0].EndPoint.X == 3,
+    "cubic to line retains endpoint");
+
+var conversionDocument = ExerciseDocument.CreateNew("conversion-history", "Conversion History", 10, 10);
+string conversionId = conversionDocument.AddMarking(PathEditing.CopyPath(editablePath));
+var conversionHistory = new EditorSnapshotHistory();
+string conversionBefore = ExerciseDefinitionStore.Serialize(conversionDocument.Definition);
+conversionHistory.Reset(conversionBefore, saved: true);
+conversionDocument.ConvertMarkingSegment(conversionId, 0, toCubic: true);
+string conversionAfter = ExerciseDefinitionStore.Serialize(conversionDocument.Definition);
+conversionHistory.Commit(conversionAfter, "Convert marking segment");
+AssertTrue(ExerciseDefinitionStore.LoadFromJson(conversionHistory.Undo()!, "conversion undo")
+        .Markings[0].Path.Segments[0] is LinePathSegmentDefinition,
+    "conversion Undo restores line");
+AssertTrue(ExerciseDefinitionStore.LoadFromJson(conversionHistory.Redo()!, "conversion redo")
+        .Markings[0].Path.Segments[0] is CubicBezierPathSegmentDefinition,
+    "conversion Redo restores cubic controls");
+
+var splitLinePath = PathEditing.FromPolyline([new Point2Dto { X = 0, Y = 0 }, new Point2Dto { X = 4, Y = 0 }]);
+AssertTrue(PathEditing.SplitSegment(splitLinePath, 0, 0.25f) && splitLinePath.Segments.Length == 2 &&
+           splitLinePath.Segments[0].EndPoint.X == 1,
+    "line split preserves order and requested parameter");
+foreach (float splitAt in new[] { 0.5f, 0.01f, 0.99f })
+{
+    PathDefinition original = PathEditing.CopyPath(cubicPath);
+    PathDefinition split = PathEditing.CopyPath(cubicPath);
+    AssertTrue(PathEditing.SplitSegment(split, 0, splitAt), $"cubic splits at {splitAt:0.##}");
+    for (int step = 0; step <= 40; step++)
+    {
+        float t = step / 40.0f;
+        Point2Dto expected = PathEditing.Evaluate(original, 0, t);
+        Point2Dto actual = t <= splitAt
+            ? PathEditing.Evaluate(split, 0, t / splitAt)
+            : PathEditing.Evaluate(split, 1, (t - splitAt) / (1 - splitAt));
+        AssertTrue(MathF.Abs(expected.X - actual.X) < 0.0001f && MathF.Abs(expected.Y - actual.Y) < 0.0001f,
+            $"split cubic sampled geometry matches original at t={t:0.###}, split={splitAt:0.##}");
+    }
+}
+
+var splitHistory = new EditorSnapshotHistory();
+var splitDocument = ExerciseDocument.CreateNew("split-history", "Split History", 10, 10);
+string splitId = splitDocument.AddMarking(cubicPath);
+string splitBefore = ExerciseDefinitionStore.Serialize(splitDocument.Definition);
+splitHistory.Reset(splitBefore, saved: true);
+splitDocument.SplitMarkingSegment(splitId, 0, 0.5f);
+string splitAfter = ExerciseDefinitionStore.Serialize(splitDocument.Definition);
+splitHistory.Commit(splitAfter, "Split marking segment");
+AssertEqual(1, ExerciseDefinitionStore.LoadFromJson(splitHistory.Undo()!, "split undo").Markings[0].Path.Segments.Length,
+    "split Undo restores one segment");
+AssertEqual(2, ExerciseDefinitionStore.LoadFromJson(splitHistory.Redo()!, "split redo").Markings[0].Path.Segments.Length,
+    "split Redo restores both segments");
+
+var dragPath = new PathDefinition
+{
+    Start = new Point2Dto { X = 0, Y = 0 },
+    Segments =
+    [
+        new CubicBezierPathSegmentDefinition
+        {
+            Control1 = new Point2Dto { X = 1, Y = 1 }, Control2 = new Point2Dto { X = 2, Y = 1 },
+            End = new Point2Dto { X = 3, Y = 0 },
+        },
+        new LinePathSegmentDefinition { End = new Point2Dto { X = 5, Y = 0 } },
+    ],
+};
+PathEditing.MoveCoordinate(dragPath, -1, MarkingPathCoordinateKind.PathStart, new Point2Dto { X = -1, Y = 0 });
+AssertEqual(-1.0f, dragPath.Start.X, "Path start drag changes only Path.start");
+PathEditing.MoveCoordinate(dragPath, 0, MarkingPathCoordinateKind.SegmentEnd, new Point2Dto { X = 3, Y = 2 });
+AssertEqual(3.0f, PathEditing.GetSegmentStart(dragPath, 1).X, "endpoint drag changes the next implicit start");
+AssertEqual(2.0f, PathEditing.GetSegmentStart(dragPath, 1).Y, "shared endpoint remains continuous");
+PathEditing.MoveCoordinate(dragPath, 0, MarkingPathCoordinateKind.Control1, new Point2Dto { X = 0, Y = 4 });
+AssertEqual(4.0f, ((CubicBezierPathSegmentDefinition)dragPath.Segments[0]).Control1.Y, "control1 drag changes control1");
+PathEditing.MoveCoordinate(dragPath, 0, MarkingPathCoordinateKind.Control2, new Point2Dto { X = 4, Y = -2 });
+AssertEqual(-2.0f, ((CubicBezierPathSegmentDefinition)dragPath.Segments[0]).Control2.Y, "control2 drag changes control2");
+PathDefinition movedWhole = PathEditing.Translate(dragPath, 10, -3);
+AssertTrue(movedWhole.Start.X == 9 && movedWhole.Segments[1].EndPoint.X == 15 &&
+           ((CubicBezierPathSegmentDefinition)movedWhole.Segments[0]).Control1.Y == 1,
+    "whole marking drag translates start, endpoints and controls");
+
+var dragHistory = new EditorSnapshotHistory();
+var dragDocument = ExerciseDocument.CreateNew("drag-history", "Drag History", 10, 10);
+string dragId = dragDocument.AddMarking(dragPath);
+string dragBefore = ExerciseDefinitionStore.Serialize(dragDocument.Definition);
+dragHistory.Reset(dragBefore, saved: true);
+for (int motion = 1; motion <= 5; motion++) dragDocument.MoveMarking(dragId, 0.1f, 0);
+string dragAfter = ExerciseDefinitionStore.Serialize(dragDocument.Definition);
+dragHistory.Commit(dragAfter, "Move marking");
+AssertEqual(dragBefore, dragHistory.Undo()!, "one history command restores a complete drag");
+AssertTrue(dragHistory.Undo() is null, "one drag creates only one history command");
+PathDefinition cancelBefore = PathEditing.CopyPath(dragDocument.FindMarking(dragId)!.Path);
+dragDocument.MoveMarking(dragId, 4, 4);
+dragDocument.ReplaceMarkingPath(dragId, cancelBefore);
+AssertEqual(JsonSerializer.Serialize(cancelBefore), JsonSerializer.Serialize(dragDocument.FindMarking(dragId)!.Path),
+    "cancel drag restores immutable before Path");
+
+var structureDocument = ExerciseDocument.CreateNew("structure", "Structure", 10, 10);
+string structureId = structureDocument.AddMarking(PathEditing.FromPolyline([
+    new Point2Dto { X = 0, Y = 0 }, new Point2Dto { X = 1, Y = 0 }]));
+AssertEqual(1, structureDocument.AppendMarkingSegment(structureId, new Point2Dto { X = 2, Y = 0 }, cubic: false),
+    "append line adds one ordered segment");
+AssertEqual(2, structureDocument.AppendMarkingSegment(structureId, new Point2Dto { X = 3, Y = 1 }, cubic: true),
+    "append cubic selects its ordered segment index");
+AssertTrue(structureDocument.FindMarking(structureId)!.Path.Segments[2] is CubicBezierPathSegmentDefinition,
+    "appended cubic retains cubic domain type");
+structureDocument.DeleteMarkingSegment(structureId, 0, out bool deletedFirstOwner);
+AssertTrue(!deletedFirstOwner && structureDocument.FindMarking(structureId)!.Path.Segments.Length == 2,
+    "delete first promotes its endpoint to Path.start");
+structureDocument.SplitMarkingSegment(structureId, 0, 0.5f);
+structureDocument.DeleteMarkingSegment(structureId, 1, out bool deletedInternalOwner);
+AssertTrue(!deletedInternalOwner && structureDocument.FindMarking(structureId)!.Path.Segments.Length == 2,
+    "delete internal retains neighboring segments");
+structureDocument.DeleteMarkingSegment(structureId, 1, out bool deletedLastOwner);
+AssertTrue(!deletedLastOwner && structureDocument.FindMarking(structureId)!.Path.Segments.Length == 1,
+    "delete last retains the preceding segment");
+structureDocument.DeleteMarkingSegment(structureId, 0, out bool deletedOnlyOwner);
+AssertTrue(deletedOnlyOwner && structureDocument.FindMarking(structureId) is null,
+    "delete only segment removes its marking");
+var recoveredSelection = new MarkingSelection("marking-001", 4, MarkingHandleKind.Control1);
+MarkingSelection sanitizedSelection = recoveredSelection.Sanitize(new PathDefinition
+{
+    Start = new Point2Dto(),
+    Segments = [new LinePathSegmentDefinition { End = new Point2Dto { X = 1 } },
+        new CubicBezierPathSegmentDefinition
+        {
+            Control1 = new Point2Dto { X = 1.2f }, Control2 = new Point2Dto { X = 1.8f },
+            End = new Point2Dto { X = 2 },
+        }],
+});
+AssertEqual(1, sanitizedSelection.SegmentIndex, "selection after mutation clamps to nearest remaining segment");
+
+var editedRoundTripDocument = ExerciseDocument.CreateNew("edited-roundtrip", "Edited Roundtrip", 10, 10);
+string editedId = editedRoundTripDocument.AddMarking(mixedPath);
+editedRoundTripDocument.MoveMarkingCoordinate(editedId, 1, MarkingPathCoordinateKind.Control1,
+    new Point2Dto { X = 1.25f, Y = 2.75f });
+editedRoundTripDocument.SetMarkingProperties(editedId, "#12AB34", 0.12f, "dotted", false);
+string editedJson = ExerciseDefinitionStore.Serialize(editedRoundTripDocument.Definition);
+ExerciseDefinitionDto editedReloaded = ExerciseDefinitionStore.LoadFromJson(editedJson, "edited-roundtrip");
+var editedCubic = (CubicBezierPathSegmentDefinition)editedReloaded.Markings[0].Path.Segments[1];
+AssertTrue(editedReloaded.Markings[0].Path.Start.X == -1 && editedCubic.Control1.X == 1.25f &&
+           editedCubic.Control1.Y == 2.75f && editedReloaded.Markings[0].Style == "dotted" &&
+           !editedReloaded.Markings[0].VisibleInViewer,
+    "save/reload after edits preserves Path order, controls and style");
+AssertTrue(!editedJson.Contains("selection", StringComparison.OrdinalIgnoreCase) &&
+           !editedJson.Contains("handleKind", StringComparison.OrdinalIgnoreCase) &&
+           !editedJson.Contains("segmentIndex", StringComparison.OrdinalIgnoreCase),
+    "editor selection and handles are absent from Exercise JSON");
+
 string mainSceneText = File.ReadAllText(Path.Combine(ProjectDirectory, "scenes", "Main.tscn"));
 AssertTrue(mainSceneText.Contains("type=\"CharacterBody3D\"", StringComparison.Ordinal),
     "Viewer scene persists a CharacterBody3D root");
@@ -1640,7 +1802,7 @@ AssertTrue(overpassSceneText.Contains("ConvexPolygonShape3D_left_ramp", StringCo
 AssertTrue(!overpassSceneText.Contains("BoxShape3D_ramp", StringComparison.Ordinal),
     "overpass has no single box collision blocking ramp entry");
 
-Console.WriteLine("All Viewer, Exercise Editor, Track Editor and Venue Editor Iteration 1 checks passed.");
+Console.WriteLine("All Viewer, Exercise Editor Iteration 2, Track Editor and Venue Editor checks passed.");
 
 static void AssertEqual<T>(T expected, T actual, string description)
     where T : IEquatable<T>

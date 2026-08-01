@@ -173,6 +173,30 @@ public sealed class ExerciseDocument
         return id;
     }
 
+    /// <summary>Adds a marking only when its Path already contains usable geometry.</summary>
+    public string AddMarking(PathDefinition path)
+    {
+        IReadOnlyList<string> errors = PathValidator.Validate(path, "marking.path");
+        if (errors.Count > 0)
+            throw new ArgumentException(string.Join(" ", errors), nameof(path));
+
+        string id = CreateUniqueMarkingId();
+        Definition.Markings =
+        [
+            .. Definition.Markings,
+            new MarkingDto
+            {
+                Id = id,
+                Path = PathEditing.CopyPath(path),
+                Color = "#FFD10D",
+                WidthMeters = 0.08f,
+                Style = "solid",
+                VisibleInViewer = true,
+            },
+        ];
+        return id;
+    }
+
     /// <summary>Returns one marking by id without creating canvas geometry.</summary>
     public MarkingDto? FindMarking(string id) =>
         Definition.Markings.FirstOrDefault(marking => marking.Id == id);
@@ -182,6 +206,82 @@ public sealed class ExerciseDocument
     {
         MarkingDto? marking = FindMarking(id);
         return marking is not null && PathEditing.TryMoveVertex(marking.Path, pointIndex, position);
+    }
+
+    /// <summary>Moves one addressed Path coordinate; adjacent starts remain implicit.</summary>
+    public bool MoveMarkingCoordinate(
+        string id,
+        int segmentIndex,
+        MarkingPathCoordinateKind kind,
+        Point2Dto position)
+    {
+        MarkingDto? marking = FindMarking(id);
+        if (marking is null) return false;
+        PathDefinition candidate = PathEditing.CopyPath(marking.Path);
+        if (!PathEditing.MoveCoordinate(candidate, segmentIndex, kind, position) ||
+            PathValidator.Validate(candidate, $"marking '{id}'.path").Count > 0) return false;
+        marking.Path = candidate;
+        return true;
+    }
+
+    /// <summary>Replaces a marking path with a translated deep copy.</summary>
+    public bool MoveMarking(string id, float deltaX, float deltaY)
+    {
+        MarkingDto? marking = FindMarking(id);
+        if (marking is null || !float.IsFinite(deltaX) || !float.IsFinite(deltaY)) return false;
+        marking.Path = PathEditing.Translate(marking.Path, deltaX, deltaY);
+        return true;
+    }
+
+    /// <summary>Restores one immutable Path snapshot during drag cancellation.</summary>
+    public bool ReplaceMarkingPath(string id, PathDefinition path)
+    {
+        MarkingDto? marking = FindMarking(id);
+        if (marking is null) return false;
+        marking.Path = PathEditing.CopyPath(path);
+        return true;
+    }
+
+    /// <summary>Appends one line or initially straight cubic and returns its segment index.</summary>
+    public int AppendMarkingSegment(string id, Point2Dto end, bool cubic)
+    {
+        MarkingDto? marking = FindMarking(id);
+        if (marking is null) return -1;
+        return cubic ? PathEditing.AppendCubic(marking.Path, end) : PathEditing.AppendLine(marking.Path, end);
+    }
+
+    /// <summary>Explicitly converts one marking segment while retaining its index.</summary>
+    public bool ConvertMarkingSegment(string id, int segmentIndex, bool toCubic)
+    {
+        MarkingDto? marking = FindMarking(id);
+        return marking is not null && (toCubic
+            ? PathEditing.ConvertLineToCubic(marking.Path, segmentIndex)
+            : PathEditing.ConvertCubicToLine(marking.Path, segmentIndex));
+    }
+
+    /// <summary>Splits one marking segment at an interior parameter.</summary>
+    public bool SplitMarkingSegment(string id, int segmentIndex, float parameter)
+    {
+        MarkingDto? marking = FindMarking(id);
+        return marking is not null && PathEditing.SplitSegment(marking.Path, segmentIndex, parameter);
+    }
+
+    /// <summary>
+    /// Deletes a segment. The only segment removes its owning marking so an empty
+    /// serialized Path can never remain in the document.
+    /// </summary>
+    public bool DeleteMarkingSegment(string id, int segmentIndex, out bool markingDeleted)
+    {
+        markingDeleted = false;
+        MarkingDto? marking = FindMarking(id);
+        if (marking is null || (uint)segmentIndex >= (uint)marking.Path.Segments.Length) return false;
+        if (marking.Path.Segments.Length == 1)
+        {
+            markingDeleted = DeleteMarking(id);
+            return markingDeleted;
+        }
+
+        return PathEditing.DeleteSegment(marking.Path, segmentIndex);
     }
 
     /// <summary>Adds a point to a polyline under construction.</summary>

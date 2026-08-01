@@ -34,12 +34,12 @@
     },
     {
       "instanceId": "exercise-instance-003",
-      "exercisePath": "\u0413\u0418\u0411\u0414\u0414/snake-001.json",
+      "exercisePath": "\u0413\u0418\u0411\u0414\u0414/Eight.json",
       "position": {
-        "x": 18.5,
-        "y": 2.5
+        "x": 15,
+        "y": 0.5
       },
-      "rotationDeg": -180,
+      "rotationDeg": 180,
       "scale": {
         "x": 1,
         "y": 1

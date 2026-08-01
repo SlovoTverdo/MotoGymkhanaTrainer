@@ -46,6 +46,20 @@ public static class PathValidator
 
         if (errors.Count == 0)
         {
+            for (int index = 0; index < path.Segments.Length; index++)
+            {
+                var single = new PathDefinition
+                {
+                    Start = index == 0 ? path.Start : path.Segments[index - 1].EndPoint,
+                    Segments = [path.Segments[index]],
+                };
+                if (PathSampler.Sample(single).TotalLength <= PathSamplingSettings.DuplicatePointToleranceMeters)
+                    errors.Add($"{propertyPath}.segments[{index}] must have non-zero usable length");
+            }
+        }
+
+        if (errors.Count == 0)
+        {
             SampledPath sampled = PathSampler.Sample(path);
             if (sampled.Points.Length < 2 || !float.IsFinite(sampled.TotalLength) ||
                 sampled.TotalLength <= PathSamplingSettings.DuplicatePointToleranceMeters)

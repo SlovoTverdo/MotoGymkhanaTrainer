@@ -17,6 +17,8 @@ public partial class ExerciseEditor : Control
     private static readonly string[] ConeColors = ["red", "blue", "yellow", "orange", "none"];
 
     private ExerciseDocument _document = ExerciseDocument.CreateNew();
+    private readonly EditorSnapshotHistory _history = new();
+    private readonly Dictionary<string, MarkingSelection> _historySelections = new(StringComparer.Ordinal);
     private ExerciseLibrary? _library;
     private Tree? _libraryTree;
     private string _selectedLibraryFolder = string.Empty;
@@ -61,11 +63,21 @@ public partial class ExerciseEditor : Control
     private Button? _trajectoryToolButton;
     private Button? _lineMarkingToolButton;
     private Button? _polylineMarkingToolButton;
+    private Button? _cubicMarkingToolButton;
+    private Button? _splitMarkingToolButton;
+    private Button? _undoButton;
+    private Button? _redoButton;
     private Button? _startTrajectoryButton;
     private Button? _finishTrajectoryButton;
     private Button? _finishMarkingButton;
     private Label? _markingIdLabel;
     private Label? _markingTypeLabel;
+    private Label? _markingSegmentCountLabel;
+    private Label? _markingLengthLabel;
+    private VBoxContainer? _markingSegmentProperties;
+    private Label? _markingSegmentIndexLabel;
+    private Label? _markingSegmentTypeLabel;
+    private Label? _markingHandleKindLabel;
     private ColorPickerButton? _markingColorEdit;
     private SpinBox? _markingWidthEdit;
     private OptionButton? _markingStyleEdit;
@@ -98,10 +110,20 @@ public partial class ExerciseEditor : Control
     /// <inheritdoc />
     public override void _UnhandledKeyInput(InputEvent @event)
     {
-        if (@event is InputEventKey { Pressed: true, Echo: false, Keycode: Key.Delete } &&
-            DeleteSelectedObject())
+        if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
+        bool handled = false;
+        if (key.CtrlPressed && key.Keycode == Key.Z) handled = Undo();
+        else if (key.CtrlPressed && key.Keycode == Key.Y) handled = Redo();
+        else if (key.Keycode == Key.Delete) handled = DeleteSelectedObject();
+        else if (key.Keycode == Key.Escape) handled = _canvas?.HandleEscape() == true;
+        else if (key.Keycode is Key.Enter or Key.KpEnter) handled = _canvas?.HandleEnter() == true;
+        else if (!key.CtrlPressed && key.Keycode == Key.V) { SetTool(ExerciseEditorTool.Select); handled = true; }
+        else if (!key.CtrlPressed && key.Keycode == Key.L) { SetTool(ExerciseEditorTool.AppendLine); handled = true; }
+        else if (!key.CtrlPressed && key.Keycode == Key.B) { SetTool(ExerciseEditorTool.AppendCubicBezier); handled = true; }
+        if (handled)
         {
             GetViewport().SetInputAsHandled();
+            SynchronizeToolButtons();
         }
     }
 
@@ -165,6 +187,10 @@ public partial class ExerciseEditor : Control
         toolbar.AddChild(CreateButton("NewButton", "New", RequestNew));
         toolbar.AddChild(CreateButton("OpenButton", "Open", RequestOpen));
         toolbar.AddChild(CreateButton("SaveButton", "Save", Save));
+        _undoButton = CreateButton("UndoButton", "Undo", () => Undo());
+        _redoButton = CreateButton("RedoButton", "Redo", () => Redo());
+        toolbar.AddChild(_undoButton);
+        toolbar.AddChild(_redoButton);
         toolbar.AddChild(new VSeparator());
 
         var toolGroup = new ButtonGroup();
@@ -200,23 +226,43 @@ public partial class ExerciseEditor : Control
 
         _lineMarkingToolButton = new Button
         {
-            Name = "AddLineMarkingToolButton",
-            Text = "Add Line",
+            Name = "CreateMarkingToolButton",
+            Text = "Create Marking",
             ToggleMode = true,
             ButtonGroup = toolGroup,
         };
-        _lineMarkingToolButton.Pressed += () => SetTool(ExerciseEditorTool.AddLineMarking);
+        _lineMarkingToolButton.Pressed += () => SetTool(ExerciseEditorTool.CreateMarking);
         toolbar.AddChild(_lineMarkingToolButton);
 
         _polylineMarkingToolButton = new Button
         {
-            Name = "AddPolylineMarkingToolButton",
-            Text = "Add Polyline",
+            Name = "AppendLineMarkingToolButton",
+            Text = "Append Line (L)",
             ToggleMode = true,
             ButtonGroup = toolGroup,
         };
-        _polylineMarkingToolButton.Pressed += () => SetTool(ExerciseEditorTool.AddPolylineMarking);
+        _polylineMarkingToolButton.Pressed += () => SetTool(ExerciseEditorTool.AppendLine);
         toolbar.AddChild(_polylineMarkingToolButton);
+
+        _cubicMarkingToolButton = new Button
+        {
+            Name = "AppendCubicMarkingToolButton",
+            Text = "Append Curve (B)",
+            ToggleMode = true,
+            ButtonGroup = toolGroup,
+        };
+        _cubicMarkingToolButton.Pressed += () => SetTool(ExerciseEditorTool.AppendCubicBezier);
+        toolbar.AddChild(_cubicMarkingToolButton);
+
+        _splitMarkingToolButton = new Button
+        {
+            Name = "SplitMarkingToolButton",
+            Text = "Split",
+            ToggleMode = true,
+            ButtonGroup = toolGroup,
+        };
+        _splitMarkingToolButton.Pressed += () => SetTool(ExerciseEditorTool.SplitMarkingSegment);
+        toolbar.AddChild(_splitMarkingToolButton);
 
         _finishMarkingButton = CreateButton("FinishMarkingButton", "Finish Marking", FinishMarkingBuild);
         _finishMarkingButton.Disabled = true;
@@ -406,6 +452,10 @@ public partial class ExerciseEditor : Control
         _markingTypeLabel = new Label { Name = "MarkingType" };
         _markingProperties.AddChild(CreateLabeledControl("Id", _markingIdLabel));
         _markingProperties.AddChild(CreateLabeledControl("Type", _markingTypeLabel));
+        _markingSegmentCountLabel = new Label { Name = "MarkingSegmentCount" };
+        _markingLengthLabel = new Label { Name = "MarkingApproximateLength" };
+        _markingProperties.AddChild(CreateLabeledControl("Segments", _markingSegmentCountLabel));
+        _markingProperties.AddChild(CreateLabeledControl("Approx. length", _markingLengthLabel));
 
         _markingColorEdit = new ColorPickerButton { Name = "MarkingColor", EditAlpha = false };
         _markingColorEdit.ColorChanged += _ => OnMarkingPropertiesEdited();
@@ -428,23 +478,28 @@ public partial class ExerciseEditor : Control
         _markingVisibleEdit.Toggled += _ => OnMarkingPropertiesEdited();
         _markingProperties.AddChild(_markingVisibleEdit);
 
-        _markingPointProperties = new VBoxContainer { Name = "MarkingPointProperties", Visible = false };
-        _markingPointIndexLabel = new Label { Name = "MarkingPointIndex" };
+        _markingSegmentProperties = new VBoxContainer { Name = "MarkingSegmentProperties", Visible = false };
+        _markingSegmentIndexLabel = new Label { Name = "MarkingSegmentIndex" };
+        _markingSegmentTypeLabel = new Label { Name = "MarkingSegmentType" };
+        _markingSegmentProperties.AddChild(CreateLabeledControl("Segment", _markingSegmentIndexLabel));
+        _markingSegmentProperties.AddChild(CreateLabeledControl("Segment type", _markingSegmentTypeLabel));
+        _markingSegmentProperties.AddChild(CreateButton("ConvertMarkingToCurveButton", "Convert to Curve", () => ConvertSelectedMarking(true)));
+        _markingSegmentProperties.AddChild(CreateButton("ConvertMarkingToLineButton", "Convert to Line", () => ConvertSelectedMarking(false)));
+        _markingSegmentProperties.AddChild(CreateButton("SplitMarkingSegmentButton", "Split at midpoint", SplitSelectedMarking));
+        _markingSegmentProperties.AddChild(CreateButton("DeleteMarkingSegmentButton", "Delete segment", () => DeleteSelectedObject()));
+        _markingProperties.AddChild(_markingSegmentProperties);
+
+        _markingPointProperties = new VBoxContainer { Name = "MarkingHandleProperties", Visible = false };
+        _markingHandleKindLabel = new Label { Name = "MarkingHandleKind" };
+        _markingPointIndexLabel = new Label { Name = "MarkingHandleSegment" };
         _markingPointXEdit = CreateCoordinateSpinBox("MarkingPointX");
         _markingPointYEdit = CreateCoordinateSpinBox("MarkingPointY");
         _markingPointXEdit.ValueChanged += _ => OnMarkingPointEdited();
         _markingPointYEdit.ValueChanged += _ => OnMarkingPointEdited();
-        _markingPointProperties.AddChild(CreateLabeledControl("Point", _markingPointIndexLabel));
+        _markingPointProperties.AddChild(CreateLabeledControl("Handle", _markingHandleKindLabel));
+        _markingPointProperties.AddChild(CreateLabeledControl("Segment", _markingPointIndexLabel));
         _markingPointProperties.AddChild(CreateLabeledControl("X", _markingPointXEdit));
         _markingPointProperties.AddChild(CreateLabeledControl("Y", _markingPointYEdit));
-        _markingPointProperties.AddChild(CreateButton(
-            "InsertMarkingPointButton",
-            "Insert Point After",
-            InsertMarkingPointAfter));
-        _markingPointProperties.AddChild(CreateButton(
-            "DeleteMarkingPointButton",
-            "Delete internal point",
-            () => DeleteSelectedObject()));
         _markingProperties.AddChild(_markingPointProperties);
         _markingProperties.AddChild(CreateButton("DeleteMarkingButton", "Delete marking", DeleteSelectedMarking));
         inspector.AddChild(_markingProperties);
@@ -452,8 +507,9 @@ public partial class ExerciseEditor : Control
         var help = new Label
         {
             Name = "CanvasHelp",
-            Text = "Wheel: zoom\nMiddle mouse: pan\nDrag: 0.25 m snap; hold Ctrl for precise movement\n" +
-                "Polyline marking: right-click or Finish Marking\nDelete: remove selected object or permitted anchor",
+            Text = "V: Select, L: Append Line, B: Append Curve\nWheel: zoom; middle mouse: pan\n" +
+                "Drag: 0.25 m grid; hold Ctrl to disable snapping\nEnter/double-click: finish; Escape: cancel/select\n" +
+                "Ctrl+Z/Ctrl+Y: Undo/Redo; Delete: selected segment/object",
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         inspector.AddChild(help);
@@ -736,9 +792,12 @@ public partial class ExerciseEditor : Control
                 _library.ToRelative(directory),
                 Path.GetFileName(requestedPath));
             _document.SynchronizeEndpointsFromTrajectory();
+            CommitHistory("Synchronize trajectory endpoints");
             ExerciseDefinitionStore.SaveToFile(_document.Definition, filesystemPath);
             _currentFilePath = filesystemPath;
-            SetDirty(false);
+            _history.MarkSaved();
+            SetDirty(_history.IsDirty);
+            SynchronizeHistoryUi();
             SetStatus($"Saved Exercise Definition to '{filesystemPath}'.", false);
             GD.Print($"Saved Exercise Definition '{_document.Definition.Exercise.Id}' to '{filesystemPath}'.");
             RefreshLibraryTree();
@@ -789,13 +848,21 @@ public partial class ExerciseEditor : Control
         }
     }
 
-    private void ReplaceDocument(ExerciseDocument document, string? filePath, bool dirty)
+    private void ReplaceDocument(ExerciseDocument document, string? filePath, bool dirty, bool resetHistory = true)
     {
         _document = document;
         _currentFilePath = filePath;
-        _canvas?.SetDocument(document);
+        _canvas?.SetDocument(document, resetView: resetHistory);
+        if (resetHistory)
+        {
+            string snapshot = ExerciseDefinitionStore.Serialize(document.Definition);
+            _history.Reset(snapshot, saved: !dirty);
+            _historySelections.Clear();
+            _historySelections[snapshot] = MarkingSelection.None;
+        }
         SynchronizeDocumentUi();
-        SetDirty(dirty);
+        SetDirty(resetHistory ? dirty : _history.IsDirty);
+        SynchronizeHistoryUi();
     }
 
     private void OnDocumentFieldsEdited()
@@ -909,7 +976,7 @@ public partial class ExerciseEditor : Control
     private void OnMarkingPropertiesEdited()
     {
         if (_synchronizingUi || _canvas is null ||
-            _canvas.SelectionKind is not (ExerciseSelectionKind.Marking or ExerciseSelectionKind.MarkingPoint))
+            _canvas.SelectionKind is not (ExerciseSelectionKind.Marking or ExerciseSelectionKind.MarkingSegment or ExerciseSelectionKind.MarkingHandle))
         {
             return;
         }
@@ -933,29 +1000,39 @@ public partial class ExerciseEditor : Control
         }
 
         MarkDocumentChanged();
+        _canvas.RefreshMarking(_canvas.SelectedMarkingId);
     }
 
     private void OnMarkingPointEdited()
     {
-        if (_synchronizingUi || _canvas?.SelectionKind != ExerciseSelectionKind.MarkingPoint)
+        if (_synchronizingUi || _canvas?.SelectionKind != ExerciseSelectionKind.MarkingHandle)
         {
             return;
         }
 
-        _document.MoveMarkingPoint(
+        _document.MoveMarkingCoordinate(
             _canvas.SelectedMarkingId,
-            _canvas.SelectedMarkingPointIndex,
+            _canvas.SelectedMarkingSegmentIndex,
+            _canvas.SelectedMarkingHandle switch
+            {
+                MarkingHandleKind.PathStart => MarkingPathCoordinateKind.PathStart,
+                MarkingHandleKind.SegmentEnd => MarkingPathCoordinateKind.SegmentEnd,
+                MarkingHandleKind.Control1 => MarkingPathCoordinateKind.Control1,
+                MarkingHandleKind.Control2 => MarkingPathCoordinateKind.Control2,
+                _ => throw new InvalidOperationException(),
+            },
             new Point2Dto
             {
                 X = (float)_markingPointXEdit!.Value,
                 Y = (float)_markingPointYEdit!.Value,
             });
         MarkDocumentChanged();
+        _canvas.RefreshMarking(_canvas.SelectedMarkingId);
     }
 
-    private void OnCanvasDocumentChanged()
+    private void OnCanvasDocumentChanged(string description)
     {
-        SetDirty(true);
+        CommitHistory(description);
         SynchronizeDocumentUi();
         SynchronizeTrajectoryBuildUi();
         _canvas?.QueueRedraw();
@@ -975,21 +1052,13 @@ public partial class ExerciseEditor : Control
             return true;
         }
 
-        if (result == SelectionDeleteResult.MarkingPointDeleteBlocked)
-        {
-            SetStatus(
-                "Only an internal point of a polyline with more than two points can be deleted.",
-                true);
-            return true;
-        }
-
-        SetDirty(true);
+        CommitHistory("Delete selected object");
         SynchronizeDocumentUi();
         string message = result switch
         {
             SelectionDeleteResult.DeletedCone => "Selected cone deleted.",
             SelectionDeleteResult.DeletedMarking => "Selected marking deleted.",
-            SelectionDeleteResult.DeletedMarkingPoint => "Selected marking point deleted.",
+            SelectionDeleteResult.DeletedMarkingSegment => "Selected marking segment deleted.",
             _ => "Selected trajectory point deleted.",
         };
         SetStatus(message, false);
@@ -999,7 +1068,7 @@ public partial class ExerciseEditor : Control
     private void DeleteSelectedMarking()
     {
         if (_canvas is null ||
-            _canvas.SelectionKind is not (ExerciseSelectionKind.Marking or ExerciseSelectionKind.MarkingPoint))
+            _canvas.SelectionKind is not (ExerciseSelectionKind.Marking or ExerciseSelectionKind.MarkingSegment or ExerciseSelectionKind.MarkingHandle))
         {
             return;
         }
@@ -1015,21 +1084,26 @@ public partial class ExerciseEditor : Control
             return;
         }
 
-        SetDirty(true);
         SynchronizeDocumentUi();
         SetStatus("Trajectory point inserted between adjacent anchors.", false);
     }
 
-    private void InsertMarkingPointAfter()
+    private void SplitSelectedMarking()
     {
-        if (_canvas?.InsertMarkingPointAfterSelected() != true)
+        if (_canvas?.SplitSelectedMarkingSegment() != true) return;
+        SynchronizeDocumentUi();
+        SetStatus("Selected marking segment split at its midpoint.", false);
+    }
+
+    private void ConvertSelectedMarking(bool toCubic)
+    {
+        if (_canvas?.ConvertSelectedMarkingSegment(toCubic) != true)
         {
+            SetStatus(toCubic ? "Select a line marking segment." : "Select a cubic marking segment.", true);
             return;
         }
-
-        SetDirty(true);
         SynchronizeDocumentUi();
-        SetStatus("Marking point inserted at the adjacent midpoint.", false);
+        SetStatus(toCubic ? "Marking segment converted to Curve." : "Marking segment converted to Line.", false);
     }
 
     private void ConvertSelectedToCubic()
@@ -1040,7 +1114,6 @@ public partial class ExerciseEditor : Control
             return;
         }
 
-        SetDirty(true);
         SynchronizeDocumentUi();
         SetStatus("Selected section converted to cubicBezier with initially straight controls.", false);
     }
@@ -1053,7 +1126,6 @@ public partial class ExerciseEditor : Control
             return;
         }
 
-        SetDirty(true);
         SynchronizeDocumentUi();
         SetStatus("Selected cubicBezier converted to a line; adjacent polylines were normalized.", false);
     }
@@ -1079,8 +1151,50 @@ public partial class ExerciseEditor : Control
 
     private void MarkDocumentChanged()
     {
-        SetDirty(true);
+        CommitHistory("Edit Exercise Definition");
         _canvas?.QueueRedraw();
+    }
+
+    private void CommitHistory(string description)
+    {
+        string snapshot = ExerciseDefinitionStore.Serialize(_document.Definition);
+        if (_history.Commit(snapshot, description))
+            _historySelections[snapshot] = _canvas?.MarkingSelection ?? MarkingSelection.None;
+        SetDirty(_history.IsDirty);
+        SynchronizeHistoryUi();
+    }
+
+    private bool Undo() => RestoreHistory(_history.Undo(), "Undo");
+
+    private bool Redo() => RestoreHistory(_history.Redo(), "Redo");
+
+    private bool RestoreHistory(string? snapshot, string action)
+    {
+        if (snapshot is null) return false;
+        ExerciseDefinitionDto definition = ExerciseDefinitionStore.LoadFromJson(snapshot, $"{action} history");
+        ReplaceDocument(new ExerciseDocument(definition), _currentFilePath, dirty: _history.IsDirty, resetHistory: false);
+        if (_historySelections.TryGetValue(snapshot, out MarkingSelection selection) && selection.HasMarking &&
+            _document.FindMarking(selection.MarkingId) is { } marking)
+        {
+            selection = selection.Sanitize(marking.Path);
+            int segment = selection.SegmentIndex;
+            if (selection.HandleKind == MarkingHandleKind.PathStart)
+                _canvas?.SelectMarkingHandle(selection.MarkingId, -1, selection.HandleKind);
+            else if ((uint)segment < (uint)marking.Path.Segments.Length)
+            {
+                if (selection.HasHandle) _canvas?.SelectMarkingHandle(selection.MarkingId, segment, selection.HandleKind);
+                else _canvas?.SelectMarkingSegment(selection.MarkingId, segment);
+            }
+            else _canvas?.SelectMarking(selection.MarkingId);
+        }
+        SetStatus(action, false);
+        return true;
+    }
+
+    private void SynchronizeHistoryUi()
+    {
+        if (_undoButton is not null) _undoButton.Disabled = !_history.CanUndo;
+        if (_redoButton is not null) _redoButton.Disabled = !_history.CanRedo;
     }
 
     private void SynchronizeDocumentUi()
@@ -1150,7 +1264,8 @@ public partial class ExerciseEditor : Control
                 SynchronizeTrajectorySegmentUi();
                 break;
             case ExerciseSelectionKind.Marking:
-            case ExerciseSelectionKind.MarkingPoint:
+            case ExerciseSelectionKind.MarkingSegment:
+            case ExerciseSelectionKind.MarkingHandle:
                 SynchronizeMarkingUi();
                 break;
             default:
@@ -1206,15 +1321,21 @@ public partial class ExerciseEditor : Control
             return;
         }
 
-        _selectionTitle!.Text = _canvas.SelectionKind == ExerciseSelectionKind.MarkingPoint
-            ? $"Selection: {marking.Id} / point {_canvas.SelectedMarkingPointIndex}"
-            : $"Selection: {marking.Id}";
+        string suffix = _canvas.SelectionKind switch
+        {
+            ExerciseSelectionKind.MarkingHandle => $" / segment {_canvas.SelectedMarkingSegmentIndex} / {_canvas.SelectedMarkingHandle}",
+            ExerciseSelectionKind.MarkingSegment => $" / segment {_canvas.SelectedMarkingSegmentIndex}",
+            _ => string.Empty,
+        };
+        _selectionTitle!.Text = $"Selection: {marking.Id}{suffix}";
         _coneProperties!.Visible = false;
         _trajectoryPointProperties!.Visible = false;
         _trajectorySegmentProperties!.Visible = false;
         _markingProperties!.Visible = true;
         _markingIdLabel!.Text = marking.Id;
         _markingTypeLabel!.Text = PathEditing.IsAllLine(marking.Path) ? "line path" : "curved path";
+        _markingSegmentCountLabel!.Text = marking.Path.Segments.Length.ToString();
+        _markingLengthLabel!.Text = $"{PathSampler.Sample(marking.Path).TotalLength:0.###} m";
         _markingColorEdit!.Color = ParseCanonicalColor(marking.Color);
         _markingWidthEdit!.Value = marking.WidthMeters;
         _markingStyleEdit!.Selected = marking.Style switch
@@ -1225,13 +1346,30 @@ public partial class ExerciseEditor : Control
         };
         _markingVisibleEdit!.ButtonPressed = marking.VisibleInViewer;
 
-        bool pointSelected = _canvas.SelectionKind == ExerciseSelectionKind.MarkingPoint;
-        _markingPointProperties!.Visible = pointSelected;
-        if (pointSelected)
+        bool segmentSelected = _canvas.SelectedMarkingSegmentIndex >= 0;
+        _markingSegmentProperties!.Visible = segmentSelected;
+        if (segmentSelected)
         {
-            int pointIndex = _canvas.SelectedMarkingPointIndex;
-            Point2Dto point = PathEditing.GetVertices(marking.Path)[pointIndex];
-            _markingPointIndexLabel!.Text = pointIndex.ToString();
+            _markingSegmentIndexLabel!.Text = _canvas.SelectedMarkingSegmentIndex.ToString();
+            _markingSegmentTypeLabel!.Text = marking.Path.Segments[_canvas.SelectedMarkingSegmentIndex] is CubicBezierPathSegmentDefinition
+                ? "cubicBezier" : "line";
+        }
+
+        bool handleSelected = _canvas.SelectionKind == ExerciseSelectionKind.MarkingHandle;
+        _markingPointProperties!.Visible = handleSelected;
+        if (handleSelected)
+        {
+            int segmentIndex = _canvas.SelectedMarkingSegmentIndex;
+            Point2Dto point = _canvas.SelectedMarkingHandle switch
+            {
+                MarkingHandleKind.PathStart => marking.Path.Start,
+                MarkingHandleKind.SegmentEnd => marking.Path.Segments[segmentIndex].EndPoint,
+                MarkingHandleKind.Control1 => ((CubicBezierPathSegmentDefinition)marking.Path.Segments[segmentIndex]).Control1,
+                MarkingHandleKind.Control2 => ((CubicBezierPathSegmentDefinition)marking.Path.Segments[segmentIndex]).Control2,
+                _ => marking.Path.Start,
+            };
+            _markingHandleKindLabel!.Text = _canvas.SelectedMarkingHandle.ToString();
+            _markingPointIndexLabel!.Text = segmentIndex < 0 ? "Path start" : segmentIndex.ToString();
             _markingPointXEdit!.Value = point.X;
             _markingPointYEdit!.Value = point.Y;
         }
@@ -1251,15 +1389,7 @@ public partial class ExerciseEditor : Control
         if (_canvas?.IsBuildingMarking == true && tool != _canvas.Tool &&
             !_canvas.TryFinishMarkingBuild())
         {
-            if (_canvas.Tool == ExerciseEditorTool.AddLineMarking)
-            {
-                _lineMarkingToolButton?.SetPressedNoSignal(true);
-            }
-            else
-            {
-                _polylineMarkingToolButton?.SetPressedNoSignal(true);
-            }
-
+            SynchronizeToolButtons();
             return;
         }
 
@@ -1271,11 +1401,26 @@ public partial class ExerciseEditor : Control
             ExerciseEditorTool.AddCone => "Add Cone tool active.",
             ExerciseEditorTool.EditTrajectory =>
                 "Edit Trajectory tool active. Select/drag anchors or press Start Trajectory.",
-            ExerciseEditorTool.AddLineMarking => "Add Line tool active. Click its first and second point.",
-            _ => "Add Polyline tool active. Click points, then right-click or press Finish Marking.",
+            ExerciseEditorTool.CreateMarking => "Create Marking active. Click start, then line endpoints; Enter finishes.",
+            ExerciseEditorTool.AppendLine => "Append Line active. Select a marking, then click its new endpoint.",
+            ExerciseEditorTool.AppendCubicBezier => "Append Curve active. Select a marking, then click its endpoint.",
+            _ => "Split active. Click a marking segment at the desired split position.",
         };
         SetStatus(message, false);
+        SynchronizeToolButtons();
         SynchronizeTrajectoryBuildUi();
+    }
+
+    private void SynchronizeToolButtons()
+    {
+        if (_canvas is null) return;
+        _selectToolButton?.SetPressedNoSignal(_canvas.Tool == ExerciseEditorTool.Select);
+        _addConeToolButton?.SetPressedNoSignal(_canvas.Tool == ExerciseEditorTool.AddCone);
+        _trajectoryToolButton?.SetPressedNoSignal(_canvas.Tool == ExerciseEditorTool.EditTrajectory);
+        _lineMarkingToolButton?.SetPressedNoSignal(_canvas.Tool == ExerciseEditorTool.CreateMarking);
+        _polylineMarkingToolButton?.SetPressedNoSignal(_canvas.Tool == ExerciseEditorTool.AppendLine);
+        _cubicMarkingToolButton?.SetPressedNoSignal(_canvas.Tool == ExerciseEditorTool.AppendCubicBezier);
+        _splitMarkingToolButton?.SetPressedNoSignal(_canvas.Tool == ExerciseEditorTool.SplitMarkingSegment);
     }
 
     private void SynchronizeTrajectoryBuildUi()

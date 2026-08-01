@@ -9,8 +9,10 @@ public enum ExerciseEditorTool
     Select,
     AddCone,
     EditTrajectory,
-    AddLineMarking,
-    AddPolylineMarking,
+    CreateMarking,
+    AppendLine,
+    AppendCubicBezier,
+    SplitMarkingSegment,
 }
 
 /// <summary>Kind of domain object selected on the canvas.</summary>
@@ -22,7 +24,8 @@ public enum ExerciseSelectionKind
     TrajectorySegment,
     BezierControl,
     Marking,
-    MarkingPoint,
+    MarkingSegment,
+    MarkingHandle,
 }
 
 /// <summary>Outcome of deleting the currently selected object.</summary>
@@ -33,8 +36,7 @@ public enum SelectionDeleteResult
     DeletedTrajectoryPoint,
     TrajectoryMinimumBlocked,
     DeletedMarking,
-    DeletedMarkingPoint,
-    MarkingPointDeleteBlocked,
+    DeletedMarkingSegment,
 }
 
 /// <summary>
@@ -55,6 +57,8 @@ public partial class ExerciseEditorCanvas : Control
 
     private readonly Color _minorGridColor = new(0.23f, 0.26f, 0.30f);
     private readonly Color _majorGridColor = new(0.34f, 0.38f, 0.44f);
+    private readonly Dictionary<string, MarkingStyleGeometry> _markingGeometryCache = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, PathBounds> _markingBoundsCache = new(StringComparer.Ordinal);
     private ExerciseDocument? _document;
     private Vector2 _panPixels;
     private float _pixelsPerMeter = DefaultPixelsPerMeter;
@@ -63,11 +67,16 @@ public partial class ExerciseEditorCanvas : Control
     private bool _buildingTrajectory;
     private int _trajectoryBuildClickCount;
     private bool _buildingMarking;
-    private int _markingBuildClickCount;
+    private Point2Dto? _markingDraftStart;
+    private Point2Dto? _markingPreviewEnd;
     private string _buildingMarkingId = string.Empty;
+    private PathDefinition? _dragBeforeMarkingPath;
+    private Point2Dto? _dragBeforePoint;
+    private Point2Dto? _dragPointerStart;
+    private bool _dragChanged;
 
     /// <summary>Raised whenever a domain value was changed through direct manipulation.</summary>
-    public event Action? DocumentChanged;
+    public event Action<string>? DocumentChanged;
 
     /// <summary>Raised whenever the current object selection changes.</summary>
     public event Action? SelectionChanged;
@@ -90,8 +99,12 @@ public partial class ExerciseEditorCanvas : Control
     /// <summary>Id of the selected marking or marking point.</summary>
     public string SelectedMarkingId { get; private set; } = string.Empty;
 
-    /// <summary>Persisted point index inside the selected marking, or -1.</summary>
-    public int SelectedMarkingPointIndex { get; private set; } = -1;
+    /// <summary>Stable editor-only selection within a marking Path.</summary>
+    public MarkingSelection MarkingSelection { get; private set; } = MarkingSelection.None;
+
+    public int SelectedMarkingSegmentIndex => MarkingSelection.SegmentIndex;
+
+    public MarkingHandleKind SelectedMarkingHandle => MarkingSelection.HandleKind;
 
     /// <summary>Global conceptual anchor index, or -1.</summary>
     public int SelectedTrajectoryPointIndex { get; private set; } = -1;
@@ -123,10 +136,13 @@ public partial class ExerciseEditorCanvas : Control
     public void SetDocument(ExerciseDocument document, bool resetView = true)
     {
         _document = document;
+        _markingGeometryCache.Clear();
+        _markingBoundsCache.Clear();
         _buildingTrajectory = false;
         _trajectoryBuildClickCount = 0;
         _buildingMarking = false;
-        _markingBuildClickCount = 0;
+        _markingDraftStart = null;
+        _markingPreviewEnd = null;
         _buildingMarkingId = string.Empty;
         ClearSelection();
         if (resetView)
@@ -143,10 +159,9 @@ public partial class ExerciseEditorCanvas : Control
     public void SetTool(ExerciseEditorTool tool)
     {
         Tool = tool;
-        _buildingMarking = false;
-        _markingBuildClickCount = 0;
-        _buildingMarkingId = string.Empty;
-        ClearSelection();
+        CancelTransientOperation(restoreDrag: true);
+        if (tool is ExerciseEditorTool.CreateMarking)
+            ClearSelection();
         TrajectoryBuildStateChanged?.Invoke();
     }
 
@@ -187,11 +202,11 @@ public partial class ExerciseEditorCanvas : Control
 
     /// <summary>Selects a cone after creation or another UI action.</summary>
     public void SelectCone(string coneId) =>
-        SetSelection(ExerciseSelectionKind.Cone, coneId, string.Empty, -1, -1, -1, -1);
+        SetSelection(ExerciseSelectionKind.Cone, coneId, string.Empty, -1, -1, -1);
 
     /// <summary>Selects a conceptual trajectory anchor.</summary>
     public void SelectTrajectoryPoint(int pointIndex) =>
-        SetSelection(ExerciseSelectionKind.TrajectoryPoint, string.Empty, string.Empty, -1, pointIndex, -1, -1);
+        SetSelection(ExerciseSelectionKind.TrajectoryPoint, string.Empty, string.Empty, pointIndex, -1, -1);
 
     /// <summary>Selects one section between adjacent anchors.</summary>
     public void SelectTrajectorySection(TrajectorySectionLocation location) =>
@@ -200,17 +215,29 @@ public partial class ExerciseEditorCanvas : Control
             string.Empty,
             string.Empty,
             -1,
-            -1,
             location.SegmentIndex,
             location.SectionIndex);
 
     /// <summary>Selects a marking body.</summary>
-    public void SelectMarking(string markingId) =>
-        SetSelection(ExerciseSelectionKind.Marking, string.Empty, markingId, -1, -1, -1, -1);
+    public void SelectMarking(string markingId)
+    {
+        MarkingSelection = new MarkingSelection(markingId, -1, MarkingHandleKind.None);
+        SetSelection(ExerciseSelectionKind.Marking, string.Empty, markingId, -1, -1, -1);
+    }
 
-    /// <summary>Selects one persisted marking anchor.</summary>
-    public void SelectMarkingPoint(string markingId, int pointIndex) =>
-        SetSelection(ExerciseSelectionKind.MarkingPoint, string.Empty, markingId, pointIndex, -1, -1, -1);
+    /// <summary>Selects a segment by stable marking id and persisted segment index.</summary>
+    public void SelectMarkingSegment(string markingId, int segmentIndex)
+    {
+        MarkingSelection = new MarkingSelection(markingId, segmentIndex, MarkingHandleKind.None);
+        SetSelection(ExerciseSelectionKind.MarkingSegment, string.Empty, markingId, -1, -1, -1);
+    }
+
+    /// <summary>Selects one editor-only Path handle.</summary>
+    public void SelectMarkingHandle(string markingId, int segmentIndex, MarkingHandleKind handle)
+    {
+        MarkingSelection = new MarkingSelection(markingId, segmentIndex, handle);
+        SetSelection(ExerciseSelectionKind.MarkingHandle, string.Empty, markingId, -1, -1, -1);
+    }
 
     /// <summary>Clears transient selection without changing the domain document.</summary>
     public void ClearSelection()
@@ -218,7 +245,7 @@ public partial class ExerciseEditorCanvas : Control
         SelectionKind = ExerciseSelectionKind.None;
         SelectedConeId = string.Empty;
         SelectedMarkingId = string.Empty;
-        SelectedMarkingPointIndex = -1;
+        MarkingSelection = MarkingSelection.None;
         SelectedTrajectoryPointIndex = -1;
         SelectedTrajectorySegmentIndex = -1;
         SelectedTrajectorySectionIndex = -1;
@@ -238,27 +265,34 @@ public partial class ExerciseEditorCanvas : Control
         if (SelectionKind == ExerciseSelectionKind.Cone && _document.DeleteCone(SelectedConeId))
         {
             ClearSelection();
-            DocumentChanged?.Invoke();
+            DocumentChanged?.Invoke("Delete cone");
             return SelectionDeleteResult.DeletedCone;
         }
 
         if (SelectionKind == ExerciseSelectionKind.Marking && _document.DeleteMarking(SelectedMarkingId))
         {
+            _markingGeometryCache.Remove(SelectedMarkingId);
+            _markingBoundsCache.Remove(SelectedMarkingId);
             ClearSelection();
-            DocumentChanged?.Invoke();
+            DocumentChanged?.Invoke("Delete marking");
             return SelectionDeleteResult.DeletedMarking;
         }
 
-        if (SelectionKind == ExerciseSelectionKind.MarkingPoint)
+        if (SelectionKind is ExerciseSelectionKind.MarkingSegment or ExerciseSelectionKind.MarkingHandle &&
+            SelectedMarkingSegmentIndex >= 0)
         {
-            if (!_document.DeleteMarkingPoint(SelectedMarkingId, SelectedMarkingPointIndex))
+            int deletedIndex = SelectedMarkingSegmentIndex;
+            if (!_document.DeleteMarkingSegment(SelectedMarkingId, deletedIndex, out bool markingDeleted))
+                return SelectionDeleteResult.NothingSelected;
+            if (markingDeleted) ClearSelection();
+            else
             {
-                return SelectionDeleteResult.MarkingPointDeleteBlocked;
+                MarkingDto marking = _document.FindMarking(SelectedMarkingId)!;
+                RefreshMarking(marking.Id);
+                SelectMarkingSegment(marking.Id, Math.Min(deletedIndex, marking.Path.Segments.Length - 1));
             }
-
-            ClearSelection();
-            DocumentChanged?.Invoke();
-            return SelectionDeleteResult.DeletedMarkingPoint;
+            DocumentChanged?.Invoke("Delete marking segment");
+            return markingDeleted ? SelectionDeleteResult.DeletedMarking : SelectionDeleteResult.DeletedMarkingSegment;
         }
 
         if (SelectionKind != ExerciseSelectionKind.TrajectoryPoint)
@@ -278,7 +312,7 @@ public partial class ExerciseEditorCanvas : Control
         }
 
         ClearSelection();
-        DocumentChanged?.Invoke();
+        DocumentChanged?.Invoke("Delete trajectory point");
         return SelectionDeleteResult.DeletedTrajectoryPoint;
     }
 
@@ -298,27 +332,18 @@ public partial class ExerciseEditorCanvas : Control
         }
 
         SelectTrajectoryPoint(insertedIndex);
-        DocumentChanged?.Invoke();
+        DocumentChanged?.Invoke("Insert trajectory point");
         return true;
     }
 
-    /// <summary>Inserts a midpoint after a selected internal marking anchor.</summary>
-    public bool InsertMarkingPointAfterSelected()
+    /// <summary>Splits the selected marking segment at its midpoint.</summary>
+    public bool SplitSelectedMarkingSegment(float parameter = 0.5f)
     {
-        if (_document is null || SelectionKind != ExerciseSelectionKind.MarkingPoint)
-        {
-            return false;
-        }
-
-        int index = _document.InsertMarkingPointAfter(SelectedMarkingId, SelectedMarkingPointIndex);
-        if (index < 0)
-        {
-            MessageRequested?.Invoke("Only a non-final polyline point supports insertion.", true);
-            return false;
-        }
-
-        SelectMarkingPoint(SelectedMarkingId, index);
-        DocumentChanged?.Invoke();
+        if (_document is null || SelectedMarkingSegmentIndex < 0 ||
+            !_document.SplitMarkingSegment(SelectedMarkingId, SelectedMarkingSegmentIndex, parameter)) return false;
+        RefreshMarking(SelectedMarkingId);
+        SelectMarkingSegment(SelectedMarkingId, SelectedMarkingSegmentIndex + 1);
+        DocumentChanged?.Invoke("Split marking segment");
         return true;
     }
 
@@ -330,14 +355,15 @@ public partial class ExerciseEditorCanvas : Control
             return true;
         }
 
-        if (_markingBuildClickCount < 2)
+        if (_markingDraftStart is not null && string.IsNullOrEmpty(_buildingMarkingId))
         {
             MessageRequested?.Invoke("Add a second marking point before finishing.", true);
             return false;
         }
 
         _buildingMarking = false;
-        _markingBuildClickCount = 0;
+        _markingDraftStart = null;
+        _markingPreviewEnd = null;
         _buildingMarkingId = string.Empty;
         TrajectoryBuildStateChanged?.Invoke();
         MessageRequested?.Invoke("Marking construction finished.", false);
@@ -361,7 +387,7 @@ public partial class ExerciseEditorCanvas : Control
         }
 
         SelectTrajectorySection(result.Value);
-        DocumentChanged?.Invoke();
+        DocumentChanged?.Invoke("Convert trajectory section to cubic");
         return true;
     }
 
@@ -381,8 +407,45 @@ public partial class ExerciseEditorCanvas : Control
         }
 
         SelectTrajectorySection(result.Value);
-        DocumentChanged?.Invoke();
+        DocumentChanged?.Invoke("Convert trajectory section to line");
         return true;
+    }
+
+    /// <summary>Converts the selected marking segment and keeps its stable index selected.</summary>
+    public bool ConvertSelectedMarkingSegment(bool toCubic)
+    {
+        if (_document is null || SelectedMarkingSegmentIndex < 0 ||
+            !_document.ConvertMarkingSegment(SelectedMarkingId, SelectedMarkingSegmentIndex, toCubic)) return false;
+        RefreshMarking(SelectedMarkingId);
+        SelectMarkingSegment(SelectedMarkingId, SelectedMarkingSegmentIndex);
+        DocumentChanged?.Invoke(toCubic ? "Convert marking segment to curve" : "Convert marking segment to line");
+        return true;
+    }
+
+    /// <summary>Cancels a transient operation or returns to Select.</summary>
+    public bool HandleEscape()
+    {
+        if (_buildingTrajectory && !TryFinishTrajectoryBuild())
+            return true;
+        bool handled = _draggingSelection || _buildingMarking || Tool != ExerciseEditorTool.Select;
+        CancelTransientOperation(restoreDrag: true);
+        Tool = ExerciseEditorTool.Select;
+        TrajectoryBuildStateChanged?.Invoke();
+        QueueRedraw();
+        return handled;
+    }
+
+    /// <summary>Completes the active marking construction on Enter.</summary>
+    public bool HandleEnter() => _buildingMarking && TryFinishMarkingBuild();
+
+    /// <summary>Invalidates only one marking's sampled/style preview geometry.</summary>
+    public void RefreshMarking(string markingId)
+    {
+        _markingGeometryCache.Remove(markingId);
+        _markingBoundsCache.Remove(markingId);
+        if (_document?.FindMarking(markingId) is { } marking)
+            _markingBoundsCache[markingId] = PathBoundsCalculator.Calculate(marking.Path, marking.WidthMeters);
+        QueueRedraw();
     }
 
     /// <inheritdoc />
@@ -415,6 +478,7 @@ public partial class ExerciseEditorCanvas : Control
 
         DrawBounds(_document.Definition.Bounds);
         DrawMarkings();
+        DrawMarkingPreview();
         DrawCones(_document.Definition.Cones, _document.Definition.Bounds);
         DrawTrajectory();
     }
@@ -462,7 +526,7 @@ public partial class ExerciseEditorCanvas : Control
 
         if (!button.Pressed)
         {
-            _draggingSelection = false;
+            CompleteDrag();
             return;
         }
 
@@ -475,19 +539,27 @@ public partial class ExerciseEditorCanvas : Control
             case ExerciseEditorTool.EditTrajectory:
                 HandleTrajectoryClick(button.Position);
                 break;
-            case ExerciseEditorTool.AddLineMarking:
-            case ExerciseEditorTool.AddPolylineMarking:
-                AddMarkingBuildPoint(Snap(ScreenToDomain(button.Position)));
+            case ExerciseEditorTool.CreateMarking:
+            case ExerciseEditorTool.AppendLine:
+            case ExerciseEditorTool.AppendCubicBezier:
+                AddMarkingBuildPoint(ResolveSnap(button.Position, button.CtrlPressed));
+                if (button.DoubleClick) TryFinishMarkingBuild();
+                break;
+            case ExerciseEditorTool.SplitMarkingSegment:
+                SplitMarkingAt(button.Position);
                 break;
             default:
-                // Select-tool priority keeps small marking anchors reachable before
-                // their wider stroke, then falls back to the existing cone objects.
-                if (!HitTestMarkingPoint(button.Position) && !HitTestMarking(button.Position))
+                // Handles are editor overlays and therefore receive priority over
+                // the sampled centreline and all unrelated scene objects.
+                if (!HitTestMarkingHandle(button.Position) && !HitTestMarking(button.Position) &&
+                    !HitTestCone(button.Position))
                 {
-                    HitTestCone(button.Position);
+                    ClearSelection();
                 }
 
-                _draggingSelection = SelectionKind is ExerciseSelectionKind.Cone or ExerciseSelectionKind.MarkingPoint;
+                _draggingSelection = SelectionKind is ExerciseSelectionKind.Cone or
+                    ExerciseSelectionKind.Marking or ExerciseSelectionKind.MarkingSegment or ExerciseSelectionKind.MarkingHandle;
+                if (_draggingSelection) BeginDrag(ScreenToDomain(button.Position));
                 break;
         }
 
@@ -508,7 +580,7 @@ public partial class ExerciseEditorCanvas : Control
 
         string coneId = _document!.AddCone(position);
         SelectCone(coneId);
-        DocumentChanged?.Invoke();
+        DocumentChanged?.Invoke("Create cone");
     }
 
     private void HandleTrajectoryClick(Vector2 screenPosition)
@@ -529,6 +601,7 @@ public partial class ExerciseEditorCanvas : Control
         {
             _draggingSelection = SelectionKind is ExerciseSelectionKind.BezierControl or
                 ExerciseSelectionKind.TrajectoryPoint or ExerciseSelectionKind.Cone;
+            if (_draggingSelection) BeginDrag(ScreenToDomain(screenPosition));
             return;
         }
 
@@ -554,7 +627,7 @@ public partial class ExerciseEditorCanvas : Control
 
         _trajectoryBuildClickCount++;
         SelectTrajectoryPoint(selectedIndex);
-        DocumentChanged?.Invoke();
+        DocumentChanged?.Invoke("Edit trajectory construction");
         MessageRequested?.Invoke(
             $"Trajectory point {selectedIndex} added. " +
             (_trajectoryBuildClickCount < 2 ? "Add one more point before finishing." : "Continue clicking or finish."),
@@ -563,43 +636,75 @@ public partial class ExerciseEditorCanvas : Control
 
     private void AddMarkingBuildPoint(Point2Dto position)
     {
-        bool line = Tool == ExerciseEditorTool.AddLineMarking;
-        if (!_buildingMarking)
+        if (Tool is ExerciseEditorTool.AppendLine or ExerciseEditorTool.AppendCubicBezier)
         {
-            _buildingMarking = true;
-            _markingBuildClickCount = 1;
-            _buildingMarkingId = _document!.AddMarking(
-                line ? "line" : "polyline",
-                [position, position]);
-            TrajectoryBuildStateChanged?.Invoke();
-            SelectMarkingPoint(_buildingMarkingId, 0);
-            DocumentChanged?.Invoke();
-            MessageRequested?.Invoke("First marking point added. Click the second point.", false);
+            string id = SelectedMarkingId;
+            if (string.IsNullOrEmpty(id))
+            {
+                MessageRequested?.Invoke("Select a marking before appending a segment.", true);
+                return;
+            }
+
+            int index = _document!.AppendMarkingSegment(id, position, Tool == ExerciseEditorTool.AppendCubicBezier);
+            if (index < 0)
+            {
+                MessageRequested?.Invoke("A zero-length segment cannot be appended.", true);
+                return;
+            }
+
+            SelectMarkingSegment(id, index);
+            RefreshMarking(id);
+            DocumentChanged?.Invoke(Tool == ExerciseEditorTool.AppendCubicBezier
+                ? "Append cubic marking segment"
+                : "Append line marking segment");
             return;
         }
 
-        int pointIndex;
-        if (_markingBuildClickCount == 1)
+        if (!_buildingMarking)
         {
-            _document!.MoveMarkingPoint(_buildingMarkingId, 1, position);
-            pointIndex = 1;
-        }
-        else
-        {
-            pointIndex = _document!.AppendMarkingPoint(_buildingMarkingId, position);
+            _buildingMarking = true;
+            _markingDraftStart = new Point2Dto { X = position.X, Y = position.Y };
+            _markingPreviewEnd = new Point2Dto { X = position.X, Y = position.Y };
+            _buildingMarkingId = string.Empty;
+            TrajectoryBuildStateChanged?.Invoke();
+            MessageRequested?.Invoke("Marking start set. Click an endpoint for the first line.", false);
+            QueueRedraw();
+            return;
         }
 
-        _markingBuildClickCount++;
-        SelectMarkingPoint(_buildingMarkingId, pointIndex);
-        DocumentChanged?.Invoke();
-        if (line)
+        if (string.IsNullOrEmpty(_buildingMarkingId))
         {
-            TryFinishMarkingBuild();
+            if (_markingDraftStart is null || PathEditing.PointsEqual(_markingDraftStart, position))
+            {
+                MessageRequested?.Invoke("A zero-length marking segment is not allowed.", true);
+                return;
+            }
+
+            var path = new PathDefinition
+            {
+                Start = new Point2Dto { X = _markingDraftStart.X, Y = _markingDraftStart.Y },
+                Segments = [new LinePathSegmentDefinition { End = new Point2Dto { X = position.X, Y = position.Y } }],
+            };
+            _buildingMarkingId = _document!.AddMarking(path);
+            _markingPreviewEnd = position;
+            SelectMarkingSegment(_buildingMarkingId, 0);
+            RefreshMarking(_buildingMarkingId);
+            DocumentChanged?.Invoke("Create marking");
+            MessageRequested?.Invoke("Marking created. Continue clicking to append lines or press Enter.", false);
+            return;
         }
-        else
+
+        int appended = _document!.AppendMarkingSegment(_buildingMarkingId, position, cubic: false);
+        if (appended < 0)
         {
-            MessageRequested?.Invoke("Polyline point added. Continue clicking or right-click to finish.", false);
+            MessageRequested?.Invoke("A zero-length marking segment is not allowed.", true);
+            return;
         }
+
+        SelectMarkingSegment(_buildingMarkingId, appended);
+        RefreshMarking(_buildingMarkingId);
+        DocumentChanged?.Invoke("Append line marking segment");
+        MessageRequested?.Invoke("Line appended. Continue clicking or press Enter to finish.", false);
     }
 
     private void HandleMouseMotion(InputEventMouseMotion motion)
@@ -610,6 +715,12 @@ public partial class ExerciseEditorCanvas : Control
             QueueRedraw();
             AcceptEvent();
             return;
+        }
+
+        if (_buildingMarking || Tool is ExerciseEditorTool.AppendLine or ExerciseEditorTool.AppendCubicBezier)
+        {
+            _markingPreviewEnd = ResolveSnap(motion.Position, motion.CtrlPressed);
+            QueueRedraw();
         }
 
         if (!_draggingSelection || (motion.ButtonMask & MouseButtonMask.Left) == 0)
@@ -636,15 +747,176 @@ public partial class ExerciseEditorCanvas : Control
         {
             _document!.MoveBezierControl(SelectedTrajectorySegmentIndex, SelectedBezierControl, dragged);
         }
-        else if (SelectionKind == ExerciseSelectionKind.MarkingPoint)
+        else if (SelectionKind == ExerciseSelectionKind.MarkingHandle)
         {
-            _document!.MoveMarkingPoint(SelectedMarkingId, SelectedMarkingPointIndex, dragged);
+            _document!.MoveMarkingCoordinate(
+                SelectedMarkingId,
+                SelectedMarkingSegmentIndex,
+                ToCoordinateKind(SelectedMarkingHandle),
+                dragged);
+            RefreshMarking(SelectedMarkingId);
+        }
+        else if (SelectionKind is ExerciseSelectionKind.Marking or ExerciseSelectionKind.MarkingSegment &&
+            _dragBeforeMarkingPath is not null && _dragPointerStart is not null)
+        {
+            _document!.ReplaceMarkingPath(SelectedMarkingId, _dragBeforeMarkingPath);
+            _document.MoveMarking(
+                SelectedMarkingId,
+                dragged.X - _dragPointerStart.X,
+                dragged.Y - _dragPointerStart.Y);
+            RefreshMarking(SelectedMarkingId);
         }
 
-        DocumentChanged?.Invoke();
+        _dragChanged = true;
         SelectionChanged?.Invoke();
         QueueRedraw();
         AcceptEvent();
+    }
+
+    private void BeginDrag(Point2Dto pointer)
+    {
+        _dragChanged = false;
+        _dragPointerStart = new Point2Dto { X = pointer.X, Y = pointer.Y };
+        _dragBeforePoint = null;
+        _dragBeforeMarkingPath = null;
+        if (SelectionKind == ExerciseSelectionKind.Cone)
+            _dragBeforePoint = CopyPoint(_document!.FindCone(SelectedConeId)!.Position);
+        else if (SelectionKind == ExerciseSelectionKind.TrajectoryPoint)
+            _dragBeforePoint = CopyPoint(_document!.GetTrajectoryPoint(SelectedTrajectoryPointIndex));
+        else if (SelectionKind == ExerciseSelectionKind.BezierControl)
+        {
+            TrajectorySegmentDto segment = _document!.GetTrajectorySegment(SelectedTrajectorySegmentIndex);
+            _dragBeforePoint = CopyPoint(SelectedBezierControl == BezierControlKind.Control1 ? segment.Control1! : segment.Control2!);
+        }
+        else if (SelectionKind is ExerciseSelectionKind.Marking or ExerciseSelectionKind.MarkingSegment or ExerciseSelectionKind.MarkingHandle)
+            _dragBeforeMarkingPath = PathEditing.CopyPath(_document!.FindMarking(SelectedMarkingId)!.Path);
+    }
+
+    private void CompleteDrag()
+    {
+        if (!_draggingSelection) return;
+        _draggingSelection = false;
+        if (_dragChanged)
+        {
+            string description = SelectionKind switch
+            {
+                ExerciseSelectionKind.MarkingHandle => $"Move marking {SelectedMarkingHandle}",
+                ExerciseSelectionKind.Marking or ExerciseSelectionKind.MarkingSegment => "Move marking",
+                ExerciseSelectionKind.Cone => "Move cone",
+                ExerciseSelectionKind.BezierControl => "Move trajectory control",
+                _ => "Move trajectory point",
+            };
+            DocumentChanged?.Invoke(description);
+        }
+
+        _dragBeforePoint = null;
+        _dragBeforeMarkingPath = null;
+        _dragPointerStart = null;
+        _dragChanged = false;
+    }
+
+    private void CancelTransientOperation(bool restoreDrag)
+    {
+        if (restoreDrag && _draggingSelection && _dragChanged)
+        {
+            if (_dragBeforeMarkingPath is not null)
+            {
+                _document?.ReplaceMarkingPath(SelectedMarkingId, _dragBeforeMarkingPath);
+                RefreshMarking(SelectedMarkingId);
+            }
+            else if (_dragBeforePoint is not null && SelectionKind == ExerciseSelectionKind.Cone)
+                _document?.MoveCone(SelectedConeId, _dragBeforePoint);
+            else if (_dragBeforePoint is not null && SelectionKind == ExerciseSelectionKind.TrajectoryPoint)
+                _document?.MoveTrajectoryPoint(SelectedTrajectoryPointIndex, _dragBeforePoint);
+            else if (_dragBeforePoint is not null && SelectionKind == ExerciseSelectionKind.BezierControl)
+                _document?.MoveBezierControl(SelectedTrajectorySegmentIndex, SelectedBezierControl, _dragBeforePoint);
+        }
+
+        _draggingSelection = false;
+        _dragChanged = false;
+        _dragBeforePoint = null;
+        _dragBeforeMarkingPath = null;
+        _dragPointerStart = null;
+        _buildingMarking = false;
+        _markingDraftStart = null;
+        _markingPreviewEnd = null;
+        _buildingMarkingId = string.Empty;
+        SelectionChanged?.Invoke();
+        QueueRedraw();
+    }
+
+    private void SplitMarkingAt(Vector2 screenPosition)
+    {
+        if (!TryFindNearestMarkingSegment(screenPosition, out string id, out int segmentIndex, out float parameter))
+        {
+            MessageRequested?.Invoke("Click a marking segment to split it.", true);
+            return;
+        }
+
+        SelectMarkingSegment(id, segmentIndex);
+        if (SplitSelectedMarkingSegment(parameter))
+            MessageRequested?.Invoke("Marking segment split without changing its shape.", false);
+    }
+
+    private bool TryFindNearestMarkingSegment(
+        Vector2 screenPosition,
+        out string markingId,
+        out int segmentIndex,
+        out float parameter)
+    {
+        markingId = string.Empty;
+        segmentIndex = -1;
+        parameter = 0.5f;
+        float best = SectionHitTolerancePixels;
+        bool bestIsSelected = false;
+        foreach (MarkingDto marking in _document!.Definition.Markings.OrderByDescending(item => item.Id == SelectedMarkingId))
+        {
+            for (int index = 0; index < marking.Path.Segments.Length; index++)
+            {
+                float candidate = FindNearestParameter(marking.Path, index, screenPosition, out float distance);
+                bool candidateIsSelected = marking.Id == SelectedMarkingId;
+                if (distance > SectionHitTolerancePixels ||
+                    (bestIsSelected && !candidateIsSelected) ||
+                    (candidateIsSelected == bestIsSelected && distance > best)) continue;
+                best = distance;
+                bestIsSelected = candidateIsSelected;
+                markingId = marking.Id;
+                segmentIndex = index;
+                parameter = candidate;
+            }
+        }
+
+        return segmentIndex >= 0;
+    }
+
+    private float FindNearestParameter(PathDefinition path, int segmentIndex, Vector2 screenPosition, out float distance)
+    {
+        const int coarseSteps = 32;
+        float bestT = 0;
+        distance = float.MaxValue;
+        for (int step = 0; step <= coarseSteps; step++)
+        {
+            float t = step / (float)coarseSteps;
+            float candidate = screenPosition.DistanceTo(DomainToScreen(PathEditing.Evaluate(path, segmentIndex, t)));
+            if (candidate < distance) { distance = candidate; bestT = t; }
+        }
+
+        float radius = 1.0f / coarseSteps;
+        float left = MathF.Max(0, bestT - radius);
+        float right = MathF.Min(1, bestT + radius);
+        // Bounded ternary refinement is deterministic and sufficient for click placement.
+        for (int iteration = 0; iteration < 10; iteration++)
+        {
+            float a = left + (right - left) / 3;
+            float b = right - (right - left) / 3;
+            float da = screenPosition.DistanceTo(DomainToScreen(PathEditing.Evaluate(path, segmentIndex, a)));
+            float db = screenPosition.DistanceTo(DomainToScreen(PathEditing.Evaluate(path, segmentIndex, b)));
+            if (da <= db) right = b; else left = a;
+        }
+
+        bestT = (left + right) * 0.5f;
+        distance = screenPosition.DistanceTo(DomainToScreen(PathEditing.Evaluate(path, segmentIndex, bestT)));
+        return Math.Clamp(bestT, 0.0001f, 0.9999f);
     }
 
     private void ZoomAt(Vector2 screenPosition, float factor)
@@ -754,9 +1026,9 @@ public partial class ExerciseEditorCanvas : Control
         return false;
     }
 
-    private bool HitTestMarkingPoint(Vector2 screenPosition)
+    private bool HitTestMarkingHandle(Vector2 screenPosition)
     {
-        if (SelectionKind is not (ExerciseSelectionKind.Marking or ExerciseSelectionKind.MarkingPoint))
+        if (string.IsNullOrEmpty(SelectedMarkingId))
         {
             return false;
         }
@@ -767,13 +1039,16 @@ public partial class ExerciseEditorCanvas : Control
             return false;
         }
 
-        if (!PathEditing.IsAllLine(marking.Path)) return false;
-        Point2Dto[] vertices = PathEditing.GetVertices(marking.Path);
-        for (int pointIndex = vertices.Length - 1; pointIndex >= 0; pointIndex--)
+        var handles = EnumerateMarkingHandles(marking).ToArray();
+        // The selected handle wins ties, followed by later overlay handles which
+        // are drawn last and are therefore visually on top.
+        foreach ((int segmentIndex, MarkingHandleKind kind, Point2Dto point) in handles
+            .OrderBy(handle => handle.segmentIndex == SelectedMarkingSegmentIndex &&
+                handle.kind == SelectedMarkingHandle ? 0 : 1))
         {
-            if (screenPosition.DistanceTo(DomainToScreen(vertices[pointIndex])) <= AnchorHitRadiusPixels)
+            if (screenPosition.DistanceTo(DomainToScreen(point)) <= HandleHitRadiusPixels)
             {
-                SelectMarkingPoint(marking.Id, pointIndex);
+                SelectMarkingHandle(marking.Id, segmentIndex, kind);
                 return true;
             }
         }
@@ -785,23 +1060,49 @@ public partial class ExerciseEditorCanvas : Control
     {
         float bestDistance = float.MaxValue;
         string? bestId = null;
-        foreach (MarkingDto marking in _document!.Definition.Markings)
+        int bestSegment = -1;
+        bool bestIsSelected = false;
+        foreach (MarkingDto marking in _document!.Definition.Markings
+            .OrderByDescending(candidate => candidate.Id == SelectedMarkingId))
         {
             float tolerance = MathF.Max(SectionHitTolerancePixels, marking.WidthMeters * _pixelsPerMeter / 2.0f + 5.0f);
+            if (!_markingBoundsCache.TryGetValue(marking.Id, out PathBounds bounds))
+            {
+                bounds = PathBoundsCalculator.Calculate(marking.Path, marking.WidthMeters);
+                _markingBoundsCache[marking.Id] = bounds;
+            }
+            Point2Dto domainPointer = ScreenToDomain(screenPosition);
+            float toleranceMeters = tolerance / _pixelsPerMeter;
+            if (domainPointer.X < bounds.MinX - toleranceMeters || domainPointer.X > bounds.MaxX + toleranceMeters ||
+                domainPointer.Y < bounds.MinY - toleranceMeters || domainPointer.Y > bounds.MaxY + toleranceMeters)
+                continue;
             // Hit testing follows the persisted path, not temporary dash samples.
             // A user can therefore select a dashed/dotted marking even when the
             // pointer happens to be over one of its visual gaps.
-            Point2Dto[] points = PathSampler.Sample(marking.Path).Points;
-            for (int pointIndex = 0; pointIndex < points.Length - 1; pointIndex++)
+            for (int segmentIndex = 0; segmentIndex < marking.Path.Segments.Length; segmentIndex++)
             {
-                float distance = DistanceToScreenSegment(
-                    screenPosition,
-                    DomainToScreen(points[pointIndex]),
-                    DomainToScreen(points[pointIndex + 1]));
-                if (distance <= tolerance && distance < bestDistance)
+                Point2Dto start = PathEditing.GetSegmentStart(marking.Path, segmentIndex);
+                var segmentPath = new PathDefinition
                 {
-                    bestDistance = distance;
-                    bestId = marking.Id;
+                    Start = start,
+                    Segments = [marking.Path.Segments[segmentIndex]],
+                };
+                Point2Dto[] points = PathSampler.Sample(segmentPath).Points;
+                for (int pointIndex = 0; pointIndex < points.Length - 1; pointIndex++)
+                {
+                    float distance = DistanceToScreenSegment(
+                        screenPosition,
+                        DomainToScreen(points[pointIndex]),
+                        DomainToScreen(points[pointIndex + 1]));
+                    bool candidateIsSelected = marking.Id == SelectedMarkingId;
+                    if (distance <= tolerance &&
+                        ((candidateIsSelected && !bestIsSelected) || candidateIsSelected == bestIsSelected && distance < bestDistance))
+                    {
+                        bestDistance = distance;
+                        bestId = marking.Id;
+                        bestSegment = segmentIndex;
+                        bestIsSelected = candidateIsSelected;
+                    }
                 }
             }
         }
@@ -811,29 +1112,29 @@ public partial class ExerciseEditorCanvas : Control
             return false;
         }
 
-        SelectMarking(bestId);
+        SelectMarkingSegment(bestId, bestSegment);
         return true;
     }
 
     private void SelectBezierControl(int segmentIndex, BezierControlKind control)
     {
         SelectedBezierControl = control;
-        SetSelection(ExerciseSelectionKind.BezierControl, string.Empty, string.Empty, -1, -1, segmentIndex, 0);
+        SetSelection(ExerciseSelectionKind.BezierControl, string.Empty, string.Empty, -1, segmentIndex, 0);
     }
 
     private void SetSelection(
         ExerciseSelectionKind kind,
         string coneId,
         string markingId,
-        int markingPointIndex,
         int trajectoryPointIndex,
         int segmentIndex,
         int sectionIndex)
     {
         SelectionKind = kind;
+        if (kind is not (ExerciseSelectionKind.Marking or ExerciseSelectionKind.MarkingSegment or ExerciseSelectionKind.MarkingHandle))
+            MarkingSelection = MarkingSelection.None;
         SelectedConeId = coneId;
         SelectedMarkingId = markingId;
-        SelectedMarkingPointIndex = markingPointIndex;
         SelectedTrajectoryPointIndex = trajectoryPointIndex;
         SelectedTrajectorySegmentIndex = segmentIndex;
         SelectedTrajectorySectionIndex = sectionIndex;
@@ -896,10 +1197,13 @@ public partial class ExerciseEditorCanvas : Control
             }
 
             bool selected = SelectedMarkingId == marking.Id &&
-                SelectionKind is ExerciseSelectionKind.Marking or ExerciseSelectionKind.MarkingPoint;
+                SelectionKind is ExerciseSelectionKind.Marking or ExerciseSelectionKind.MarkingSegment or ExerciseSelectionKind.MarkingHandle;
             float widthPixels = MathF.Max(1.0f, marking.WidthMeters * _pixelsPerMeter);
-            SampledPath sampled = PathSampler.Sample(marking.Path);
-            MarkingStyleGeometry geometry = MarkingGeometry.CreateStyleGeometry(sampled, marking.Style);
+            if (!_markingGeometryCache.TryGetValue(marking.Id, out MarkingStyleGeometry? geometry))
+            {
+                geometry = MarkingGeometry.CreateStyleGeometry(PathSampler.Sample(marking.Path), marking.Style);
+                _markingGeometryCache[marking.Id] = geometry;
+            }
             foreach (MarkingStroke stroke in geometry.Strokes)
             {
                 Vector2 start = DomainToScreen(stroke.Start);
@@ -924,17 +1228,63 @@ public partial class ExerciseEditorCanvas : Control
                 continue;
             }
 
-            if (!PathEditing.IsAllLine(marking.Path)) continue;
-            Point2Dto[] vertices = PathEditing.GetVertices(marking.Path);
-            for (int pointIndex = 0; pointIndex < vertices.Length; pointIndex++)
+            DrawMarkingHandles(marking, color);
+        }
+    }
+
+    private void DrawMarkingHandles(MarkingDto marking, Color color)
+    {
+        int selectedSegment = SelectedMarkingSegmentIndex;
+        if ((uint)selectedSegment < (uint)marking.Path.Segments.Length &&
+            marking.Path.Segments[selectedSegment] is CubicBezierPathSegmentDefinition selectedCubic)
+        {
+            Vector2 start = DomainToScreen(PathEditing.GetSegmentStart(marking.Path, selectedSegment));
+            Vector2 end = DomainToScreen(selectedCubic.End);
+            DrawLine(start, DomainToScreen(selectedCubic.Control1), new Color(0.72f, 0.75f, 0.82f), 1.5f);
+            DrawLine(end, DomainToScreen(selectedCubic.Control2), new Color(0.72f, 0.75f, 0.82f), 1.5f);
+        }
+
+        foreach ((int segmentIndex, MarkingHandleKind kind, Point2Dto point) in EnumerateMarkingHandles(marking))
+        {
+            Vector2 center = DomainToScreen(point);
+            bool active = SelectionKind == ExerciseSelectionKind.MarkingHandle &&
+                SelectedMarkingSegmentIndex == segmentIndex && SelectedMarkingHandle == kind;
+            Color fill = active ? Colors.White : kind is MarkingHandleKind.Control1 or MarkingHandleKind.Control2
+                ? new Color(1.0f, 0.55f, 0.16f)
+                : color;
+            if (kind == MarkingHandleKind.PathStart)
             {
-                Vector2 center = DomainToScreen(vertices[pointIndex]);
-                bool pointSelected = SelectionKind == ExerciseSelectionKind.MarkingPoint &&
-                    SelectedMarkingPointIndex == pointIndex;
-                DrawCircle(center, pointSelected ? 8.0f : 6.0f, pointSelected ? Colors.White : color);
-                DrawArc(center, pointSelected ? 8.0f : 6.0f, 0.0f, Mathf.Tau, 20, Colors.Black, 2.0f);
+                DrawRect(new Rect2(center - new Vector2(6, 6), new Vector2(12, 12)), fill, true);
+                DrawRect(new Rect2(center - new Vector2(6, 6), new Vector2(12, 12)), Colors.Black, false, 2);
+            }
+            else if (kind is MarkingHandleKind.Control1 or MarkingHandleKind.Control2)
+            {
+                Vector2[] diamond = [center + Vector2.Up * 7, center + Vector2.Right * 7, center + Vector2.Down * 7, center + Vector2.Left * 7];
+                DrawColoredPolygon(diamond, fill);
+                DrawPolyline([.. diamond, diamond[0]], Colors.Black, 2);
+            }
+            else
+            {
+                DrawCircle(center, active ? 8 : 6, fill);
+                DrawArc(center, active ? 8 : 6, 0, Mathf.Tau, 20, Colors.Black, 2);
             }
         }
+    }
+
+    private void DrawMarkingPreview()
+    {
+        if (_markingPreviewEnd is null) return;
+        Point2Dto? start = string.IsNullOrEmpty(_buildingMarkingId) ? _markingDraftStart : null;
+        if (start is null && !string.IsNullOrEmpty(SelectedMarkingId))
+            start = _document?.FindMarking(SelectedMarkingId) is { } marking ? PathEditing.GetPathEnd(marking.Path) : null;
+        if (start is null || PathEditing.PointsEqual(start, _markingPreviewEnd)) return;
+
+        var preview = new PathDefinition { Start = start, Segments = [] };
+        if (Tool == ExerciseEditorTool.AppendCubicBezier) PathEditing.AppendCubic(preview, _markingPreviewEnd);
+        else PathEditing.AppendLine(preview, _markingPreviewEnd);
+        Vector2[] screen = PathSampler.Sample(preview).Points.Select(DomainToScreen).ToArray();
+        DrawPolyline(screen, new Color(1.0f, 0.82f, 0.2f, 0.85f), 3.0f, true);
+        DrawCircle(DomainToScreen(_markingPreviewEnd), 5.0f, Colors.White);
     }
 
     private void DrawCones(IEnumerable<ConeDto> cones, ExerciseBoundsDto bounds)
@@ -1084,6 +1434,36 @@ public partial class ExerciseEditorCanvas : Control
     {
         return EditorCanvasMath.Snap(point, SnapStepMeters);
     }
+
+    private Point2Dto ResolveSnap(Vector2 screenPosition, bool bypassSnap) =>
+        EditorCanvasMath.ResolveDragPosition(ScreenToDomain(screenPosition), SnapStepMeters, bypassSnap);
+
+    private static IEnumerable<(int segmentIndex, MarkingHandleKind kind, Point2Dto point)> EnumerateMarkingHandles(
+        MarkingDto marking)
+    {
+        yield return (-1, MarkingHandleKind.PathStart, marking.Path.Start);
+        for (int index = 0; index < marking.Path.Segments.Length; index++)
+        {
+            PathSegmentDefinition segment = marking.Path.Segments[index];
+            yield return (index, MarkingHandleKind.SegmentEnd, segment.EndPoint);
+            if (segment is CubicBezierPathSegmentDefinition cubic)
+            {
+                yield return (index, MarkingHandleKind.Control1, cubic.Control1);
+                yield return (index, MarkingHandleKind.Control2, cubic.Control2);
+            }
+        }
+    }
+
+    private static MarkingPathCoordinateKind ToCoordinateKind(MarkingHandleKind kind) => kind switch
+    {
+        MarkingHandleKind.PathStart => MarkingPathCoordinateKind.PathStart,
+        MarkingHandleKind.SegmentEnd => MarkingPathCoordinateKind.SegmentEnd,
+        MarkingHandleKind.Control1 => MarkingPathCoordinateKind.Control1,
+        MarkingHandleKind.Control2 => MarkingPathCoordinateKind.Control2,
+        _ => throw new InvalidOperationException("The marking selection does not address a coordinate."),
+    };
+
+    private static Point2Dto CopyPoint(Point2Dto point) => new() { X = point.X, Y = point.Y };
 
     private static float DistanceToScreenSegment(Vector2 point, Vector2 start, Vector2 end)
     {
