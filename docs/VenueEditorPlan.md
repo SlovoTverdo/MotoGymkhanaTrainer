@@ -431,37 +431,51 @@ Cone не имеет:
 
 # 15. Venue markings
 
-Переиспользовать marking editing из Exercise Editor.
+Venue Definition v2 использует Path-based markings согласно:
 
-Поддержать:
+`docs/CurvedMarkingsPlan.md`
 
-* line;
-* polyline;
-* point selection;
-* drag;
-* insert/delete internal point;
-* color;
-* widthMeters;
-* solid;
-* dashed;
-* dotted;
-* visibleInViewer.
+Полноценное интерактивное редактирование описано в:
+
+`docs/VenueEditorCurvedMarkingsPlan.md`
+
+Поддерживаются:
+
+- line segments;
+- cubic Bézier segments;
+- Path/segment selection;
+- endpoints;
+- control points;
+- drag;
+- split;
+- line/cubic conversion;
+- segment deletion;
+- whole-marking translation;
+- color;
+- thickness;
+- solid;
+- dashed;
+- dotted;
+- visibleInViewer;
+- Undo/Redo.
 
 Marking с:
 
-```text
-visibleInViewer = false
-```
+`visibleInViewer = false`
 
 остаётся видимым в Venue Editor с editor-only признаком.
 
+Venue Editor должен максимально переиспользовать curved-marking editor infrastructure Exercise Editor.
+
 Не добавлять:
 
-* arc;
-* circle;
-* ellipse;
-* polygon fill;
-* custom dash pattern.
+- text;
+- arc;
+- circle;
+- ellipse;
+- polygon fill;
+- tangent modes;
+- custom dash pattern.
 
 ---
 
@@ -481,8 +495,9 @@ UI должен ясно показывать active tool или selection type.
 Select
 Add Object
 Add Cone
+Add Marking
 Add Line
-Add Polyline
+Add Curve
 ```
 
 При смене инструмента незавершённая операция должна:
