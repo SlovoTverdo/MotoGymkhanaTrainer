@@ -16,7 +16,8 @@ This project is deliberately small and iterative. Do not expand scope beyond the
 ## Mandatory working style
 
 1. Before coding, summarize the requested iteration and list the exact files/scenes you intend to change.
-2. Implement only the current iteration from `docs/MVP.md` unless explicitly instructed otherwise.
+2. Implement only the explicitly requested iteration and the documentation directly referenced by that iteration.
+Do not treat `docs/MVP.md` as the authoritative source for current format versions or completed later iterations.
 3. After each coherent change:
    - build/compile;
    - run relevant checks;
@@ -94,7 +95,7 @@ When documentation is ambiguous, choose the smallest implementation compatible w
 - Track Project formatVersion 3 обязан ссылаться на Venue Definition через безопасный относительный `venuePath`.
 - Track Project не хранит area или редактируемую копию Venue.
 - Track Editor не редактирует Venue geometry; она отображается read-only.
-- Exported Track formatVersion 4 содержит runtime snapshot Venue и Track.
+- Exported Track formatVersion 5 содержит runtime snapshot Venue и Track.
 - Viewer не читает Track Project, Venue Definition или Exercise Definition.
 - Панорама отображается через `PanoramaSkyMaterial`, а не через cylinder/sphere mesh.
 - Venue object assets загружаются как PackedScene по `res://` path.
@@ -105,7 +106,7 @@ When documentation is ambiguous, choose the smallest implementation compatible w
 
 ### Web Viewer documentation
 
-* `docs/WebViewerPlan.md` — отдельный GDScript Web Viewer, Track v4 loading, browser runtime и GitHub Pages deployment.
+* `docs/WebViewerPlan.md` — отдельный GDScript Web Viewer, current Exported Track loading, browser runtime и GitHub Pages deployment.
 * `web-viewer/README.md` — локальная сборка и проверка Web Viewer.
 * `docs/WebViewerMobileControlsPlan.md` — сенсорное управление Web Viewer, мультитач, responsive mobile UI и ограничение минимальной высоты Fly camera.
 * `docs/WebViewerRouteFollowPlan.md` — автоматическое следование Web Viewer по projected trajectory, playback, управление камерой и мобильный Follow UI.
@@ -115,7 +116,7 @@ When documentation is ambiguous, choose the smallest implementation compatible w
 
 * Desktop editors and Track compilation remain in the Godot C# project.
 * `web-viewer/` is a separate Godot project using only GDScript.
-* The Web Viewer loads only Exported Track formatVersion 4.
+* The Web Viewer loads the current Exported Track formatVersion 5.
 * The published Track is `tracks/default-track.json`.
 * The Web Viewer must work under a GitHub Project Pages subpath and must not assume `/` is the site root.
 * The Web Viewer must use the Compatibility renderer.
@@ -221,4 +222,6 @@ ambiguous implementation and final review.
 * Editor transient creation and drag state must never be serialized into Exercise Definition.
 * Control handles are editor overlays and must not become Viewer geometry.
 * Dashed and dotted markings must be selectable through their complete centerline, including visual gaps.
-* Exercise Editor Iteration 2 must not add Venue Editor curved-segment editing or change JSON format versions.
+* Exercise Editor Iteration 2 adds curved-segment editing only to Exercise Editor.
+Venue Editor curved-segment editing is implemented separately by Venue Editor Curved Markings Iteration 3.
+Neither iteration changes JSON format versions beyond Exercise v3, Venue v2 and Exported Track v5.
