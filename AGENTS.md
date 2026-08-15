@@ -225,3 +225,20 @@ ambiguous implementation and final review.
 * Exercise Editor Iteration 2 adds curved-segment editing only to Exercise Editor.
 Venue Editor curved-segment editing is implemented separately by Venue Editor Curved Markings Iteration 3.
 Neither iteration changes JSON format versions beyond Exercise v3, Venue v2 and Exported Track v5.
+
+### Venue Editor curved markings
+
+- `docs/VenueEditorCurvedMarkingsPlan.md` — полноценное Path-based line/cubic Bézier editing в Venue Editor.
+
+### Venue Editor curved-marking constraints
+
+- Venue Editor must reuse Exercise Editor curved-marking infrastructure where behavior is identical.
+- Do not implement an independent second Bézier editor.
+- Venue markings remain Venue Definition domain geometry and are not Track or Exercise geometry.
+- Segment starts remain implicit and must not be duplicated.
+- Line/cubic conversion and cubic splitting must use the same shared domain operations as Exercise Editor.
+- One handle drag must create one Undo/Redo transaction.
+- Curved Path geometry outside Venue area must be preserved and reported as a warning, not deleted automatically.
+- Changing Venue area must not scale or reposition markings.
+- `visibleInViewer=false` markings remain visible in Venue Editor with editor-only indication.
+- Venue Editor Curved Markings Iteration 3 must not change Exercise v3, Venue v2, Track Project v3 or Exported Track v5 formats.
