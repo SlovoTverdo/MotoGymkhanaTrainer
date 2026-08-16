@@ -1061,3 +1061,21 @@ Exercise Editor Iteration добавляет:
 
 Не смешивать editor transient state с сериализуемым Path contract.
 
+# Track Editor Exercise preview
+
+Path-based markings должны корректно отображаться в Track Editor Exercise Library preview.
+
+Preview обязан поддерживать:
+
+* line segments;
+* cubicBezier segments;
+* mixed Paths;
+* solid;
+* dashed;
+* dotted;
+* color;
+* thickness.
+
+Preview использует тот же PathSampler и read-only rendering pipeline, что другие desktop editor representations.
+
+Editor handles, control lines и transient editing state в preview не отображаются.
