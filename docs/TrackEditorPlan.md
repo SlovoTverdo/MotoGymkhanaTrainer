@@ -2755,3 +2755,28 @@ Track metadata
 Create Track
 ```
 
+# Exercise Library Preview
+
+Track Editor отображает read-only preview выбранного Exercise согласно:
+
+`docs/TrackEditorExercisePreviewPlan.md`
+
+Preview использует локальную Exercise Definition geometry и не создаёт временный Track instance.
+
+Отображаются:
+
+* footprint;
+* cones;
+* Path-based markings;
+* solid/dashed/dotted styles;
+* internal trajectory;
+* entry;
+* exit;
+* routing-only state;
+* basic metadata.
+
+Preview должен использовать shared Exercise geometry/rendering infrastructure и не создавать независимую третью реализацию Exercise rendering.
+
+Preview не поддерживает редактирование geometry и не участвует в Undo/Redo.
+
+Выбор другого Exercise либо reload library немедленно обновляет preview.
