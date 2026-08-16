@@ -242,3 +242,18 @@ Neither iteration changes JSON format versions beyond Exercise v3, Venue v2 and 
 - Changing Venue area must not scale or reposition markings.
 - `visibleInViewer=false` markings remain visible in Venue Editor with editor-only indication.
 - Venue Editor Curved Markings Iteration 3 must not change Exercise v3, Venue v2, Track Project v3 or Exported Track v5 formats.
+
+### Track Editor Exercise Preview
+
+* `docs/TrackEditorExercisePreviewPlan.md` — read-only preview выбранного Exercise в Track Editor Exercise Library.
+
+### Exercise Preview constraints
+
+* Exercise preview must render the source Exercise Definition in local Exercise coordinates, not a temporary Track instance.
+* Preview must preserve aspect ratio and use automatic content fitting.
+* Preview must reuse shared Exercise/Path rendering helpers instead of implementing another independent Exercise renderer.
+* Preview is read-only and must not create Undo/Redo history entries.
+* Curved Path markings in preview must support line, cubicBezier, solid, dashed and dotted rendering.
+* `visibleInViewer=false` authoring markings should remain visible in editor preview using the existing editor-only indication.
+* Exercise Library reload must invalidate stale preview data.
+* Exercise Preview Iteration must not change Exercise v3, Venue v2, Track Project v3 or Exported Track v5.
