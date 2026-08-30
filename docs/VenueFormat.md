@@ -867,3 +867,47 @@ Venue Definition version 2 не поддерживает:
 * thumbnails;
 * asset catalog metadata;
 * embedded Track Project.
+
+## Imported objects
+
+Venue Definition v2 допускает imported Venue Objects.
+
+Пример:
+
+{
+  "id": "object-01",
+  "type": "imported",
+  "asset": "assets/venue/imported/bench-01/source.glb",
+  "transform": {
+    "position": {
+      "x": 10.0,
+      "y": 0.0,
+      "z": 5.0
+    },
+    "rotation": {
+      "x": 0.0,
+      "y": 45.0,
+      "z": 0.0
+    },
+    "scale": {
+      "x": 1.0,
+      "y": 1.0,
+      "z": 1.0
+    }
+  },
+  "collision": {
+    "mode": "generated"
+  }
+}
+
+`asset` всегда является project-relative path.
+
+Абсолютные filesystem paths запрещены.
+
+Imported asset geometry не сериализуется в Venue Definition.
+
+Footprint является свойством asset metadata и не дублирует mesh geometry.
+
+Venue instance хранит только ссылку на asset и собственный transform/collision configuration.
+
+Если существующая Venue object schema использует другие названия transform fields, применяется фактический schema contract проекта.
