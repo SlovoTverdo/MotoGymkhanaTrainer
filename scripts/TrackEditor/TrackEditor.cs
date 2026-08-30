@@ -1,6 +1,7 @@
 using Godot;
 using MotoGymkhanaTrainer.ExerciseEditor;
 using MotoGymkhanaTrainer.Tracks;
+using MotoGymkhanaTrainer.VenueEditor;
 
 namespace MotoGymkhanaTrainer.TrackEditor;
 
@@ -65,12 +66,17 @@ public partial class TrackEditor : Control
     private ConfirmationDialog? _newTrackDialog;
     private AcceptDialog? _noVenuesDialog;
     private OptionButton? _newTrackVenue;
+    private VenuePreviewControl? _newTrackVenuePreview;
+    private Label? _newTrackVenueMetadata;
     private LineEdit? _newTrackId;
     private LineEdit? _newTrackName;
     private LineEdit? _newFolderName;
     private string? _currentFilePath;
     private string _selectedExercisePath = string.Empty;
     private string _selectedExerciseId = string.Empty;
+    // This is transient dialog state, deliberately separate from a TrackProject.
+    private string _selectedNewTrackVenuePath = string.Empty;
+    private string _selectedNewTrackVenueId = string.Empty;
     private string _selectedTrackFolder = string.Empty;
     private string? _pendingOpenPath;
     private PendingAction _pendingAction;
@@ -471,12 +477,25 @@ public partial class TrackEditor : Control
         AddChild(_removeOrphanedDialog);
 
         _newTrackVenue = new OptionButton { Name = "NewTrackVenue", SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        _newTrackVenue.ItemSelected += _ => LoadNewTrackVenuePreview();
+        _newTrackVenuePreview = new VenuePreviewControl
+        {
+            Name = "NewTrackVenuePreview",
+            CustomMinimumSize = new Vector2(440, 300),
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+        };
+        _newTrackVenueMetadata = new Label
+        {
+            Name = "NewTrackVenueMetadata",
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
         _newTrackId = new LineEdit { Name = "NewTrackId", Text = "new-track" };
         _newTrackName = new LineEdit { Name = "NewTrackName", Text = "New Track" };
         var newTrackFields = new VBoxContainer
         {
             Name = "NewTrackFields",
-            CustomMinimumSize = new Vector2(560, 126),
+            CustomMinimumSize = new Vector2(980, 460),
             AnchorRight = 1.0f,
             AnchorBottom = 1.0f,
             OffsetLeft = 20.0f,
@@ -486,16 +505,24 @@ public partial class TrackEditor : Control
         };
         newTrackFields.AddThemeConstantOverride("separation", 8);
         newTrackFields.AddChild(new Label { Text = "Select a Venue before entering Track metadata." });
-        newTrackFields.AddChild(Row("1. Venue", _newTrackVenue));
-        newTrackFields.AddChild(Row("2. Track ID", _newTrackId));
-        newTrackFields.AddChild(Row("3. Track Name", _newTrackName));
+        var venueAndPreview = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
+        var venueFields = new VBoxContainer { CustomMinimumSize = new Vector2(360, 0), SizeFlagsVertical = SizeFlags.ExpandFill };
+        venueFields.AddThemeConstantOverride("separation", 8);
+        venueFields.AddChild(Row("1. Venue", _newTrackVenue));
+        venueFields.AddChild(CreateButton("RefreshNewTrackVenues", "Refresh Venues", RefreshNewTrackVenuePreview));
+        venueFields.AddChild(_newTrackVenueMetadata);
+        venueFields.AddChild(Row("2. Track ID", _newTrackId));
+        venueFields.AddChild(Row("3. Track Name", _newTrackName));
+        venueAndPreview.AddChild(venueFields);
+        venueAndPreview.AddChild(_newTrackVenuePreview);
+        newTrackFields.AddChild(venueAndPreview);
         _newTrackDialog = new ConfirmationDialog
         {
             Name = "NewTrackDialog",
             Title = "New Track Project v3",
             DialogText = string.Empty,
             OkButtonText = "Create Track",
-            Size = new Vector2I(620, 320),
+            Size = new Vector2I(1040, 650),
         };
         // ConfirmationDialog does not expose its content VBox in the 4.7.1 C# API.
         // Reserve an anchored rectangle above the built-in action row and keep the
@@ -816,6 +843,8 @@ public partial class TrackEditor : Control
 
     private void ShowNewTrackDialog()
     {
+        string previousPath = _selectedNewTrackVenuePath;
+        string previousId = _selectedNewTrackVenueId;
         _newTrackVenue!.Clear();
         foreach (JsonLibraryEntry entry in _venueLibrary!.EnumerateEntries().Where(item => !item.IsDirectory))
         {
@@ -825,14 +854,189 @@ public partial class TrackEditor : Control
 
         if (_newTrackVenue.ItemCount == 0)
         {
+            ClearNewTrackVenuePreview();
             _noVenuesDialog!.PopupCentered();
             SetStatus("New Track blocked: res://venues/ contains no Venue Definition JSON. Use Venue Editor first.", true);
             return;
         }
 
+        int selected = -1;
+        for (int index = 0; index < _newTrackVenue.ItemCount; index++)
+        {
+            string path = _newTrackVenue.GetItemMetadata(index).AsString();
+            if (!string.Equals(path, previousPath, StringComparison.OrdinalIgnoreCase)) continue;
+            if (string.IsNullOrWhiteSpace(previousId)) { selected = index; break; }
+            try
+            {
+                ResolvedVenue candidate = ResolvedVenueLoader.Load(path, _venueLibrary!, ProjectRoot(), ProbeVenueResource);
+                if (string.Equals(candidate.Definition.Venue.Id, previousId, StringComparison.Ordinal)) { selected = index; break; }
+            }
+            catch (Exception) { /* Continue the id search and retain diagnostics on explicit selection. */ }
+        }
+        if (selected < 0 && !string.IsNullOrWhiteSpace(previousId))
+        {
+            // A library refresh may have moved a file. Resolve candidates by stable
+            // Venue id rather than retaining the prior DTO or assuming its path.
+            for (int index = 0; index < _newTrackVenue.ItemCount; index++)
+            {
+                try
+                {
+                    string path = _newTrackVenue.GetItemMetadata(index).AsString();
+                    ResolvedVenue candidate = ResolvedVenueLoader.Load(path, _venueLibrary!, ProjectRoot(), ProbeVenueResource);
+                    if (string.Equals(candidate.Definition.Venue.Id, previousId, StringComparison.Ordinal)) { selected = index; break; }
+                }
+                catch (Exception) { /* Invalid candidates remain selectable for diagnostics. */ }
+            }
+        }
+        if (selected < 0 && !string.IsNullOrWhiteSpace(previousPath))
+        {
+            // The prior selection disappeared during the rescan. Keep the dialog
+            // unselected and show its terminal state; the user may then select another Venue.
+            _newTrackVenue.Select(-1);
+            _selectedNewTrackVenuePath = string.Empty;
+            _selectedNewTrackVenueId = string.Empty;
+            _newTrackVenuePreview!.ShowMissing(previousPath);
+            UpdateNewTrackVenuePreviewMetadata();
+            _newTrackId!.Text = "new-track";
+            _newTrackName!.Text = "New Track";
+            _newTrackDialog!.PopupCentered();
+            return;
+        }
+        if (selected < 0) selected = 0;
+        _newTrackVenue.Select(selected);
         _newTrackId!.Text = "new-track";
         _newTrackName!.Text = "New Track";
+        // The library is enumerated immediately before this call, so re-resolving
+        // here refreshes the preview and discards any stale DTO reference.
+        LoadNewTrackVenuePreview(previousId);
         _newTrackDialog!.PopupCentered();
+    }
+
+    /// <summary>
+    /// Re-resolves the selected source while the dialog is open. It is intentionally
+    /// transient: no Track document, dirty flag, or history entry is touched.
+    /// </summary>
+    private void RefreshNewTrackVenuePreview()
+    {
+        string previousPath = _selectedNewTrackVenuePath;
+        string previousId = _selectedNewTrackVenueId;
+        if (string.IsNullOrWhiteSpace(previousPath))
+        {
+            ClearNewTrackVenuePreview();
+            return;
+        }
+
+        // Rebuild the selector from disk first: a Venue can be moved, deleted, or
+        // added while this dialog remains open. The prior DTO is never reused.
+        _newTrackVenue!.Clear();
+        foreach (JsonLibraryEntry entry in _venueLibrary!.EnumerateEntries().Where(item => !item.IsDirectory))
+        {
+            string path = entry.RelativePath.Replace('\\', '/');
+            _newTrackVenue.AddItem(path);
+            _newTrackVenue.SetItemMetadata(_newTrackVenue.ItemCount - 1, path);
+        }
+
+        int selected = -1;
+        for (int index = 0; index < _newTrackVenue.ItemCount; index++)
+        {
+            string candidatePath = _newTrackVenue.GetItemMetadata(index).AsString();
+            try
+            {
+                ResolvedVenue candidate = ResolvedVenueLoader.Load(
+                    candidatePath, _venueLibrary!, ProjectRoot(), ProbeVenueResource);
+                if (string.Equals(candidate.Definition.Venue.Id, previousId, StringComparison.Ordinal))
+                {
+                    selected = index;
+                    break;
+                }
+            }
+            catch (Exception) { /* Invalid candidates remain available for explicit diagnostics. */ }
+        }
+
+        if (selected < 0)
+        {
+            _newTrackVenue.Select(-1);
+            _selectedNewTrackVenuePath = string.Empty;
+            _selectedNewTrackVenueId = string.Empty;
+            _newTrackVenuePreview!.ShowMissing(previousPath);
+            UpdateNewTrackVenuePreviewMetadata();
+            return;
+        }
+
+        _newTrackVenue.Select(selected);
+        LoadNewTrackVenuePreview(previousId);
+    }
+
+    /// <summary>Loads only the Venue selector preview; it never creates a TrackProject.</summary>
+    private void LoadNewTrackVenuePreview(string previousId = "")
+    {
+        if (_newTrackVenue is null || _newTrackVenue.Selected < 0)
+        {
+            ClearNewTrackVenuePreview();
+            return;
+        }
+
+        string path = _newTrackVenue.GetItemMetadata(_newTrackVenue.Selected).AsString();
+        _selectedNewTrackVenuePath = path;
+        _newTrackVenuePreview!.ShowLoading(path);
+        UpdateNewTrackVenuePreviewMetadata();
+        try
+        {
+            ResolvedVenue venue = ResolvedVenueLoader.Load(path, _venueLibrary!, ProjectRoot(), ProbeVenueResource);
+            if (!string.IsNullOrWhiteSpace(previousId) &&
+                !string.Equals(venue.Definition.Venue.Id, previousId, StringComparison.Ordinal))
+            {
+                _newTrackVenue.Select(-1);
+                _selectedNewTrackVenuePath = string.Empty;
+                _selectedNewTrackVenueId = string.Empty;
+                _newTrackVenuePreview.ShowInvalid(path,
+                    "The selected Venue was replaced with a different ID. Select a Venue again.");
+                UpdateNewTrackVenuePreviewMetadata();
+                return;
+            }
+            _selectedNewTrackVenueId = venue.Definition.Venue.Id;
+            _newTrackVenuePreview.ShowVenue(path, venue.Definition, venue.Warnings);
+            UpdateNewTrackVenuePreviewMetadata();
+        }
+        catch (FileNotFoundException)
+        {
+            _newTrackVenue.Select(-1);
+            _selectedNewTrackVenuePath = string.Empty;
+            _selectedNewTrackVenueId = string.Empty;
+            _newTrackVenuePreview.ShowMissing(path);
+            UpdateNewTrackVenuePreviewMetadata();
+        }
+        catch (Exception exception)
+        {
+            _selectedNewTrackVenueId = previousId;
+            _newTrackVenuePreview.ShowInvalid(path, exception.Message);
+            UpdateNewTrackVenuePreviewMetadata();
+            GD.PushWarning($"Venue preview failed for '{path}': {exception.Message}");
+        }
+    }
+
+    /// <summary>Clears dialog-only selection state without affecting the current Track document or history.</summary>
+    private void ClearNewTrackVenuePreview()
+    {
+        _selectedNewTrackVenuePath = string.Empty;
+        _selectedNewTrackVenueId = string.Empty;
+        _newTrackVenuePreview?.ClearPreview();
+        UpdateNewTrackVenuePreviewMetadata();
+    }
+
+    private void UpdateNewTrackVenuePreviewMetadata()
+    {
+        if (_newTrackVenuePreview is null || _newTrackVenueMetadata is null) return;
+        VenuePreviewModel model = _newTrackVenuePreview.Model;
+        _newTrackVenueMetadata.Text = model.State switch
+        {
+            VenuePreviewState.Ready when model.Definition is VenueDefinitionDto definition =>
+                VenuePreviewMetadataFormatter.Format(definition, model.Warnings.Count),
+            VenuePreviewState.Loading => $"Loading Venue: {model.SourcePath}",
+            VenuePreviewState.InvalidVenue => $"Invalid Venue: {model.Diagnostic}",
+            VenuePreviewState.MissingVenue => $"Missing Venue: {model.SourcePath}",
+            _ => "No Venue selected.",
+        };
     }
 
     private void CreateNewTrack()

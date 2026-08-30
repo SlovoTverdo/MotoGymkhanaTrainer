@@ -1590,6 +1590,80 @@ try
     string absoluteAsset = VenueStore.Serialize(venue.Definition).Replace("res://Assets/barrier.tscn", "C:/outside.tscn");
     AssertThrows<InvalidDataException>(() => VenueStore.LoadFromJson(absoluteAsset, "absolute.json", temporaryVenueRoot),
         "Venue object rejects absolute asset paths");
+
+    // Track Editor Venue Preview Iteration: pure preview preparation is independent
+    // of the Godot Control and therefore verifies source fidelity without UI input.
+    var venuePreviewModel = new VenuePreviewModel();
+    AssertTrue(venuePreviewModel.State == VenuePreviewState.NoSelection,
+        "Venue preview begins with no selection");
+    venuePreviewModel.SetLoading("training/training-hall.json");
+    AssertTrue(venuePreviewModel.State == VenuePreviewState.Loading && venuePreviewModel.Definition is null,
+        "Venue selection clears stale definition while loading");
+    venuePreviewModel.SetReady("training/training-hall.json", venue.Definition, []);
+    AssertTrue(venuePreviewModel.State == VenuePreviewState.Ready && ReferenceEquals(venuePreviewModel.Definition, venue.Definition),
+        "Venue selection keeps the freshly loaded source definition");
+
+    var previewVenue = new VenueDefinitionDto
+    {
+        FormatVersion = 2,
+        Venue = new VenueMetadataDto { Id = "preview", Name = "Preview Venue" },
+        Area = new VenueAreaDto { Width = 20, Length = 10 },
+        Panorama = new VenuePanoramaDto { Enabled = true, TexturePath = "res://panorama.hdr", EnergyMultiplier = 1 },
+        Objects = [new VenueObjectInstanceDto
+        {
+            ObjectId = "rotated", Name = "Rotated object", AssetPath = "res://Assets/barrier.tscn",
+            Position = new Point2Dto { X = 14, Y = -2 }, RotationDeg = 90,
+            Scale = new Scale3Dto { X = 2, Y = 1, Z = 3 }, Footprint = new FootprintDto { Width = 2, Length = 2 },
+            CollisionEnabled = true, VisibleInViewer = true,
+        }, new VenueObjectInstanceDto
+        {
+            ObjectId = "missing-footprint", Name = "Missing footprint", AssetPath = "res://Assets/barrier.tscn",
+            Position = new Point2Dto(), Scale = new Scale3Dto { X = 1, Y = 1, Z = 1 },
+            Footprint = new FootprintDto { Width = 0, Length = 0 }, CollisionEnabled = true, VisibleInViewer = true,
+        }],
+        Cones = [new ConeDto { Id = "preview-cone", Position = new Point2Dto { X = -12, Y = 6 }, Color = "blue" }],
+        Markings = [
+            new MarkingDto { Id = "line", Color = "#12ABEF", WidthMeters = 0.2f, Style = "solid", VisibleInViewer = true,
+                Path = new PathDefinition { Start = new Point2Dto { X = -2, Y = 0 }, Segments = [new LinePathSegmentDefinition { End = new Point2Dto { X = 2, Y = 0 } }] } },
+            new MarkingDto { Id = "cubic-dashed", Color = "#FFAA00", WidthMeters = 0.3f, Style = "dashed", VisibleInViewer = true,
+                Path = new PathDefinition { Start = new Point2Dto { X = 0, Y = 0 }, Segments = [new CubicBezierPathSegmentDefinition { Control1 = new Point2Dto { X = 5, Y = 9 }, Control2 = new Point2Dto { X = 10, Y = -9 }, End = new Point2Dto { X = 13, Y = 1 } }] } },
+            new MarkingDto { Id = "dotted", Color = "#FFFFFF", WidthMeters = 0.15f, Style = "dotted", VisibleInViewer = true,
+                Path = new PathDefinition { Start = new Point2Dto { X = -3, Y = -3 }, Segments = [new LinePathSegmentDefinition { End = new Point2Dto { X = 3, Y = -3 } }] } },
+            new MarkingDto { Id = "hidden", Color = "#FFFFFF", WidthMeters = 0.15f, Style = "solid", VisibleInViewer = false,
+                Path = new PathDefinition { Start = new Point2Dto { X = -50, Y = -50 }, Segments = [new LinePathSegmentDefinition { End = new Point2Dto { X = 50, Y = 50 } }] } },
+        ],
+    };
+    string previewVenueBefore = JsonSerializer.Serialize(previewVenue);
+    VenuePreviewGeometry previewGeometry = VenuePreviewRenderer.Build(previewVenue);
+    AssertEqual(1, previewGeometry.Objects.Count, "Venue preview uses transformed persisted footprints and skips missing footprints");
+    AssertEqual(1, previewGeometry.Cones.Count, "Venue preview includes Venue cones");
+    AssertEqual(3, previewGeometry.Markings.Count, "Venue preview filters runtime-hidden markings");
+    AssertTrue(previewGeometry.Markings.Any(item => item.Marking.Id == "cubic-dashed" && item.Geometry.Strokes.Count > 1),
+        "Venue preview samples cubic dashed markings through shared PathSampler and style geometry");
+    AssertTrue(previewGeometry.Markings.Any(item => item.Marking.Id == "dotted" && item.Geometry.Dots.Count > 1),
+        "Venue preview renders dotted markings through shared style geometry");
+    AssertTrue(previewGeometry.Bounds.MaxX > 16 && previewGeometry.Bounds.MinX <= -12 && previewGeometry.Bounds.MaxY >= 6,
+        "Venue auto-fit bounds include rotated/scaled objects, cones and curve geometry");
+    AssertTrue(previewGeometry.Diagnostics.Any(value => value.Contains("missing-footprint", StringComparison.Ordinal)),
+        "missing footprint is an isolated preview diagnostic");
+    AssertEqual(previewVenueBefore, JsonSerializer.Serialize(previewVenue), "Venue preview preparation does not mutate the source definition");
+    AssertTrue(VenuePreviewMetadataFormatter.Format(previewVenue).Contains("Visible markings: 3", StringComparison.Ordinal) &&
+               VenuePreviewMetadataFormatter.Format(previewVenue).Contains("Panorama: available", StringComparison.Ordinal),
+        "Venue preview metadata reports source counts and panorama availability without rendering it");
+    VenuePreviewFit wideVenueFit = VenuePreviewFitCalculator.Calculate(previewGeometry.Bounds, new Vector2(400, 180));
+    VenuePreviewFit tallVenueFit = VenuePreviewFitCalculator.Calculate(new VenueContentBounds(-5, -50, 5, 50), new Vector2(400, 180));
+    AssertTrue(wideVenueFit.PixelsPerMeter > 0 && tallVenueFit.PixelsPerMeter > 0 &&
+               tallVenueFit.PixelsPerMeter < wideVenueFit.PixelsPerMeter,
+        "Venue preview fit preserves aspect ratio for wide and tall bounds");
+    venuePreviewModel.SetInvalid("training/invalid.json", "invalid dimensions");
+    AssertTrue(venuePreviewModel.State == VenuePreviewState.InvalidVenue && venuePreviewModel.Definition is null,
+        "invalid Venue clears ready preview state");
+    venuePreviewModel.SetMissing("training/deleted.json");
+    AssertTrue(venuePreviewModel.State == VenuePreviewState.MissingVenue && venuePreviewModel.Definition is null,
+        "deleted selected Venue clears ready preview state");
+    venuePreviewModel.Clear();
+    AssertTrue(venuePreviewModel.State == VenuePreviewState.NoSelection && venuePreviewModel.Definition is null,
+        "Venue deselection clears preview state without creating history");
 }
 finally
 {
