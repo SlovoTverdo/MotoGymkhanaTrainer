@@ -764,3 +764,37 @@ Venue Editor Iteration 1 завершена, если:
 * Viewer работает;
 * проект собирается без compile errors;
 * runtime logs не содержат необработанных ошибок.
+
+
+---
+
+```markdown
+## Imported GLB objects
+
+Venue Editor поддерживает импорт пользовательских static assets в формате GLB согласно:
+
+`docs/GLBImportPlan.md`
+
+Imported assets являются дополнительным типом Venue Object и не заменяют существующие built-in objects.
+
+Asset хранится отдельно от Venue Definition.
+
+Venue Definition хранит project-relative asset reference и instance transform.
+
+Для каждого imported asset автоматически рассчитываются:
+
+- aggregate bounds;
+- 2D footprint;
+- collision representation.
+
+Footprint рассчитывается по фактической geometry всех VisualInstance3D imported scene с учётом nested transforms.
+
+Venue object хранит transform отдельно от asset.
+
+Imported asset может использоваться несколькими Venue instances.
+
+Удаление Venue instance не удаляет asset.
+
+Missing asset не должен делать Venue неоткрываемым.
+
+Web Viewer не обязан поддерживать runtime GLB loading на этом этапе.
