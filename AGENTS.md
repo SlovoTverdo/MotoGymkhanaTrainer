@@ -257,3 +257,22 @@ Neither iteration changes JSON format versions beyond Exercise v3, Venue v2 and 
 * `visibleInViewer=false` authoring markings should remain visible in editor preview using the existing editor-only indication.
 * Exercise Library reload must invalidate stale preview data.
 * Exercise Preview Iteration must not change Exercise v3, Venue v2, Track Project v3 or Exported Track v5.
+
+### Track Editor Venue Preview
+
+- `docs/TrackEditorVenuePreviewPlan.md` — read-only top-down Venue preview used during Track creation.
+
+### Venue Preview constraints
+
+- Venue preview must use the current Venue Definition as its source of truth.
+- Venue preview is top-down and orthographic in the first implementation.
+- Do not introduce a separate preview image asset as authoritative Venue data.
+- Preview must preserve Venue aspect ratio.
+- Object footprints must use existing Venue footprint/AABB policy.
+- Venue markings must use the shared Path rendering infrastructure.
+- Preview uses runtime visibility semantics: `visibleInViewer=false` markings are hidden.
+- Preview is read-only and must not create Undo/Redo history.
+- Preview must not perform physics, surface projection, GLB loading or Track export.
+- Panorama rendering is explicitly out of scope for this iteration.
+- Track creation must continue to use the existing Venue selection/creation workflow.
+- This iteration must not change Exercise v3, Venue v2, Track Project v3 or Exported Track v5.
