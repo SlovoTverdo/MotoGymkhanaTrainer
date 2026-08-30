@@ -276,3 +276,27 @@ Neither iteration changes JSON format versions beyond Exercise v3, Venue v2 and 
 - Panorama rendering is explicitly out of scope for this iteration.
 - Track creation must continue to use the existing Venue selection/creation workflow.
 - This iteration must not change Exercise v3, Venue v2, Track Project v3 or Exported Track v5.
+
+
+### Venue Editor GLB import
+
+- `docs/GLBImportPlan.md` — imported GLB assets, placement, footprint, collision and asset management.
+
+### GLB import constraints
+
+- Use Godot's native GLTF/GLB importer; do not implement a custom GLB parser.
+- Imported GLB files are managed project assets, not embedded into Venue JSON.
+- Venue Definition stores project-relative asset references only.
+- Never serialize absolute Windows filesystem paths.
+- Aggregate asset bounds must include all relevant VisualInstance3D children and nested transforms.
+- Footprint is calculated from actual imported geometry, not from the root Node3D alone.
+- Footprint is stored in asset-local coordinates and is not recalculated on every object rotation/drag.
+- Object transforms are stored on Venue instances and must not modify the source mesh/resource.
+- Imported assets may be shared by multiple Venue instances.
+- Deleting an instance must not delete its asset.
+- Missing imported assets must not make a Venue impossible to open.
+- Collision must use the same transform as render geometry.
+- Imported GLB objects are static Venue geometry in the first implementation.
+- Web Viewer GLB runtime loading is out of scope for this iteration.
+- Existing built-in Venue objects such as house, ramp and fence must remain functional.
+- Do not change Venue format version unless the current schema demonstrably requires it; if a version bump is required, stop and document the reason before implementation.
