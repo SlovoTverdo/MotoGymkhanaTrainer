@@ -849,3 +849,21 @@ Projection не изменяет Exported Track JSON.
 Основная площадка и проходимые части Venue assets должны участвовать в surface projection и character floor detection.
 
 Непроходимые стены и заборы участвуют в character collision, но не должны использоваться как поверхность для projection.
+
+## Imported Venue Objects
+
+Track export должен учитывать imported Venue objects через существующий Venue object export pipeline.
+
+Exported Track v5 может содержать project-relative reference на imported asset.
+
+Desktop Viewer обязан уметь разрешить imported Venue assets.
+
+Web Viewer в текущей версии не обязан загружать imported GLB assets.
+
+Если Web Viewer встречает unsupported imported object:
+
+- он не должен crash;
+- object может быть пропущен;
+- diagnostic должен быть доступен в debug/log output.
+
+Не добавлять Web Viewer GLB loader в рамках Venue Editor GLB Import Iteration.
