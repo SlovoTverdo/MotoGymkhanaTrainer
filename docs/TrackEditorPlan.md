@@ -2739,6 +2739,40 @@ Iteration 4 завершена, если:
 
 ---
 
+
+---
+
+```markdown
+## Venue selection preview
+
+При создании нового Track пользователь выбирает существующий Venue.
+
+Track Editor отображает read-only top-down preview выбранного Venue согласно:
+
+`docs/TrackEditorVenuePreviewPlan.md`
+
+Preview строится непосредственно из актуального Venue Definition.
+
+Отображаются:
+
+- Venue boundary;
+- dimensions;
+- fence;
+- object footprints;
+- cones;
+- runtime-visible Venue markings;
+- basic Venue metadata.
+
+Preview не является Venue Editor и не позволяет редактировать Venue geometry.
+
+Выбор Venue в preview не создаёт Track до явного подтверждения пользователем.
+
+Preview не участвует в Undo/Redo.
+
+Форматы не изменяются:
+- Venue Definition v2;
+- Track Project v3;
+- Exported Track v5.
 Venue Editor Iteration 1
 
 # Track/Venue Integration Iteration 1
