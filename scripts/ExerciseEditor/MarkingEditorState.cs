@@ -1,4 +1,4 @@
-namespace MotoGymkhanaTrainer.ExerciseEditor;
+namespace MotoGymkhanaTrainer;
 
 using MotoGymkhanaTrainer.Tracks;
 

@@ -235,12 +235,26 @@ public partial class TrackEditorCanvas : Control
         // Exercise geometry is rendered in document-defined passes so route
         // order cannot accidentally place one instance's cones beneath another
         // instance's markings or trajectory.
+        var exerciseGeometry = new List<ExerciseGeometryRenderData>();
         foreach (TrackProjectInstanceDto instance in _document.Project.Instances)
-            DrawInstanceMarkings(instance);
-        foreach (TrackProjectInstanceDto instance in _document.Project.Instances)
-            DrawInstanceCones(instance);
-        foreach (TrackProjectInstanceDto instance in _document.Project.Instances)
-            DrawInstanceTrajectory(instance);
+        {
+            ExerciseDefinitionDto? definition = _document.FindDefinition(instance.InstanceId);
+            if (definition is not null)
+            {
+                exerciseGeometry.Add(ExerciseGeometryRenderer.Build(
+                    definition, point => Transform(point, instance)));
+            }
+        }
+        foreach (ExerciseGeometryRenderData geometry in exerciseGeometry)
+            DrawInstanceMarkings(geometry);
+        foreach (ExerciseGeometryRenderData geometry in exerciseGeometry)
+            ExerciseGeometryRenderer.DrawCones(this, geometry, ToScreen, new ExerciseGeometryRenderOptions
+            {
+                ConeRadiusPixels = 5.0f,
+                ShowConeOutline = false,
+            });
+        foreach (ExerciseGeometryRenderData geometry in exerciseGeometry)
+            DrawInstanceTrajectory(geometry);
 
         if (_showTransitions)
             DrawTransitionPreview();
@@ -781,57 +795,31 @@ public partial class TrackEditorCanvas : Control
         }
     }
 
-    private void DrawInstanceMarkings(TrackProjectInstanceDto instance)
+    private void DrawInstanceMarkings(ExerciseGeometryRenderData geometry)
     {
-        ExerciseDefinitionDto? definition = _document.FindDefinition(instance.InstanceId);
-        if (definition is null) return;
-        foreach (MarkingDto marking in definition.Markings)
+        ExerciseGeometryRenderer.DrawMarkings(this, geometry, ToScreen, new ExerciseGeometryRenderOptions
         {
-            Color color = ResolveRgb(marking.Color);
-            if (!marking.VisibleInViewer)
-            {
-                color.A = 0.35f; // Editor-only visibility indication; data remains present.
-            }
-
-            PathDefinition worldPath = PathTransformService.Transform(marking.Path, point => Transform(point, instance));
-            MarkingStyleGeometry geometry = MarkingGeometry.CreateStyleGeometry(
-                PathSampler.Sample(worldPath), marking.Style);
-            foreach (MarkingStroke stroke in geometry.Strokes)
-            {
-                DrawLine(ToScreen(stroke.Start), ToScreen(stroke.End), color,
-                    MathF.Max(1.0f, marking.WidthMeters * _pixelsPerMeter), true);
-            }
-            foreach (Point2Dto dot in geometry.Dots)
-                DrawCircle(ToScreen(dot), MathF.Max(1.0f, marking.WidthMeters * _pixelsPerMeter * 0.5f), color);
-        }
+            PixelsPerMeter = _pixelsPerMeter,
+            ShowFootprint = false,
+            ShowCones = false,
+            ShowTrajectory = false,
+            ShowEntryExit = false,
+            ShowDirectionMarkers = false,
+        });
     }
 
-    private void DrawInstanceTrajectory(TrackProjectInstanceDto instance)
+    private void DrawInstanceTrajectory(ExerciseGeometryRenderData geometry)
     {
-        ExerciseDefinitionDto? definition = _document.FindDefinition(instance.InstanceId);
-        if (definition is null) return;
-        foreach (TrajectorySegmentDto segment in definition.Trajectory.Segments)
+        ExerciseGeometryRenderer.DrawTrajectory(this, geometry, ToScreen, new ExerciseGeometryRenderOptions
         {
-            Point2Dto[] points = segment.Type == "polyline"
-                ? segment.Points!
-                : TrajectoryGeometry.SampleCubicBezier(segment, BezierSubdivisions);
-            for (int index = 0; index < points.Length - 1; index++)
-            {
-                DrawLine(ToScreen(Transform(points[index], instance)),
-                    ToScreen(Transform(points[index + 1], instance)),
-                    new Color(0.2f, 0.95f, 0.55f), 3.0f, true);
-            }
-        }
-    }
-
-    private void DrawInstanceCones(TrackProjectInstanceDto instance)
-    {
-        ExerciseDefinitionDto? definition = _document.FindDefinition(instance.InstanceId);
-        if (definition is null) return;
-        foreach (ConeDto cone in definition.Cones)
-        {
-            DrawCircle(ToScreen(Transform(cone.Position, instance)), 5.0f, ResolveConeColor(cone.Color));
-        }
+            PixelsPerMeter = _pixelsPerMeter,
+            ShowFootprint = false,
+            ShowCones = false,
+            ShowMarkings = false,
+            ShowEntryExit = false,
+            ShowDirectionMarkers = false,
+            TrajectoryColor = new Color(0.2f, 0.95f, 0.55f),
+        });
     }
 
     private void DrawInstanceOverlay(TrackProjectInstanceDto instance, int routeIndex)

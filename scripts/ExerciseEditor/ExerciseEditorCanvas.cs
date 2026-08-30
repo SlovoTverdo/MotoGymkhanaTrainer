@@ -871,52 +871,19 @@ public partial class ExerciseEditorCanvas : Control
         bool bestIsSelected = false;
         foreach (MarkingDto marking in _document!.Definition.Markings.OrderByDescending(item => item.Id == SelectedMarkingId))
         {
-            for (int index = 0; index < marking.Path.Segments.Length; index++)
-            {
-                float candidate = FindNearestParameter(marking.Path, index, screenPosition, out float distance);
-                bool candidateIsSelected = marking.Id == SelectedMarkingId;
-                if (distance > SectionHitTolerancePixels ||
-                    (bestIsSelected && !candidateIsSelected) ||
-                    (candidateIsSelected == bestIsSelected && distance > best)) continue;
-                best = distance;
-                bestIsSelected = candidateIsSelected;
-                markingId = marking.Id;
-                segmentIndex = index;
-                parameter = candidate;
-            }
+            if (!MarkingPathHitTester.TryHitCenterline(marking.Path, screenPosition, DomainToScreen,
+                SectionHitTolerancePixels, out int index, out float candidate, out float distance)) continue;
+            bool candidateIsSelected = marking.Id == SelectedMarkingId;
+            if ((bestIsSelected && !candidateIsSelected) ||
+                (candidateIsSelected == bestIsSelected && distance > best)) continue;
+            best = distance;
+            bestIsSelected = candidateIsSelected;
+            markingId = marking.Id;
+            segmentIndex = index;
+            parameter = candidate;
         }
 
         return segmentIndex >= 0;
-    }
-
-    private float FindNearestParameter(PathDefinition path, int segmentIndex, Vector2 screenPosition, out float distance)
-    {
-        const int coarseSteps = 32;
-        float bestT = 0;
-        distance = float.MaxValue;
-        for (int step = 0; step <= coarseSteps; step++)
-        {
-            float t = step / (float)coarseSteps;
-            float candidate = screenPosition.DistanceTo(DomainToScreen(PathEditing.Evaluate(path, segmentIndex, t)));
-            if (candidate < distance) { distance = candidate; bestT = t; }
-        }
-
-        float radius = 1.0f / coarseSteps;
-        float left = MathF.Max(0, bestT - radius);
-        float right = MathF.Min(1, bestT + radius);
-        // Bounded ternary refinement is deterministic and sufficient for click placement.
-        for (int iteration = 0; iteration < 10; iteration++)
-        {
-            float a = left + (right - left) / 3;
-            float b = right - (right - left) / 3;
-            float da = screenPosition.DistanceTo(DomainToScreen(PathEditing.Evaluate(path, segmentIndex, a)));
-            float db = screenPosition.DistanceTo(DomainToScreen(PathEditing.Evaluate(path, segmentIndex, b)));
-            if (da <= db) right = b; else left = a;
-        }
-
-        bestT = (left + right) * 0.5f;
-        distance = screenPosition.DistanceTo(DomainToScreen(PathEditing.Evaluate(path, segmentIndex, bestT)));
-        return Math.Clamp(bestT, 0.0001f, 0.9999f);
     }
 
     private void ZoomAt(Vector2 screenPosition, float factor)
@@ -1039,16 +1006,16 @@ public partial class ExerciseEditorCanvas : Control
             return false;
         }
 
-        var handles = EnumerateMarkingHandles(marking).ToArray();
+        var handles = MarkingPathHitTester.EnumerateHandles(marking.Path).ToArray();
         // The selected handle wins ties, followed by later overlay handles which
         // are drawn last and are therefore visually on top.
-        foreach ((int segmentIndex, MarkingHandleKind kind, Point2Dto point) in handles
-            .OrderBy(handle => handle.segmentIndex == SelectedMarkingSegmentIndex &&
-                handle.kind == SelectedMarkingHandle ? 0 : 1))
+        foreach (MarkingHandleLocation handle in handles
+            .OrderBy(item => item.SegmentIndex == SelectedMarkingSegmentIndex &&
+                item.Kind == SelectedMarkingHandle ? 0 : 1))
         {
-            if (screenPosition.DistanceTo(DomainToScreen(point)) <= HandleHitRadiusPixels)
+            if (screenPosition.DistanceTo(DomainToScreen(handle.Point)) <= HandleHitRadiusPixels)
             {
-                SelectMarkingHandle(marking.Id, segmentIndex, kind);
+                SelectMarkingHandle(marking.Id, handle.SegmentIndex, handle.Kind);
                 return true;
             }
         }
@@ -1234,41 +1201,7 @@ public partial class ExerciseEditorCanvas : Control
 
     private void DrawMarkingHandles(MarkingDto marking, Color color)
     {
-        int selectedSegment = SelectedMarkingSegmentIndex;
-        if ((uint)selectedSegment < (uint)marking.Path.Segments.Length &&
-            marking.Path.Segments[selectedSegment] is CubicBezierPathSegmentDefinition selectedCubic)
-        {
-            Vector2 start = DomainToScreen(PathEditing.GetSegmentStart(marking.Path, selectedSegment));
-            Vector2 end = DomainToScreen(selectedCubic.End);
-            DrawLine(start, DomainToScreen(selectedCubic.Control1), new Color(0.72f, 0.75f, 0.82f), 1.5f);
-            DrawLine(end, DomainToScreen(selectedCubic.Control2), new Color(0.72f, 0.75f, 0.82f), 1.5f);
-        }
-
-        foreach ((int segmentIndex, MarkingHandleKind kind, Point2Dto point) in EnumerateMarkingHandles(marking))
-        {
-            Vector2 center = DomainToScreen(point);
-            bool active = SelectionKind == ExerciseSelectionKind.MarkingHandle &&
-                SelectedMarkingSegmentIndex == segmentIndex && SelectedMarkingHandle == kind;
-            Color fill = active ? Colors.White : kind is MarkingHandleKind.Control1 or MarkingHandleKind.Control2
-                ? new Color(1.0f, 0.55f, 0.16f)
-                : color;
-            if (kind == MarkingHandleKind.PathStart)
-            {
-                DrawRect(new Rect2(center - new Vector2(6, 6), new Vector2(12, 12)), fill, true);
-                DrawRect(new Rect2(center - new Vector2(6, 6), new Vector2(12, 12)), Colors.Black, false, 2);
-            }
-            else if (kind is MarkingHandleKind.Control1 or MarkingHandleKind.Control2)
-            {
-                Vector2[] diamond = [center + Vector2.Up * 7, center + Vector2.Right * 7, center + Vector2.Down * 7, center + Vector2.Left * 7];
-                DrawColoredPolygon(diamond, fill);
-                DrawPolyline([.. diamond, diamond[0]], Colors.Black, 2);
-            }
-            else
-            {
-                DrawCircle(center, active ? 8 : 6, fill);
-                DrawArc(center, active ? 8 : 6, 0, Mathf.Tau, 20, Colors.Black, 2);
-            }
-        }
+        MarkingHandleOverlay.Draw(this, marking, MarkingSelection, color, DomainToScreen);
     }
 
     private void DrawMarkingPreview()
@@ -1437,22 +1370,6 @@ public partial class ExerciseEditorCanvas : Control
 
     private Point2Dto ResolveSnap(Vector2 screenPosition, bool bypassSnap) =>
         EditorCanvasMath.ResolveDragPosition(ScreenToDomain(screenPosition), SnapStepMeters, bypassSnap);
-
-    private static IEnumerable<(int segmentIndex, MarkingHandleKind kind, Point2Dto point)> EnumerateMarkingHandles(
-        MarkingDto marking)
-    {
-        yield return (-1, MarkingHandleKind.PathStart, marking.Path.Start);
-        for (int index = 0; index < marking.Path.Segments.Length; index++)
-        {
-            PathSegmentDefinition segment = marking.Path.Segments[index];
-            yield return (index, MarkingHandleKind.SegmentEnd, segment.EndPoint);
-            if (segment is CubicBezierPathSegmentDefinition cubic)
-            {
-                yield return (index, MarkingHandleKind.Control1, cubic.Control1);
-                yield return (index, MarkingHandleKind.Control2, cubic.Control2);
-            }
-        }
-    }
 
     private static MarkingPathCoordinateKind ToCoordinateKind(MarkingHandleKind kind) => kind switch
     {

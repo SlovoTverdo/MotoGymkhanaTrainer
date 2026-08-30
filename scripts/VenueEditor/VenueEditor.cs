@@ -22,8 +22,8 @@ public partial class VenueEditor : Control
     private CheckButton? _panoramaEnabled, _collisionEnabled, _visibleInViewer, _lockObject;
     private OptionButton? _coneColor, _markingStyle;
     private ColorPickerButton? _markingColor;
-    private Button? _undoButton, _redoButton, _duplicateButton, _insertPointButton, _deletePointButton;
-    private Label? _fileLabel, _dirtyLabel, _statusLabel, _selectionLabel;
+    private Button? _undoButton, _redoButton, _duplicateButton, _convertButton, _splitButton, _deleteSegmentButton;
+    private Label? _fileLabel, _dirtyLabel, _statusLabel, _selectionLabel, _toolLabel, _markingMetricsLabel, _segmentInfoLabel;
     private RichTextLabel? _warningsLabel;
     private FileDialog? _openDialog, _saveDialog, _objectDialog, _textureDialog;
     private ConfirmationDialog? _unsavedDialog, _newFolderDialog, _deleteDialog;
@@ -33,6 +33,7 @@ public partial class VenueEditor : Control
     private PendingAction _pendingAction;
     private bool _updatingUi;
     private string? _transactionSnapshot;
+    private string? _transactionDescription;
 
     public override void _Ready()
     {
@@ -50,6 +51,8 @@ public partial class VenueEditor : Control
         if (key.CtrlPressed && key.Keycode == Key.Z && !key.Echo) handled = key.ShiftPressed ? Redo() : Undo();
         else if (key.CtrlPressed && key.Keycode == Key.Y && !key.Echo) handled = Redo();
         else if (key.CtrlPressed && key.Keycode == Key.D && !key.Echo) handled = DuplicateSelected();
+        else if (key.Keycode == Key.Escape && !key.Echo) handled = _canvas?.CancelTransientOperation() == true;
+        else if (key.Keycode is Key.Enter or Key.KpEnter && !key.Echo) handled = _canvas?.FinishMarking() == true;
         else if (key.Keycode == Key.Delete && !key.Echo) handled = RequestDelete();
         else if (_canvas?.SelectionKind == VenueSelectionKind.Object && _canvas.SelectedId is not null)
             handled = ApplyObjectShortcut(key);
@@ -79,6 +82,8 @@ public partial class VenueEditor : Control
         _canvas.DocumentChanged += OnCanvasChanged;
         _canvas.EditTransactionStarted += BeginTransaction;
         _canvas.EditTransactionFinished += EndTransaction;
+        _canvas.EditTransactionCanceled += CancelTransaction;
+        _canvas.ToolChanged += tool => { if (_toolLabel is not null) _toolLabel.Text = $"Tool: {ToolDisplayName(tool)}"; };
         _canvas.DuplicateRequested += _ => DuplicateSelected();
         _canvas.LockedTransformAttempted += id => SetStatus($"Object '{id}' is locked.", true);
         body.AddChild(_canvas);
@@ -105,9 +110,11 @@ public partial class VenueEditor : Control
         bar.AddChild(Button("Select", () => _canvas?.SetTool(VenueTool.Select)));
         bar.AddChild(Button("Add Object", () => _objectDialog?.PopupCenteredRatio(0.8f)));
         bar.AddChild(Button("Add Cone", () => _canvas?.SetTool(VenueTool.AddCone)));
+        bar.AddChild(Button("Add Marking", () => _canvas?.SetTool(VenueTool.AddMarking)));
         bar.AddChild(Button("Add Line", () => _canvas?.SetTool(VenueTool.AddLine)));
-        bar.AddChild(Button("Add Polyline", () => _canvas?.SetTool(VenueTool.AddPolyline)));
+        bar.AddChild(Button("Add Cubic Bézier", () => _canvas?.SetTool(VenueTool.AddCubicBezier)));
         bar.AddChild(Button("Finish Marking", FinishMarking));
+        _toolLabel = new Label { Text = "Tool: Select" }; bar.AddChild(_toolLabel);
         bar.AddChild(Button("Fit", () => _canvas?.FitAreaInView()));
         bar.AddChild(Button("Delete", () => RequestDelete()));
         return bar;
@@ -178,8 +185,11 @@ public partial class VenueEditor : Control
         _markingWidth = NumberField(panel, "Marking Width", 0.001, 100, 0.01, OnSelectionPropertiesChanged);
         _markingStyle = new OptionButton(); foreach (string value in new[] { "solid", "dashed", "dotted" }) _markingStyle.AddItem(value);
         _markingStyle.ItemSelected += _ => OnSelectionPropertiesChanged(); panel.AddChild(Labeled("Marking Style", _markingStyle));
-        _insertPointButton = Button("Insert Point After", InsertPoint); _deletePointButton = Button("Delete Internal Point", DeletePoint);
-        panel.AddChild(_insertPointButton); panel.AddChild(_deletePointButton);
+        _markingMetricsLabel = new Label { Text = "Segments: —   Length: —" }; panel.AddChild(_markingMetricsLabel);
+        _segmentInfoLabel = new Label { Text = "Segment: —" }; panel.AddChild(_segmentInfoLabel);
+        _convertButton = Button("Convert Segment", ConvertSelectedMarking); panel.AddChild(_convertButton);
+        _splitButton = Button("Split Segment at Midpoint", SplitSelectedMarking); panel.AddChild(_splitButton);
+        _deleteSegmentButton = Button("Delete Segment", DeleteSelectedSegment); panel.AddChild(_deleteSegmentButton);
         return scroll;
     }
 
@@ -231,7 +241,8 @@ public partial class VenueEditor : Control
         _selectionLabel!.Text = $"Selection: {kind}"; _selectedId!.Text = id ?? string.Empty;
         VenueObjectInstanceDto? item = kind == VenueSelectionKind.Object ? _document.FindObject(id) : null;
         ConeDto? cone = kind == VenueSelectionKind.Cone ? _document.FindCone(id) : null;
-        MarkingDto? marking = kind is VenueSelectionKind.Marking or VenueSelectionKind.MarkingPoint ? _document.FindMarking(id) : null;
+        MarkingDto? marking = kind is VenueSelectionKind.Marking or VenueSelectionKind.MarkingSegment or VenueSelectionKind.MarkingHandle
+            ? _document.FindMarking(id) : null;
         if (item is not null)
         {
             _objectName!.Text = item.Name; _objectPath!.Text = item.AssetPath;
@@ -248,19 +259,21 @@ public partial class VenueEditor : Control
         }
         else if (marking is not null)
         {
-            Point2Dto[] vertices = PathEditing.IsAllLine(marking.Path) ? PathEditing.GetVertices(marking.Path) : [];
-            int index = _canvas.SelectedPointIndex >= 0 ? _canvas.SelectedPointIndex : 0;
-            if (vertices.Length > index) SetPoint(vertices[index]);
+            if (GetSelectedMarkingPoint(marking) is Point2Dto selectedPoint) SetPoint(selectedPoint);
             _markingColor!.Color = new Color(marking.Color.TrimStart('#')); _markingWidth!.Value = marking.WidthMeters;
             _markingStyle!.Select(marking.Style switch { "dashed" => 1, "dotted" => 2, _ => 0 });
             _visibleInViewer!.ButtonPressed = marking.VisibleInViewer;
+            _markingMetricsLabel!.Text = $"Segments: {marking.Path.Segments.Length}   Length: {PathSampler.Sample(marking.Path).TotalLength:0.###} m";
+            int segmentIndex = _canvas.SelectedSegmentIndex;
+            _segmentInfoLabel!.Text = (uint)segmentIndex < (uint)marking.Path.Segments.Length
+                ? $"Segment {segmentIndex}: {(marking.Path.Segments[segmentIndex] is CubicBezierPathSegmentDefinition ? "cubicBezier" : "line")}" : "Segment: —";
         }
+        else { _markingMetricsLabel!.Text = "Segments: —   Length: —"; _segmentInfoLabel!.Text = "Segment: —"; }
         bool locked = item is not null && _lockedObjectIds.Contains(item.ObjectId);
         foreach (SpinBox control in ObjectTransformControls()) control.Editable = !locked;
-        bool editableMarkingPath = marking is not null && PathEditing.IsAllLine(marking.Path);
-        int markingVertexCount = editableMarkingPath ? PathEditing.GetVertices(marking!.Path).Length : 0;
-        _duplicateButton!.Disabled = item is null; _insertPointButton!.Disabled = !editableMarkingPath;
-        _deletePointButton!.Disabled = !editableMarkingPath || markingVertexCount <= 2 || _canvas.SelectedPointIndex < 0;
+        bool hasSegment = marking is not null && (uint)_canvas.SelectedSegmentIndex < (uint)marking.Path.Segments.Length;
+        _duplicateButton!.Disabled = item is null;
+        _convertButton!.Disabled = !hasSegment; _splitButton!.Disabled = !hasSegment; _deleteSegmentButton!.Disabled = !hasSegment;
         _updatingUi = false;
     }
 
@@ -293,7 +306,12 @@ public partial class VenueEditor : Control
         var point = new Point2Dto { X = (float)(_canvas.SelectionKind == VenueSelectionKind.Object ? _positionX!.Value : _pointX!.Value), Y = (float)(_canvas.SelectionKind == VenueSelectionKind.Object ? _positionY!.Value : _pointY!.Value) };
         if (_canvas.SelectionKind == VenueSelectionKind.Object) { if (_lockedObjectIds.Contains(id)) { SynchronizeSelection(); return; } _document.MoveObject(id, point); }
         else if (_canvas.SelectionKind == VenueSelectionKind.Cone) _document.MoveCone(id, point);
-        else if (_canvas.SelectionKind == VenueSelectionKind.MarkingPoint) _document.MoveMarkingPoint(id, _canvas.SelectedPointIndex, point);
+        else if (_canvas.SelectionKind == VenueSelectionKind.MarkingHandle)
+        {
+            if (!_document.MoveMarkingCoordinate(id, _canvas.SelectedSegmentIndex,
+                ToCoordinateKind(_canvas.SelectedHandleKind), point)) return;
+            _canvas.RefreshMarking(id);
+        }
         else return;
         Commit("Edit item position"); _canvas.QueueRedraw();
     }
@@ -302,12 +320,12 @@ public partial class VenueEditor : Control
     {
         if (_updatingUi || _canvas?.SelectedId is not string id) return;
         if (_canvas.SelectionKind == VenueSelectionKind.Cone) _document.SetConeColor(id, _coneColor!.GetItemText(_coneColor.Selected));
-        else if (_canvas.SelectionKind is VenueSelectionKind.Marking or VenueSelectionKind.MarkingPoint)
+        else if (_canvas.SelectionKind is VenueSelectionKind.Marking or VenueSelectionKind.MarkingSegment or VenueSelectionKind.MarkingHandle)
         {
-            MarkingDto marking = _document.FindMarking(id)!;
-            marking.Color = $"#{_markingColor!.Color.ToHtml(false).ToUpperInvariant()}";
-            marking.WidthMeters = (float)_markingWidth!.Value; marking.Style = _markingStyle!.GetItemText(_markingStyle.Selected);
-            marking.VisibleInViewer = _visibleInViewer!.ButtonPressed;
+            if (!_document.SetMarkingProperties(id, $"#{_markingColor!.Color.ToHtml(false).ToUpperInvariant()}",
+                (float)_markingWidth!.Value, _markingStyle!.GetItemText(_markingStyle.Selected),
+                _visibleInViewer!.ButtonPressed)) return;
+            _canvas.RefreshMarking(id);
         }
         else if (_canvas.SelectionKind == VenueSelectionKind.Object) OnObjectChanged(); else return;
         Commit("Edit item properties"); _canvas.QueueRedraw();
@@ -319,12 +337,18 @@ public partial class VenueEditor : Control
         if (_transactionSnapshot is null) Commit("Edit canvas item");
     }
 
-    private void BeginTransaction(string description) => _transactionSnapshot = VenueStore.Serialize(_document.Definition);
+    private void BeginTransaction(string description)
+    {
+        _transactionSnapshot = VenueStore.Serialize(_document.Definition);
+        _transactionDescription = description;
+    }
     private void EndTransaction()
     {
         if (_transactionSnapshot is null) return;
-        _transactionSnapshot = null; Commit("Move Venue item");
+        string description = _transactionDescription ?? "Move Venue item";
+        _transactionSnapshot = null; _transactionDescription = null; Commit(description);
     }
+    private void CancelTransaction() { _transactionSnapshot = null; _transactionDescription = null; RefreshDiagnostics(); UpdateState(); }
 
     private void Commit(string description)
     {
@@ -340,11 +364,11 @@ public partial class VenueEditor : Control
         if (snapshot is null) return false;
         string? selected = _canvas?.SelectedId;
         VenueSelectionKind selectedKind = _canvas?.SelectionKind ?? VenueSelectionKind.None;
-        int selectedPoint = _canvas?.SelectedPointIndex ?? -1;
+        MarkingSelection markingSelection = _canvas?.MarkingSelection ?? MarkingSelection.None;
         _document.Replace(VenueStore.LoadFromJson(snapshot, "history", ProjectSettings.GlobalizePath("res://")).Definition);
         _lockedObjectIds.RemoveWhere(id => _document.FindObject(id) is null);
         _canvas!.SetDocument(_document, false); _canvas.SetLockedObjects(_lockedObjectIds);
-        _canvas.RestoreSelection(selectedKind, selected, selectedPoint);
+        _canvas.RestoreSelection(selectedKind, selected, markingSelection);
         SynchronizeAll(); SetStatus(action, false); return true;
     }
 
@@ -445,6 +469,8 @@ public partial class VenueEditor : Control
     {
         if (_canvas?.SelectedId is null) return false;
         if (_canvas.SelectionKind == VenueSelectionKind.Object) { _deleteDialog!.PopupCentered(); return true; }
+        if (_canvas.SelectionKind is VenueSelectionKind.MarkingSegment or VenueSelectionKind.MarkingHandle &&
+            _canvas.SelectedSegmentIndex >= 0) { DeleteSelectedSegment(); return true; }
         DeleteSelectedNow(); return true;
     }
     private void DeleteSelectedNow()
@@ -453,22 +479,56 @@ public partial class VenueEditor : Control
         bool changed = _canvas.SelectionKind switch
         {
             VenueSelectionKind.Object => _document.DeleteObject(id), VenueSelectionKind.Cone => _document.DeleteCone(id),
-            VenueSelectionKind.Marking or VenueSelectionKind.MarkingPoint => _document.DeleteMarking(id), _ => false,
+            VenueSelectionKind.Marking => _document.DeleteMarking(id), _ => false,
         };
         if (changed) { _lockedObjectIds.Remove(id); Commit("Delete Venue item"); _canvas.SetDocument(_document, false); SynchronizeAll(); }
     }
-    private void InsertPoint()
+
+    private void ConvertSelectedMarking()
     {
-        if (_canvas?.SelectedId is not string id || _canvas.SelectedPointIndex < 0) return;
-        _document.InsertMarkingPointAfter(id, _canvas.SelectedPointIndex); Commit("Insert marking point"); _canvas.QueueRedraw(); SynchronizeSelection();
+        if (_canvas?.SelectedId is not string id || _document.FindMarking(id) is not MarkingDto marking ||
+            (uint)_canvas.SelectedSegmentIndex >= (uint)marking.Path.Segments.Length) return;
+        int index = _canvas.SelectedSegmentIndex;
+        bool toCubic = marking.Path.Segments[index] is LinePathSegmentDefinition;
+        if (!_document.ConvertMarkingSegment(id, index, toCubic)) return;
+        Commit(toCubic ? "Convert marking line to cubic" : "Convert marking cubic to line");
+        _canvas.RefreshMarking(id);
+        _canvas.RestoreSelection(VenueSelectionKind.MarkingSegment, id,
+            new MarkingSelection(id, index, MarkingHandleKind.None));
+        SynchronizeSelection();
     }
-    private void DeletePoint()
+
+    private void SplitSelectedMarking()
     {
-        if (_canvas?.SelectedId is not string id || _canvas.SelectedPointIndex < 0) return;
-        try { _document.DeleteMarkingPoint(id, _canvas.SelectedPointIndex); Commit("Delete marking point"); _canvas.QueueRedraw(); SynchronizeSelection(); }
-        catch (Exception exception) { SetStatus(exception.Message, true); }
+        if (_canvas?.SelectedId is not string id || _canvas.SelectedSegmentIndex < 0) return;
+        int index = _canvas.SelectedSegmentIndex;
+        if (!_document.SplitMarkingSegment(id, index, 0.5f)) return;
+        Commit("Split marking segment"); _canvas.RefreshMarking(id);
+        _canvas.RestoreSelection(VenueSelectionKind.MarkingSegment, id,
+            new MarkingSelection(id, index + 1, MarkingHandleKind.None));
+        SynchronizeSelection();
     }
-    private void FinishMarking() { if (_canvas?.FinishMarking() == true) Commit("Add polyline marking"); else SetStatus("Polyline needs at least two points.", true); }
+
+    private void DeleteSelectedSegment()
+    {
+        if (_canvas?.SelectedId is not string id || _canvas.SelectedSegmentIndex < 0) return;
+        int index = _canvas.SelectedSegmentIndex;
+        if (!_document.DeleteMarkingSegment(id, index, out bool markingDeleted)) return;
+        Commit("Delete marking segment");
+        if (markingDeleted) { _canvas.SetDocument(_document, false); SynchronizeAll(); return; }
+        MarkingDto marking = _document.FindMarking(id)!;
+        int selected = Math.Clamp(index, 0, marking.Path.Segments.Length - 1);
+        _canvas.RefreshMarking(id);
+        _canvas.RestoreSelection(VenueSelectionKind.MarkingSegment, id,
+            new MarkingSelection(id, selected, MarkingHandleKind.None));
+        SynchronizeSelection();
+    }
+
+    private void FinishMarking()
+    {
+        if (_canvas?.FinishMarking() == true) SetStatus("Marking creation finished.", false);
+        else SetStatus("No active marking creation.", true);
+    }
 
     private bool ApplyObjectShortcut(InputEventKey key)
     {
@@ -556,6 +616,29 @@ public partial class VenueEditor : Control
     private bool IsEditingText() => GetViewport().GuiGetFocusOwner() is LineEdit or TextEdit or SpinBox;
     private void SetPosition(Point2Dto value) { _positionX!.Value = value.X; _positionY!.Value = value.Y; }
     private void SetPoint(Point2Dto value) { _pointX!.Value = value.X; _pointY!.Value = value.Y; }
+    private Point2Dto? GetSelectedMarkingPoint(MarkingDto marking)
+    {
+        if (_canvas is null || _canvas.SelectionKind != VenueSelectionKind.MarkingHandle) return null;
+        int index = _canvas.SelectedSegmentIndex;
+        return _canvas.SelectedHandleKind switch
+        {
+            MarkingHandleKind.PathStart => marking.Path.Start,
+            MarkingHandleKind.SegmentEnd when (uint)index < (uint)marking.Path.Segments.Length => marking.Path.Segments[index].EndPoint,
+            MarkingHandleKind.Control1 when (uint)index < (uint)marking.Path.Segments.Length &&
+                marking.Path.Segments[index] is CubicBezierPathSegmentDefinition cubic => cubic.Control1,
+            MarkingHandleKind.Control2 when (uint)index < (uint)marking.Path.Segments.Length &&
+                marking.Path.Segments[index] is CubicBezierPathSegmentDefinition cubic => cubic.Control2,
+            _ => null,
+        };
+    }
+    private static MarkingPathCoordinateKind ToCoordinateKind(MarkingHandleKind kind) => kind switch
+    {
+        MarkingHandleKind.PathStart => MarkingPathCoordinateKind.PathStart,
+        MarkingHandleKind.SegmentEnd => MarkingPathCoordinateKind.SegmentEnd,
+        MarkingHandleKind.Control1 => MarkingPathCoordinateKind.Control1,
+        MarkingHandleKind.Control2 => MarkingPathCoordinateKind.Control2,
+        _ => throw new InvalidOperationException("The selected handle has no persisted coordinate."),
+    };
     private IEnumerable<SpinBox> ObjectTransformControls() => [_positionX!, _positionY!, _elevation!, _rotation!, _scaleX!, _scaleY!, _scaleZ!, _footprintWidth!, _footprintLength!];
 
     private static Button Button(string text, Action action) { var value = new Button { Text = text }; value.Pressed += action; return value; }
@@ -594,4 +677,12 @@ public partial class VenueEditor : Control
         return "res://" + Path.GetRelativePath(root, candidate).Replace('\\', '/');
     }
     private static string EscapeBbcode(string value) => value.Replace("[", "(").Replace("]", ")");
+    private static string ToolDisplayName(VenueTool tool) => tool switch
+    {
+        VenueTool.AddCone => "Cone",
+        VenueTool.AddMarking => "Marking",
+        VenueTool.AddLine => "Line",
+        VenueTool.AddCubicBezier => "Cubic",
+        _ => "Select",
+    };
 }

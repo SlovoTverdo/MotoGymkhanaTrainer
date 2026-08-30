@@ -16,6 +16,8 @@ public partial class TrackEditor : Control
     private SandboxedJsonLibrary? _exportLibrary;
     private TrackEditorCanvas? _canvas;
     private ExerciseLibraryTree? _exerciseTree;
+    private ExercisePreviewControl? _exercisePreview;
+    private Label? _exercisePreviewMetadata;
     private Tree? _trackTree;
     private ItemList? _routeList;
     private LineEdit? _trackId;
@@ -68,6 +70,7 @@ public partial class TrackEditor : Control
     private LineEdit? _newFolderName;
     private string? _currentFilePath;
     private string _selectedExercisePath = string.Empty;
+    private string _selectedExerciseId = string.Empty;
     private string _selectedTrackFolder = string.Empty;
     private string? _pendingOpenPath;
     private PendingAction _pendingAction;
@@ -267,6 +270,22 @@ public partial class TrackEditor : Control
         };
         _exerciseTree.ItemSelected += OnExerciseSelected;
         panel.AddChild(_exerciseTree);
+        panel.AddChild(Section("Exercise Preview"));
+        _exercisePreview = new ExercisePreviewControl
+        {
+            Name = "ExercisePreview",
+            CustomMinimumSize = new Vector2(0, 210),
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
+        panel.AddChild(_exercisePreview);
+        _exercisePreviewMetadata = new Label
+        {
+            Name = "ExercisePreviewMetadata",
+            Text = "No Exercise selected.",
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            CustomMinimumSize = new Vector2(0, 58),
+        };
+        panel.AddChild(_exercisePreviewMetadata);
 
         panel.AddChild(Section("Track Projects — res://tracks/"));
         var trackActions = new HBoxContainer();
@@ -497,7 +516,10 @@ public partial class TrackEditor : Control
 
     private void RefreshExerciseTree()
     {
+        string selectedPath = _selectedExercisePath;
+        string selectedId = _selectedExerciseId;
         FillTree(_exerciseTree!, "exercises", _exerciseLibrary!);
+        ReloadExercisePreview(selectedPath, selectedId);
         if (_document is null) return;
         if (_document.Project.Instances.Length == 0)
         {
@@ -549,9 +571,142 @@ public partial class TrackEditor : Control
     {
         if (ReadTreeSelection(_exerciseTree, out bool directory, out string path) && !directory)
         {
-            _selectedExercisePath = path;
-            SetStatus($"Selected Exercise Definition: {path}", false);
+            LoadExercisePreview(path);
+            return;
         }
+
+        ClearExerciseLibrarySelection();
+    }
+
+    private void LoadExercisePreview(string relativePath)
+    {
+        _selectedExercisePath = relativePath;
+        _exercisePreview!.ShowLoading(relativePath);
+        UpdateExercisePreviewMetadata();
+        string? file = null;
+        try
+        {
+            file = _exerciseLibrary!.ResolveExistingJson(relativePath);
+            ExerciseDefinitionLoadResult loaded = ExerciseDefinitionStore.LoadFromFileWithDiagnostics(file);
+            _selectedExerciseId = loaded.Definition.Exercise.Id;
+            _exercisePreview!.ShowExercise(relativePath, loaded.Definition, loaded.Warnings);
+            UpdateExercisePreviewMetadata();
+            SetStatus($"Selected Exercise Definition: {relativePath}", false);
+        }
+        catch (FileNotFoundException)
+        {
+            _selectedExerciseId = string.Empty;
+            _exercisePreview!.ShowMissing(relativePath);
+            UpdateExercisePreviewMetadata();
+            SetStatus($"Selected Exercise is missing: {relativePath}", true);
+        }
+        catch (Exception exception)
+        {
+            ExercisePreviewIdentity? identity = file is null
+                ? null
+                : ExercisePreviewIdentityExtractor.TryReadFile(file);
+            _selectedExerciseId = identity?.ExerciseId ?? string.Empty;
+            _exercisePreview!.ShowInvalid(relativePath, exception.Message, identity);
+            UpdateExercisePreviewMetadata();
+            SetStatus($"Exercise preview failed: {exception.Message}", true);
+        }
+    }
+
+    /// <summary>
+    /// Refresh resolves a new DTO by stable Exercise id. Exact path is tried
+    /// first; a moved file is found by id without retaining a stale reference.
+    /// </summary>
+    private void ReloadExercisePreview(string previousPath, string previousId)
+    {
+        if (!string.IsNullOrWhiteSpace(previousPath))
+        {
+            _exercisePreview!.ShowLoading(previousPath);
+            UpdateExercisePreviewMetadata();
+        }
+        ExercisePreviewLibraryResolution resolution = ExercisePreviewLibraryResolver.Resolve(
+            _exerciseLibrary!, previousPath, previousId);
+        switch (resolution.State)
+        {
+            case ExercisePreviewState.Ready:
+                ApplyReloadedPreview(resolution.RelativePath, resolution.LoadResult!);
+                break;
+            case ExercisePreviewState.InvalidExercise:
+                ExercisePreviewIdentity? identity = resolution.Identity ??
+                    (string.IsNullOrWhiteSpace(previousId) ? null : new ExercisePreviewIdentity(null, previousId));
+                _selectedExercisePath = resolution.RelativePath;
+                _selectedExerciseId = identity?.ExerciseId ?? string.Empty;
+                _exercisePreview!.ShowInvalid(resolution.RelativePath, resolution.Diagnostic, identity);
+                UpdateExercisePreviewMetadata();
+                SelectExerciseTreePath(resolution.RelativePath);
+                break;
+            case ExercisePreviewState.MissingExercise:
+                _exercisePreview!.ShowMissing(resolution.RelativePath);
+                _selectedExercisePath = string.Empty;
+                _selectedExerciseId = string.Empty;
+                UpdateExercisePreviewMetadata();
+                break;
+            default:
+                ClearExerciseLibrarySelection(deselectTree: false);
+                break;
+        }
+    }
+
+    private void ApplyReloadedPreview(string relativePath, ExerciseDefinitionLoadResult loaded)
+    {
+        _selectedExercisePath = relativePath;
+        _selectedExerciseId = loaded.Definition.Exercise.Id;
+        _exercisePreview!.ShowExercise(relativePath, loaded.Definition, loaded.Warnings);
+        UpdateExercisePreviewMetadata();
+        SelectExerciseTreePath(relativePath);
+    }
+
+    private void ClearExerciseLibrarySelection(bool deselectTree = true)
+    {
+        _selectedExercisePath = string.Empty;
+        _selectedExerciseId = string.Empty;
+        _exercisePreview?.ClearPreview();
+        UpdateExercisePreviewMetadata();
+        if (deselectTree) _exerciseTree?.DeselectAll();
+    }
+
+    private void UpdateExercisePreviewMetadata()
+    {
+        if (_exercisePreviewMetadata is null || _exercisePreview is null) return;
+        ExercisePreviewModel model = _exercisePreview.Model;
+        if (model.State == ExercisePreviewState.Ready && model.Definition is ExerciseDefinitionDto definition)
+        {
+            _exercisePreviewMetadata.Text = ExercisePreviewMetadataFormatter.Format(
+                definition, model.Warnings.Count);
+            return;
+        }
+
+        _exercisePreviewMetadata.Text = model.State switch
+        {
+            ExercisePreviewState.Loading => $"Loading Exercise: {model.SourcePath}",
+            ExercisePreviewState.InvalidExercise => ExercisePreviewMetadataFormatter.FormatInvalid(
+                model.SourcePath, model.Diagnostic, model.Identity),
+            ExercisePreviewState.MissingExercise => $"Missing Exercise: {model.SourcePath}",
+            _ => "No Exercise selected.",
+        };
+    }
+
+    private void SelectExerciseTreePath(string relativePath)
+    {
+        TreeItem? root = _exerciseTree?.GetRoot();
+        TreeItem? item = FindTreeItem(root, $"F|{relativePath}");
+        if (item is not null) _exerciseTree!.SetSelected(item, 0);
+    }
+
+    private static TreeItem? FindTreeItem(TreeItem? item, string metadata)
+    {
+        for (TreeItem? current = item; current is not null; current = current.GetNext())
+        {
+            if (string.Equals(current.GetMetadata(0).AsString(), metadata, StringComparison.OrdinalIgnoreCase))
+                return current;
+            TreeItem? child = FindTreeItem(current.GetFirstChild(), metadata);
+            if (child is not null) return child;
+        }
+        return null;
     }
 
     private void AddSelectedExercise()

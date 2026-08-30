@@ -583,6 +583,214 @@ try
     ExerciseDefinitionDto firstDefinition = ExerciseDefinitionStore.LoadFromFile(firstExercisePath);
     ExerciseDefinitionDto secondDefinition = ExerciseDefinitionStore.LoadFromFile(secondExercisePath);
 
+    var previewModel = new ExercisePreviewModel();
+    AssertTrue(previewModel.State == ExercisePreviewState.NoSelection,
+        "Exercise preview starts in NoSelection state");
+    previewModel.SetReady("polyline.json", firstDefinition);
+    AssertTrue(previewModel.State == ExercisePreviewState.Ready &&
+        ReferenceEquals(firstDefinition, previewModel.Definition),
+        "selecting an Exercise previews the selected Definition directly");
+    previewModel.SetReady("multi.json", secondDefinition);
+    AssertEqual(secondDefinition.Exercise.Id, previewModel.Definition!.Exercise.Id,
+        "switching Exercise selection replaces preview data");
+    previewModel.SetLoading("loading.json");
+    AssertTrue(previewModel.State == ExercisePreviewState.Loading && previewModel.Definition is null &&
+        previewModel.Diagnostic.Length == 0 && previewModel.Warnings.Count == 0,
+        "loading Exercise clears stale preview DTO and diagnostics");
+    previewModel.Clear();
+    AssertTrue(previewModel.State == ExercisePreviewState.NoSelection && previewModel.Definition is null,
+        "deselecting Exercise clears preview geometry state");
+
+    var previewDefinition = new ExerciseDefinitionDto
+    {
+        Exercise = new ExerciseMetadataDto { Id = "preview-fixture", Name = "Preview Fixture" },
+        Bounds = new ExerciseBoundsDto { Width = 2.0f, Length = 4.0f },
+        Cones =
+        [
+            new ConeDto { Id = "preview-cone", Position = new Point2Dto { X = 5.0f, Y = -1.0f }, Color = "blue", Type = "standard" },
+        ],
+        Markings =
+        [
+            new MarkingDto
+            {
+                Id = "preview-line", Color = "#FFFFFF", WidthMeters = 0.1f, Style = "solid", VisibleInViewer = true,
+                Path = new PathDefinition { Start = new Point2Dto { X = -1.0f, Y = 0.0f }, Segments = [new LinePathSegmentDefinition { End = new Point2Dto { X = 1.0f, Y = 0.0f } }] },
+            },
+            new MarkingDto
+            {
+                Id = "preview-cubic", Color = "#FF00AA", WidthMeters = 0.12f, Style = "solid", VisibleInViewer = false,
+                Path = new PathDefinition
+                {
+                    Start = new Point2Dto { X = -1.0f, Y = 0.0f },
+                    Segments = [new CubicBezierPathSegmentDefinition
+                    {
+                        Control1 = new Point2Dto { X = -1.0f, Y = 6.0f },
+                        Control2 = new Point2Dto { X = 1.0f, Y = 6.0f },
+                        End = new Point2Dto { X = 1.0f, Y = 0.0f },
+                    }],
+                },
+            },
+            new MarkingDto
+            {
+                Id = "preview-dashed", Color = "#FFFF00", WidthMeters = 0.08f, Style = "dashed", VisibleInViewer = true,
+                Path = new PathDefinition { Start = new Point2Dto { X = -3.0f, Y = -3.0f }, Segments = [new LinePathSegmentDefinition { End = new Point2Dto { X = 3.0f, Y = -3.0f } }] },
+            },
+            new MarkingDto
+            {
+                Id = "preview-dotted", Color = "#00FFFF", WidthMeters = 0.08f, Style = "dotted", VisibleInViewer = true,
+                Path = new PathDefinition { Start = new Point2Dto { X = -3.0f, Y = -4.0f }, Segments = [new LinePathSegmentDefinition { End = new Point2Dto { X = 3.0f, Y = -4.0f } }] },
+            },
+        ],
+        EntryPoint = new Point2Dto { X = -2.0f, Y = -2.0f },
+        ExitPoint = new Point2Dto { X = 2.0f, Y = 2.0f },
+        Trajectory = new TrajectoryDto
+        {
+            Segments =
+            [
+                new TrajectorySegmentDto
+                {
+                    Id = "preview-trajectory", Type = "cubicBezier",
+                    Start = new Point2Dto { X = -2.0f, Y = -2.0f },
+                    Control1 = new Point2Dto { X = -2.0f, Y = 2.0f },
+                    Control2 = new Point2Dto { X = 2.0f, Y = -2.0f },
+                    End = new Point2Dto { X = 2.0f, Y = 2.0f },
+                },
+            ],
+        },
+    };
+    string previewBeforeRender = JsonSerializer.Serialize(previewDefinition);
+    ExerciseGeometryRenderData previewGeometry = ExerciseGeometryRenderer.Build(previewDefinition);
+    ExerciseContentBounds previewBounds = ExerciseContentBoundsCalculator.Calculate(previewDefinition);
+    AssertTrue(previewBounds.MinX <= -1.0f && previewBounds.MaxX >= 1.0f &&
+        previewBounds.MinY <= -2.0f && previewBounds.MaxY >= 2.0f,
+        "Exercise preview bounds include footprint");
+    AssertTrue(previewBounds.MaxX >= 5.0f && previewGeometry.Cones.Length == 1,
+        "Exercise preview bounds and geometry include cones");
+    AssertTrue(previewGeometry.Markings[0].Geometry.Strokes.Count > 0,
+        "Exercise preview prepares line marking geometry");
+    AssertTrue(previewGeometry.Markings[1].Geometry.Strokes.Count > 1 && previewBounds.MaxY > 4.0f,
+        "Exercise preview samples cubic marking and includes analytical curve bounds");
+    AssertTrue(previewGeometry.Markings[2].Geometry.Strokes.Count > 1,
+        "Exercise preview preserves dashed marking style");
+    AssertTrue(previewGeometry.Markings[3].Geometry.Dots.Count > 1,
+        "Exercise preview preserves dotted marking style");
+    AssertTrue(previewGeometry.TrajectoryLines.Length == 1 && previewGeometry.TrajectoryLines[0].Length > 2,
+        "Exercise preview prepares internal curved trajectory");
+    AssertTrue(previewGeometry.Entry.X == -2.0f && previewGeometry.Exit.X == 2.0f,
+        "Exercise preview keeps distinct entry and exit points");
+
+    var routingDefinition = new ExerciseDefinitionDto
+    {
+        Exercise = new ExerciseMetadataDto { Id = "routing-only", Name = "Routing Only" },
+        Bounds = new ExerciseBoundsDto { Width = 1.0f, Length = 1.0f },
+        Cones = [], Markings = [],
+    };
+    AssertTrue(ExercisePreviewMetadataFormatter.IsRoutingOnly(routingDefinition) &&
+        ExercisePreviewMetadataFormatter.Format(routingDefinition).Contains("Routing only: yes", StringComparison.Ordinal),
+        "Exercise preview metadata identifies routing-only definitions");
+
+    ExercisePreviewFit previewFit = ExercisePreviewFitCalculator.Calculate(previewBounds, new Vector2(320, 180));
+    Vector2 fitCenter = previewFit.ToScreen(previewBounds.Center, new Vector2(320, 180));
+    Vector2 fitX = previewFit.ToScreen(new Point2Dto { X = previewBounds.Center.X + 1.0f, Y = previewBounds.Center.Y }, new Vector2(320, 180));
+    Vector2 fitY = previewFit.ToScreen(new Point2Dto { X = previewBounds.Center.X, Y = previewBounds.Center.Y + 1.0f }, new Vector2(320, 180));
+    AssertTrue(MathF.Abs((fitX - fitCenter).Length() - (fitY - fitCenter).Length()) < 0.0001f,
+        "Exercise preview auto-fit preserves aspect ratio with one uniform scale");
+    ExercisePreviewFit wideFit = ExercisePreviewFitCalculator.Calculate(
+        new ExerciseContentBounds(-100, -1, 100, 1), new Vector2(300, 200));
+    AssertTrue(wideFit.PixelsPerMeter < 2.0f, "Exercise preview auto-fit handles very wide geometry");
+    ExercisePreviewFit tallFit = ExercisePreviewFitCalculator.Calculate(
+        new ExerciseContentBounds(-1, -100, 1, 100), new Vector2(300, 200));
+    AssertTrue(tallFit.PixelsPerMeter < 1.0f, "Exercise preview auto-fit handles very tall geometry");
+    ExercisePreviewFit tinyFit = ExercisePreviewFitCalculator.Calculate(
+        new ExerciseContentBounds(0, 0, 0.0001f, 0.0001f), new Vector2(300, 200));
+    AssertTrue(float.IsFinite(tinyFit.PixelsPerMeter) && tinyFit.PixelsPerMeter > 0.0f,
+        "Exercise preview auto-fit handles tiny geometry");
+    ExercisePreviewFit negativeFit = ExercisePreviewFitCalculator.Calculate(
+        new ExerciseContentBounds(-30, -20, -10, -5), new Vector2(300, 200));
+    AssertTrue(negativeFit.Center.X == -20.0f && negativeFit.Center.Y == -12.5f,
+        "Exercise preview auto-fit centers negative local coordinates");
+
+    previewModel.SetInvalid("invalid.json", "validation failed");
+    AssertTrue(previewModel.State == ExercisePreviewState.InvalidExercise && previewModel.Definition is null,
+        "invalid Exercise produces a non-crashing preview diagnostic state");
+    var reloadedSameId = new ExerciseDefinitionDto
+    {
+        Exercise = new ExerciseMetadataDto { Id = firstDefinition.Exercise.Id, Name = "Reloaded Name" },
+        Bounds = firstDefinition.Bounds,
+        Cones = firstDefinition.Cones,
+        Markings = firstDefinition.Markings,
+        EntryPoint = firstDefinition.EntryPoint,
+        ExitPoint = firstDefinition.ExitPoint,
+        Trajectory = firstDefinition.Trajectory,
+    };
+    previewModel.SetReady("polyline.json", firstDefinition);
+    previewModel.SetReady("polyline.json", reloadedSameId);
+    AssertTrue(ReferenceEquals(reloadedSameId, previewModel.Definition) && previewModel.Definition.Exercise.Name == "Reloaded Name",
+        "library reload with the same Exercise ID replaces the preview DTO");
+    previewModel.SetMissing("polyline.json");
+    AssertTrue(previewModel.State == ExercisePreviewState.MissingExercise && previewModel.Definition is null,
+        "library reload with a deleted Exercise clears stale preview DTO");
+
+    string previewReloadPath = Path.Combine(exerciseRoot, "preview-reload.json");
+    ExerciseDefinitionDto previewReloadDefinition = ExerciseDefinitionStore.LoadFromJson(
+        ExerciseDefinitionStore.Serialize(firstDefinition), "preview-reload-source.json");
+    previewReloadDefinition.Exercise.Id = "preview-reload-id";
+    ExerciseDefinitionStore.SaveToFile(previewReloadDefinition, previewReloadPath);
+    ExercisePreviewLibraryResolution initialResolution = ExercisePreviewLibraryResolver.Resolve(
+        exerciseLibrary, "preview-reload.json", previewReloadDefinition.Exercise.Id);
+    AssertTrue(initialResolution.State == ExercisePreviewState.Ready &&
+        initialResolution.LoadResult?.Definition.Exercise.Name == previewReloadDefinition.Exercise.Name,
+        "Exercise preview resolver loads the selected library file from disk");
+    ExerciseDefinitionDto changedOnDisk = ExerciseDefinitionStore.LoadFromFile(previewReloadPath);
+    changedOnDisk.Exercise.Name = "Reloaded Preview From Disk";
+    ExerciseDefinitionStore.SaveToFile(changedOnDisk, previewReloadPath);
+    ExercisePreviewLibraryResolution changedResolution = ExercisePreviewLibraryResolver.Resolve(
+        exerciseLibrary, "preview-reload.json", previewReloadDefinition.Exercise.Id);
+    AssertTrue(changedResolution.State == ExercisePreviewState.Ready &&
+        changedResolution.LoadResult?.Definition.Exercise.Name == "Reloaded Preview From Disk" &&
+        !ReferenceEquals(initialResolution.LoadResult?.Definition, changedResolution.LoadResult?.Definition),
+        "Exercise preview Refresh replaces the same-ID DTO with current file contents");
+    File.Delete(previewReloadPath);
+    ExercisePreviewLibraryResolution deletedResolution = ExercisePreviewLibraryResolver.Resolve(
+        exerciseLibrary, "preview-reload.json", previewReloadDefinition.Exercise.Id);
+    AssertTrue(deletedResolution.State == ExercisePreviewState.MissingExercise && deletedResolution.LoadResult is null,
+        "Exercise preview Refresh clears geometry after the selected file is deleted");
+
+    string invalidPreviewPath = Path.Combine(exerciseRoot, "invalid-preview.json");
+    File.WriteAllText(invalidPreviewPath, """
+        {
+          "formatVersion": 2,
+          "exercise": { "id": "invalid-preview-id", "name": "Invalid Preview" }
+        }
+        """);
+    ExercisePreviewLibraryResolution invalidResolution = ExercisePreviewLibraryResolver.Resolve(
+        exerciseLibrary, "invalid-preview.json", string.Empty);
+    AssertTrue(invalidResolution.State == ExercisePreviewState.InvalidExercise &&
+        invalidResolution.LoadResult is null && invalidResolution.Diagnostic.Length > 0 &&
+        invalidResolution.Identity is { DisplayName: "Invalid Preview", ExerciseId: "invalid-preview-id" },
+        "Exercise preview Refresh retains recoverable name and ID for invalid Exercise JSON");
+    previewModel.SetInvalid("invalid-preview.json", invalidResolution.Diagnostic, invalidResolution.Identity);
+    AssertTrue(previewModel.Identity == invalidResolution.Identity &&
+        ExercisePreviewMetadataFormatter.FormatInvalid(
+            previewModel.SourcePath, previewModel.Diagnostic, previewModel.Identity)
+            .Contains("ID: invalid-preview-id", StringComparison.Ordinal),
+        "invalid Exercise preview displays recovered identity without retaining geometry");
+    File.WriteAllText(invalidPreviewPath, "{ invalid Exercise json");
+    ExercisePreviewLibraryResolution malformedResolution = ExercisePreviewLibraryResolver.Resolve(
+        exerciseLibrary, "invalid-preview.json", string.Empty);
+    AssertTrue(malformedResolution.State == ExercisePreviewState.InvalidExercise &&
+        malformedResolution.Identity is null,
+        "malformed Exercise JSON does not invent preview name or ID");
+    File.Delete(invalidPreviewPath);
+    AssertEqual(previewBeforeRender, JsonSerializer.Serialize(previewDefinition),
+        "Exercise preview rendering and bounds do not mutate ExerciseDefinition");
+    var previewHistory = new TrackProjectHistory();
+    previewHistory.Reset("track-snapshot", saved: true);
+    previewModel.SetReady("multi.json", secondDefinition);
+    previewModel.Clear();
+    AssertTrue(!previewHistory.CanUndo && !previewHistory.IsDirty,
+        "Exercise library preview selection creates no Track Undo history entry");
+
     TrackProjectDocument trackDocument = NewTrack();
     TrackCompilationResult emptyCompilation = TrackCompiler.Compile(trackDocument);
     AssertTrue(!emptyCompilation.CanExport && emptyCompilation.Errors.Count > 0,
@@ -609,6 +817,8 @@ try
     string secondInstance = trackDocument.AddInstance("polyline.json", firstDefinition);
     string thirdInstance = trackDocument.AddInstance("multi.json", secondDefinition);
     AssertEqual("exercise-instance-001", firstInstance, "first Track instance id is deterministic");
+    AssertTrue(trackDocument.FindDefinition(firstInstance) is not null,
+        "Track placement still resolves the selected Exercise after preview operations");
     AssertEqual("exercise-instance-002", secondInstance, "the same Exercise can be instantiated more than once");
     AssertEqual(3, trackDocument.Project.Instances.Length, "a different Exercise can join Route Order");
 
@@ -1784,6 +1994,127 @@ AssertTrue(!editedJson.Contains("selection", StringComparison.OrdinalIgnoreCase)
            !editedJson.Contains("handleKind", StringComparison.OrdinalIgnoreCase) &&
            !editedJson.Contains("segmentIndex", StringComparison.OrdinalIgnoreCase),
     "editor selection and handles are absent from Exercise JSON");
+
+// Venue Editor Iteration 3 uses the same PathEditing operations through its
+// VenueDocument facade. These tests stay free of native Godot input dispatch;
+// real canvas mouse interaction is covered separately by editor/MCP smoke checks.
+var curvedVenue = VenueDocument.CreateNew("curved-venue", "Curved Venue");
+var venueLinePath = new PathDefinition { Start = new Point2Dto { X = -2, Y = 0 }, Segments = [] };
+PathEditing.AppendLine(venueLinePath, new Point2Dto { X = 2, Y = 0 });
+MarkingDto venueCreatedLine = curvedVenue.AddMarking(venueLinePath);
+AssertEqual(1, venueCreatedLine.Path.Segments.Length, "Venue line creation persists one Path segment");
+
+var venueCubicPath = new PathDefinition { Start = new Point2Dto { X = 0, Y = 1 }, Segments = [] };
+PathEditing.AppendCubic(venueCubicPath, new Point2Dto { X = 3, Y = 1 });
+MarkingDto venueCreatedCubic = curvedVenue.AddMarking(venueCubicPath);
+var initialVenueCubic = venueCreatedCubic.Path.Segments[0] as CubicBezierPathSegmentDefinition
+    ?? throw new InvalidOperationException("Venue cubic creation did not persist cubicBezier.");
+AssertTrue(true, "Venue cubic creation persists cubicBezier");
+AssertTrue(initialVenueCubic.Control1.X == 1 && initialVenueCubic.Control2.X == 2,
+    "Venue cubic controls initialize at one-third and two-thirds of the chord");
+
+AssertTrue(curvedVenue.MoveMarkingCoordinate(venueCreatedCubic.Id, -1, MarkingPathCoordinateKind.PathStart,
+    new Point2Dto { X = -1, Y = 1 }), "Venue PathStart drag mutation is accepted");
+AssertTrue(curvedVenue.MoveMarkingCoordinate(venueCreatedCubic.Id, 0, MarkingPathCoordinateKind.SegmentEnd,
+    new Point2Dto { X = 4, Y = 2 }), "Venue endpoint drag mutation is accepted");
+AssertTrue(curvedVenue.MoveMarkingCoordinate(venueCreatedCubic.Id, 0, MarkingPathCoordinateKind.Control1,
+    new Point2Dto { X = 0.5f, Y = 3 }), "Venue Control1 drag mutation is accepted");
+AssertTrue(curvedVenue.MoveMarkingCoordinate(venueCreatedCubic.Id, 0, MarkingPathCoordinateKind.Control2,
+    new Point2Dto { X = 3.5f, Y = 3 }), "Venue Control2 drag mutation is accepted");
+PathDefinition beforeVenueTranslation = PathEditing.CopyPath(venueCreatedCubic.Path);
+AssertTrue(curvedVenue.MoveMarking(venueCreatedCubic.Id, 2, -1), "Venue whole-marking drag mutation is accepted");
+AssertTrue(venueCreatedCubic.Path.Start.X == beforeVenueTranslation.Start.X + 2 &&
+    ((CubicBezierPathSegmentDefinition)venueCreatedCubic.Path.Segments[0]).Control2.Y ==
+    ((CubicBezierPathSegmentDefinition)beforeVenueTranslation.Segments[0]).Control2.Y - 1,
+    "Venue whole-marking drag translates endpoints and controls together");
+
+AssertTrue(curvedVenue.ConvertMarkingSegment(venueCreatedLine.Id, 0, true), "Venue line converts to cubic");
+var venueConvertedCubic = (CubicBezierPathSegmentDefinition)venueCreatedLine.Path.Segments[0];
+AssertTrue(curvedVenue.ConvertMarkingSegment(venueCreatedLine.Id, 0, false), "Venue cubic converts back to line");
+AssertEqual(2.0f, venueCreatedLine.Path.Segments[0].EndPoint.X, "Venue cubic-to-line preserves endpoint");
+
+var venueLineSplit = new VenueDocument(VenueStore.LoadFromJson(VenueStore.Serialize(curvedVenue.Definition),
+    "venue-line-split", ProjectDirectory).Definition);
+AssertTrue(venueLineSplit.SplitMarkingSegment(venueCreatedLine.Id, 0, 0.5f), "Venue line split succeeds");
+AssertEqual(2, venueLineSplit.FindMarking(venueCreatedLine.Id)!.Path.Segments.Length, "Venue line split creates two lines");
+var venueCubicSplit = new VenueDocument(VenueStore.LoadFromJson(VenueStore.Serialize(curvedVenue.Definition),
+    "venue-cubic-split", ProjectDirectory).Definition);
+AssertTrue(venueCubicSplit.SplitMarkingSegment(venueCreatedCubic.Id, 0, 0.5f), "Venue cubic split succeeds through shared de Casteljau");
+AssertTrue(venueCubicSplit.FindMarking(venueCreatedCubic.Id)!.Path.Segments.All(segment => segment is CubicBezierPathSegmentDefinition),
+    "Venue cubic split preserves cubic segment types");
+
+static VenueDocument MakeVenueDeletionDocument()
+{
+    var document = VenueDocument.CreateNew("delete-venue", "Delete Venue");
+    var path = new PathDefinition { Start = new Point2Dto(), Segments = [] };
+    PathEditing.AppendLine(path, new Point2Dto { X = 1 });
+    PathEditing.AppendLine(path, new Point2Dto { X = 2 });
+    PathEditing.AppendLine(path, new Point2Dto { X = 3 });
+    document.AddMarking(path);
+    return document;
+}
+VenueDocument deleteFirstVenue = MakeVenueDeletionDocument(); string deleteFirstId = deleteFirstVenue.Definition.Markings[0].Id;
+AssertTrue(deleteFirstVenue.DeleteMarkingSegment(deleteFirstId, 0, out _) &&
+    deleteFirstVenue.FindMarking(deleteFirstId)!.Path.Start.X == 1, "Venue delete first segment promotes its endpoint to Path.start");
+VenueDocument deleteInternalVenue = MakeVenueDeletionDocument(); string deleteInternalId = deleteInternalVenue.Definition.Markings[0].Id;
+AssertTrue(deleteInternalVenue.DeleteMarkingSegment(deleteInternalId, 1, out _) &&
+    deleteInternalVenue.FindMarking(deleteInternalId)!.Path.Segments.Length == 2, "Venue delete internal segment preserves a continuous Path structure");
+VenueDocument deleteLastVenue = MakeVenueDeletionDocument(); string deleteLastId = deleteLastVenue.Definition.Markings[0].Id;
+AssertTrue(deleteLastVenue.DeleteMarkingSegment(deleteLastId, 2, out _) &&
+    deleteLastVenue.FindMarking(deleteLastId)!.Path.Segments.Length == 2, "Venue delete last segment retains preceding geometry");
+var deleteOnlyVenue = VenueDocument.CreateNew("only-venue", "Only Venue");
+MarkingDto deleteOnlyMarking = deleteOnlyVenue.AddMarking(venueLinePath);
+AssertTrue(deleteOnlyVenue.DeleteMarkingSegment(deleteOnlyMarking.Id, 0, out bool onlyDeleted) && onlyDeleted &&
+    deleteOnlyVenue.FindMarking(deleteOnlyMarking.Id) is null, "Venue only-segment delete removes the marking");
+
+var venueDragHistory = new EditorSnapshotHistory(20);
+string venueDragBefore = VenueStore.Serialize(curvedVenue.Definition);
+venueDragHistory.Reset(venueDragBefore, saved: true);
+PathDefinition venueDragCancelBefore = PathEditing.CopyPath(venueCreatedCubic.Path);
+curvedVenue.MoveMarkingCoordinate(venueCreatedCubic.Id, 0, MarkingPathCoordinateKind.Control1, new Point2Dto { X = 8, Y = 8 });
+curvedVenue.MoveMarkingCoordinate(venueCreatedCubic.Id, 0, MarkingPathCoordinateKind.Control1, new Point2Dto { X = 9, Y = 9 });
+venueDragHistory.Commit(VenueStore.Serialize(curvedVenue.Definition), "one Venue handle drag");
+AssertTrue(venueDragHistory.Undo() == venueDragBefore && venueDragHistory.Undo() is null,
+    "Venue one drag creates exactly one Undo step");
+curvedVenue.ReplaceMarkingPath(venueCreatedCubic.Id, venueDragCancelBefore);
+AssertTrue(PathEditing.PointsEqual(venueCreatedCubic.Path.Start, venueDragCancelBefore.Start) &&
+    PathEditing.PointsEqual(((CubicBezierPathSegmentDefinition)venueCreatedCubic.Path.Segments[0]).Control1,
+        ((CubicBezierPathSegmentDefinition)venueDragCancelBefore.Segments[0]).Control1),
+    "Venue drag cancel restores the exact before Path");
+
+var venuePropertyHistory = new EditorSnapshotHistory(20);
+venuePropertyHistory.Reset(VenueStore.Serialize(curvedVenue.Definition), saved: true);
+AssertTrue(curvedVenue.SetMarkingProperties(venueCreatedCubic.Id, "#123456", 0.25f, "dotted", false),
+    "Venue style, color, thickness and visibleInViewer edit is valid");
+venuePropertyHistory.Commit(VenueStore.Serialize(curvedVenue.Definition), "Venue marking properties");
+string? venuePropertyUndoJson = venuePropertyHistory.Undo();
+AssertTrue(venuePropertyUndoJson is not null, "Venue marking properties produce an Undo snapshot");
+VenueDefinitionDto venuePropertyUndo = VenueStore.LoadFromJson(venuePropertyUndoJson!, "venue-property-undo", ProjectDirectory).Definition;
+AssertTrue(venuePropertyUndo.Markings[1].Style == "solid", "Venue marking style Undo restores the original value");
+AssertTrue(venuePropertyUndo.Markings[1].Color == "#FFFFFF", "Venue marking color Undo restores the original value");
+string? venuePropertyRedoJson = venuePropertyHistory.Redo();
+AssertTrue(venuePropertyRedoJson is not null, "Venue marking properties produce a Redo snapshot");
+VenueDefinitionDto venuePropertyRedo = VenueStore.LoadFromJson(venuePropertyRedoJson!, "venue-property-redo", ProjectDirectory).Definition;
+AssertTrue(venuePropertyRedo.Markings[1].Style == "dotted", "Venue marking style Redo restores the edited value");
+AssertTrue(venuePropertyRedo.Markings[1].Color == "#123456", "Venue marking color Redo restores the edited value");
+AssertTrue(!curvedVenue.SetMarkingProperties(venueCreatedCubic.Id, "#123456", 0, "solid", true),
+    "Venue marking thickness validation rejects non-positive values");
+AssertTrue(!venueCreatedCubic.VisibleInViewer, "Venue visibleInViewer=false remains persisted editor data");
+
+string curvedVenueJson = VenueStore.Serialize(curvedVenue.Definition);
+VenueDefinitionDto curvedVenueReload = VenueStore.LoadFromJson(curvedVenueJson, "curved-venue", ProjectDirectory).Definition;
+var reloadedVenueCubic = (CubicBezierPathSegmentDefinition)curvedVenueReload.Markings[1].Path.Segments[0];
+AssertTrue(reloadedVenueCubic.Control1.X == ((CubicBezierPathSegmentDefinition)venueCreatedCubic.Path.Segments[0]).Control1.X &&
+    reloadedVenueCubic.Control2.Y == ((CubicBezierPathSegmentDefinition)venueCreatedCubic.Path.Segments[0]).Control2.Y,
+    "Venue save/reload preserves exact curved geometry");
+PathDefinition beforeVenueResize = PathEditing.CopyPath(venueCreatedCubic.Path);
+curvedVenue.Definition.Area.Width = 1; curvedVenue.Definition.Area.Length = 1;
+AssertTrue(PathEditing.PointsEqual(beforeVenueResize.Start, venueCreatedCubic.Path.Start) &&
+    PathEditing.PointsEqual(beforeVenueResize.Segments[0].EndPoint, venueCreatedCubic.Path.Segments[0].EndPoint),
+    "Venue area resize does not mutate Path geometry");
+AssertTrue(VenueStore.Diagnose(curvedVenue.Definition, ProjectDirectory)
+    .Any(message => message.Contains("marking", StringComparison.OrdinalIgnoreCase) && message.Contains("outside", StringComparison.OrdinalIgnoreCase)),
+    "Venue out-of-area curved marking is preserved and reported as warning");
 
 string mainSceneText = File.ReadAllText(Path.Combine(ProjectDirectory, "scenes", "Main.tscn"));
 AssertTrue(mainSceneText.Contains("type=\"CharacterBody3D\"", StringComparison.Ordinal),

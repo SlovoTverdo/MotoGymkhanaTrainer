@@ -111,6 +111,24 @@ public sealed class VenueDocument
         Definition.Markings = [.. Definition.Markings, marking];
         return marking;
     }
+
+    /// <summary>Adds a fully formed, validated Path without persisting transient empty geometry.</summary>
+    public MarkingDto AddMarking(PathDefinition path)
+    {
+        IReadOnlyList<string> errors = PathValidator.Validate(path, "marking.path");
+        if (errors.Count > 0) throw new ArgumentException(string.Join(" ", errors), nameof(path));
+        var marking = new MarkingDto
+        {
+            Id = NextId("venue-marking", Definition.Markings.Select(value => value.Id)),
+            Path = PathEditing.CopyPath(path),
+            Color = "#FFFFFF",
+            WidthMeters = 0.08f,
+            Style = "solid",
+            VisibleInViewer = true,
+        };
+        Definition.Markings = [.. Definition.Markings, marking];
+        return marking;
+    }
     public bool DeleteMarking(string id)
     {
         int before = Definition.Markings.Length;
@@ -134,6 +152,86 @@ public sealed class VenueDocument
         MarkingDto marking = FindMarking(id) ?? throw Missing(id);
         if (!PathEditing.DeleteInternalVertex(marking.Path, index))
             throw new InvalidOperationException("Only an internal vertex of an all-line path can be deleted.");
+    }
+
+    /// <summary>Moves one Path coordinate while preserving implicit segment starts.</summary>
+    public bool MoveMarkingCoordinate(string id, int segmentIndex, MarkingPathCoordinateKind kind, Point2Dto point)
+    {
+        MarkingDto? marking = FindMarking(id);
+        if (marking is null) return false;
+        PathDefinition candidate = PathEditing.CopyPath(marking.Path);
+        if (!PathEditing.MoveCoordinate(candidate, segmentIndex, kind, point) ||
+            PathValidator.Validate(candidate, $"marking '{id}'.path").Count > 0) return false;
+        marking.Path = candidate;
+        return true;
+    }
+
+    /// <summary>Restores a deep Path snapshot, used by canceled drag transactions.</summary>
+    public bool ReplaceMarkingPath(string id, PathDefinition path)
+    {
+        MarkingDto? marking = FindMarking(id);
+        if (marking is null) return false;
+        marking.Path = PathEditing.CopyPath(path);
+        return true;
+    }
+
+    /// <summary>Translates all Path coordinates by one common domain-space delta.</summary>
+    public bool MoveMarking(string id, float deltaX, float deltaY)
+    {
+        MarkingDto? marking = FindMarking(id);
+        if (marking is null || !float.IsFinite(deltaX) || !float.IsFinite(deltaY)) return false;
+        marking.Path = PathEditing.Translate(marking.Path, deltaX, deltaY);
+        return true;
+    }
+
+    /// <summary>Appends a line or initially straight cubic and returns its new segment index.</summary>
+    public int AppendMarkingSegment(string id, Point2Dto end, bool cubic)
+    {
+        MarkingDto? marking = FindMarking(id);
+        if (marking is null) return -1;
+        return cubic ? PathEditing.AppendCubic(marking.Path, end) : PathEditing.AppendLine(marking.Path, end);
+    }
+
+    public bool ConvertMarkingSegment(string id, int segmentIndex, bool toCubic)
+    {
+        MarkingDto? marking = FindMarking(id);
+        return marking is not null && (toCubic
+            ? PathEditing.ConvertLineToCubic(marking.Path, segmentIndex)
+            : PathEditing.ConvertCubicToLine(marking.Path, segmentIndex));
+    }
+
+    public bool SplitMarkingSegment(string id, int segmentIndex, float parameter)
+    {
+        MarkingDto? marking = FindMarking(id);
+        return marking is not null && PathEditing.SplitSegment(marking.Path, segmentIndex, parameter);
+    }
+
+    /// <summary>Deletes one segment; deleting the only segment removes its marking.</summary>
+    public bool DeleteMarkingSegment(string id, int segmentIndex, out bool markingDeleted)
+    {
+        markingDeleted = false;
+        MarkingDto? marking = FindMarking(id);
+        if (marking is null || (uint)segmentIndex >= (uint)marking.Path.Segments.Length) return false;
+        if (marking.Path.Segments.Length == 1)
+        {
+            markingDeleted = DeleteMarking(id);
+            return markingDeleted;
+        }
+        return PathEditing.DeleteSegment(marking.Path, segmentIndex);
+    }
+
+    /// <summary>Applies validated presentation properties without touching Path geometry.</summary>
+    public bool SetMarkingProperties(string id, string color, float widthMeters, string style, bool visibleInViewer)
+    {
+        MarkingDto? marking = FindMarking(id);
+        if (marking is null || widthMeters <= 0 || !float.IsFinite(widthMeters) ||
+            !MarkingGeometry.TryNormalizeColor(color, false, out string canonical) ||
+            !MarkingGeometry.IsSupportedStyle(style)) return false;
+        marking.Color = canonical;
+        marking.WidthMeters = widthMeters;
+        marking.Style = style;
+        marking.VisibleInViewer = visibleInViewer;
+        return true;
     }
 
     private static string NextId(string prefix, IEnumerable<string> existing)
