@@ -4,7 +4,7 @@ using MotoGymkhanaTrainer.Tracks;
 namespace MotoGymkhanaTrainer.VenueEditor;
 
 /// <summary>Explicit Venue authoring tools; active state is displayed by the host toolbar.</summary>
-public enum VenueTool { Select, AddCone, AddMarking, AddLine, AddCubicBezier }
+public enum VenueTool { Select, PlaceImportedObject, AddCone, AddMarking, AddLine, AddCubicBezier }
 
 /// <summary>Kind of stable editor-only Venue selection.</summary>
 public enum VenueSelectionKind { None, Object, Cone, Marking, MarkingSegment, MarkingHandle }
@@ -32,6 +32,9 @@ public partial class VenueEditorCanvas : Control
     private PathDefinition? _draftPath;
     private string _buildingMarkingId = string.Empty;
     private Point2Dto? _previewEnd;
+    private FootprintDto? _placementFootprint;
+    private string _placementName = string.Empty;
+    private Point2Dto? _placementPoint;
     private PathDefinition? _dragBeforeMarkingPath;
     private Point2Dto? _dragBeforePoint;
     private Point2Dto? _dragPointerStart;
@@ -45,6 +48,8 @@ public partial class VenueEditorCanvas : Control
     public event Action<VenueTool>? ToolChanged;
     public event Action<string>? DuplicateRequested;
     public event Action<string>? LockedTransformAttempted;
+    public event Action<Point2Dto>? ImportedPlacementConfirmed;
+    public event Action? ImportedPlacementCanceled;
 
     public VenueSelectionKind SelectionKind => _selectionKind;
     public string? SelectedId => _selectedId;
@@ -86,6 +91,24 @@ public partial class VenueEditorCanvas : Control
         CancelTransientOperation();
         _tool = tool;
         ToolChanged?.Invoke(tool);
+        QueueRedraw();
+    }
+
+    /// <summary>Starts an editor-only snapped ghost; no DTO or history entry exists yet.</summary>
+    public void BeginImportedPlacement(string displayName, FootprintDto footprint)
+    {
+        CancelTransientOperation();
+        _placementName = displayName;
+        _placementFootprint = new FootprintDto
+        {
+            Width = footprint.Width,
+            Length = footprint.Length,
+            CenterX = footprint.CenterX,
+            CenterY = footprint.CenterY,
+        };
+        _placementPoint = new Point2Dto();
+        _tool = VenueTool.PlaceImportedObject;
+        ToolChanged?.Invoke(_tool);
         QueueRedraw();
     }
 
@@ -142,6 +165,12 @@ public partial class VenueEditorCanvas : Control
             ClearTransientCreation();
             canceled = true;
         }
+        if (_placementFootprint is not null)
+        {
+            ClearImportedPlacement();
+            ImportedPlacementCanceled?.Invoke();
+            canceled = true;
+        }
         if (canceled)
         {
             _tool = VenueTool.Select;
@@ -192,6 +221,11 @@ public partial class VenueEditorCanvas : Control
         {
             if (_panning) { _panPixels += motion.Relative; QueueRedraw(); }
             else if (_dragging) DragTo(ResolveSnap(motion.Position, motion.CtrlPressed));
+            else if (_tool == VenueTool.PlaceImportedObject)
+            {
+                _placementPoint = ResolveSnap(motion.Position, motion.CtrlPressed);
+                QueueRedraw();
+            }
             else if (IsPathTool(_tool)) { _previewEnd = ResolveSnap(motion.Position, motion.CtrlPressed); QueueRedraw(); }
         }
     }
@@ -203,11 +237,22 @@ public partial class VenueEditorCanvas : Control
         foreach (VenueObjectInstanceDto item in _document.Definition.Objects) DrawObject(item);
         foreach (ConeDto cone in _document.Definition.Cones) DrawCone(cone);
         DrawMarkingPreview();
+        DrawImportedPlacementGhost();
     }
 
     private void HandleLeftPress(Vector2 screen, bool bypassSnap)
     {
         Point2Dto point = ResolveSnap(screen, bypassSnap);
+        if (_tool == VenueTool.PlaceImportedObject && _placementFootprint is not null)
+        {
+            Point2Dto confirmed = Copy(point);
+            ClearImportedPlacement();
+            _tool = VenueTool.Select;
+            ToolChanged?.Invoke(_tool);
+            ImportedPlacementConfirmed?.Invoke(confirmed);
+            QueueRedraw();
+            return;
+        }
         if (_tool == VenueTool.AddCone)
         {
             ConeDto cone = _document.AddCone(point);
@@ -317,6 +362,13 @@ public partial class VenueEditorCanvas : Control
 
     private void ClearDragState() { _dragBeforeMarkingPath = null; _dragBeforePoint = null; _dragPointerStart = null; }
     private void ClearTransientCreation() { _draftPath = null; _buildingMarkingId = string.Empty; _previewEnd = null; }
+
+    private void ClearImportedPlacement()
+    {
+        _placementFootprint = null;
+        _placementPoint = null;
+        _placementName = string.Empty;
+    }
 
     /* Handles and Path centerlines win before cone/object selection. */
     private void HitTest(Vector2 screen)
@@ -441,6 +493,23 @@ public partial class VenueEditorCanvas : Control
         if (_tool == VenueTool.AddCubicBezier) PathEditing.AppendCubic(preview, _previewEnd); else PathEditing.AppendLine(preview, _previewEnd);
         DrawPolyline(PathSampler.Sample(preview).Points.Select(ToScreen).ToArray(), new Color(1, 0.82f, 0.2f, 0.85f), 3, true);
         DrawCircle(ToScreen(_previewEnd), 5, Colors.White);
+    }
+
+    private void DrawImportedPlacementGhost()
+    {
+        if (_placementFootprint is null || _placementPoint is null) return;
+        var ghost = new VenueObjectInstanceDto
+        {
+            Position = _placementPoint,
+            Footprint = _placementFootprint,
+            Scale = new Scale3Dto(),
+        };
+        Vector2[] polygon = VenueGeometry.TransformFootprint(ghost).Select(ToScreen).ToArray();
+        var color = new Color(0.25f, 0.9f, 1.0f, 0.65f);
+        DrawColoredPolygon(polygon, new Color(color, 0.12f));
+        DrawClosed(polygon, color, 3);
+        DrawString(ThemeDB.FallbackFont, ToScreen(_placementPoint) + new Vector2(8, -8),
+            $"{_placementName} (click to place, Esc to cancel)", HorizontalAlignment.Left, -1, 13, color);
     }
 
     private void DrawClosed(IReadOnlyList<Vector2> points, Color color, float width)

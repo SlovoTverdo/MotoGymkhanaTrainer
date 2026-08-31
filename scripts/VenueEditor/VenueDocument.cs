@@ -22,7 +22,13 @@ public sealed class VenueDocument
     public MarkingDto? FindMarking(string? id) => Definition.Markings.FirstOrDefault(item => item.Id == id);
 
     /// <summary>Adds a measured scene reference at the area centre/origin.</summary>
-    public VenueObjectInstanceDto AddObject(string assetPath, FootprintDto footprint)
+    public VenueObjectInstanceDto AddObject(
+        string assetPath,
+        FootprintDto footprint,
+        Point2Dto? position = null,
+        string? objectType = null,
+        string? assetId = null,
+        string? collisionMode = null)
     {
         ArgumentNullException.ThrowIfNull(footprint);
         var item = new VenueObjectInstanceDto
@@ -30,10 +36,17 @@ public sealed class VenueDocument
             ObjectId = NextId("venue-object", Definition.Objects.Select(value => value.ObjectId)),
             Name = Path.GetFileNameWithoutExtension(assetPath),
             AssetPath = assetPath,
+            ObjectType = objectType,
+            AssetId = assetId,
+            CollisionMode = collisionMode,
+            CollisionEnabled = collisionMode != "none",
+            Position = position is null ? new Point2Dto() : Copy(position),
             Footprint = new FootprintDto
             {
                 Width = footprint.Width,
                 Length = footprint.Length,
+                CenterX = footprint.CenterX,
+                CenterY = footprint.CenterY,
             },
         };
         Definition.Objects = [.. Definition.Objects, item];
@@ -49,12 +62,23 @@ public sealed class VenueDocument
             ObjectId = NextId("venue-object", Definition.Objects.Select(value => value.ObjectId)),
             Name = source.Name,
             AssetPath = source.AssetPath,
-            Position = new Point2Dto { X = source.Position.X + 1, Y = source.Position.Y + 1 },
+            ObjectType = source.ObjectType,
+            AssetId = source.AssetId,
+            Position = source.ObjectType == "imported"
+                ? Copy(source.Position)
+                : new Point2Dto { X = source.Position.X + 1, Y = source.Position.Y + 1 },
             Elevation = source.Elevation,
             RotationDeg = source.RotationDeg,
             Scale = new Scale3Dto { X = source.Scale.X, Y = source.Scale.Y, Z = source.Scale.Z },
-            Footprint = new FootprintDto { Width = source.Footprint.Width, Length = source.Footprint.Length },
+            Footprint = new FootprintDto
+            {
+                Width = source.Footprint.Width,
+                Length = source.Footprint.Length,
+                CenterX = source.Footprint.CenterX,
+                CenterY = source.Footprint.CenterY,
+            },
             CollisionEnabled = source.CollisionEnabled,
+            CollisionMode = source.CollisionMode,
             VisibleInViewer = source.VisibleInViewer,
         };
         int index = Array.IndexOf(Definition.Objects, source);
@@ -69,6 +93,42 @@ public sealed class VenueDocument
         return Definition.Objects.Length != before;
     }
     public void MoveObject(string id, Point2Dto position) => (FindObject(id) ?? throw Missing(id)).Position = Copy(position);
+
+    /// <summary>Changes only an imported instance's shared asset binding and cached footprint.</summary>
+    public void RelinkImportedObject(string id, VenueImportedAssetMetadata asset)
+    {
+        VenueObjectInstanceDto item = FindObject(id) ?? throw Missing(id);
+        if (item.ObjectType != "imported") throw new InvalidOperationException("Only imported Venue objects can be relinked.");
+        item.AssetId = asset.AssetId;
+        item.AssetPath = asset.RuntimeScenePath;
+        item.Footprint = Copy(asset.Footprint);
+        item.CollisionMode = asset.CollisionMode;
+        item.CollisionEnabled = asset.CollisionMode == "generated";
+    }
+
+    /// <summary>Refreshes shared cached geometry for every instance without changing instance transforms.</summary>
+    public int ApplyImportedAssetMetadata(VenueImportedAssetMetadata asset)
+    {
+        int updated = 0;
+        foreach (VenueObjectInstanceDto item in Definition.Objects.Where(value =>
+                     value.ObjectType == "imported" && value.AssetId == asset.AssetId))
+        {
+            item.AssetPath = asset.RuntimeScenePath;
+            item.Footprint = Copy(asset.Footprint);
+            updated++;
+        }
+        return updated;
+    }
+
+    /// <summary>Maps the persisted imported collision policy to the compatibility boolean.</summary>
+    public void SetImportedCollisionMode(string id, string mode)
+    {
+        VenueObjectInstanceDto item = FindObject(id) ?? throw Missing(id);
+        if (item.ObjectType != "imported") throw new InvalidOperationException("Only imported Venue objects have a collision mode.");
+        if (mode is not ("generated" or "none")) throw new ArgumentOutOfRangeException(nameof(mode));
+        item.CollisionMode = mode;
+        item.CollisionEnabled = mode == "generated";
+    }
 
     public ConeDto AddCone(Point2Dto position)
     {
@@ -244,5 +304,12 @@ public sealed class VenueDocument
         }
     }
     private static Point2Dto Copy(Point2Dto point) => new() { X = point.X, Y = point.Y };
+    private static FootprintDto Copy(FootprintDto footprint) => new()
+    {
+        Width = footprint.Width,
+        Length = footprint.Length,
+        CenterX = footprint.CenterX,
+        CenterY = footprint.CenterY,
+    };
     private static InvalidOperationException Missing(string id) => new($"Venue item '{id}' no longer exists.");
 }

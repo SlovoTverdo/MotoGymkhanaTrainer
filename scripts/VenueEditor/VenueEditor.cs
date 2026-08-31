@@ -7,25 +7,33 @@ namespace MotoGymkhanaTrainer.VenueEditor;
 public partial class VenueEditor : Control
 {
     private enum PendingAction { None, New, Open }
+    private enum HistoryKind { Venue, AssetLibrary }
 
     private VenueDocument _document = VenueDocument.CreateNew();
     private readonly EditorSnapshotHistory _history = new(100);
+    private readonly EditorSnapshotHistory _assetHistory = new(100);
+    private readonly List<HistoryKind> _actionHistory = [];
+    private readonly HashSet<string> _visibleImportedAssetIds = new(StringComparer.Ordinal);
+    private int _actionHistoryPosition = -1;
     private readonly HashSet<string> _lockedObjectIds = new(StringComparer.Ordinal);
     private SandboxedJsonLibrary? _library;
+    private VenueImportedAssetLibrary? _importedAssets;
     private VenueEditorCanvas? _canvas;
     private Tree? _libraryTree;
     private ItemList? _objectList;
+    private ItemList? _assetList;
+    private VenueImportedAssetPreview? _assetPreview;
     private LineEdit? _venueId, _venueName, _panoramaPath, _objectName, _objectPath, _selectedId;
     private SpinBox? _areaWidth, _areaLength, _panoramaRotation, _panoramaEnergy;
     private SpinBox? _positionX, _positionY, _elevation, _rotation, _scaleX, _scaleY, _scaleZ, _footprintWidth, _footprintLength;
     private SpinBox? _pointX, _pointY, _markingWidth;
-    private CheckButton? _panoramaEnabled, _collisionEnabled, _visibleInViewer, _lockObject;
+    private CheckButton? _panoramaEnabled, _collisionEnabled, _visibleInViewer, _lockObject, _showCollision;
     private OptionButton? _coneColor, _markingStyle;
     private ColorPickerButton? _markingColor;
     private Button? _undoButton, _redoButton, _duplicateButton, _convertButton, _splitButton, _deleteSegmentButton;
     private Label? _fileLabel, _dirtyLabel, _statusLabel, _selectionLabel, _toolLabel, _markingMetricsLabel, _segmentInfoLabel;
     private RichTextLabel? _warningsLabel;
-    private FileDialog? _openDialog, _saveDialog, _objectDialog, _textureDialog;
+    private FileDialog? _openDialog, _saveDialog, _objectDialog, _textureDialog, _importDialog, _relinkDialog;
     private ConfirmationDialog? _unsavedDialog, _newFolderDialog, _deleteDialog;
     private LineEdit? _newFolderName;
     private string? _currentFilePath;
@@ -34,12 +42,17 @@ public partial class VenueEditor : Control
     private bool _updatingUi;
     private string? _transactionSnapshot;
     private string? _transactionDescription;
+    private VenueImportedAssetMetadata? _selectedImportedAsset;
+    private VenueImportedAssetMetadata? _pendingPlacementAsset;
 
     public override void _Ready()
     {
         _library = new SandboxedJsonLibrary(
             ProjectSettings.GlobalizePath("res://venues"), "Venue library", "res://venues/");
+        _importedAssets = new VenueImportedAssetLibrary();
         BuildUi();
+        _visibleImportedAssetIds.UnionWith(_importedAssets.Enumerate().Select(item => item.AssetId));
+        _assetHistory.Reset(SerializeVisibleAssets(), saved: true);
         ReplaceDocument(VenueDocument.CreateNew(), null, saved: false);
         SetStatus("New Venue created.", false);
     }
@@ -86,6 +99,8 @@ public partial class VenueEditor : Control
         _canvas.ToolChanged += tool => { if (_toolLabel is not null) _toolLabel.Text = $"Tool: {ToolDisplayName(tool)}"; };
         _canvas.DuplicateRequested += _ => DuplicateSelected();
         _canvas.LockedTransformAttempted += id => SetStatus($"Object '{id}' is locked.", true);
+        _canvas.ImportedPlacementConfirmed += ConfirmImportedPlacement;
+        _canvas.ImportedPlacementCanceled += () => { _pendingPlacementAsset = null; SetStatus("Imported object placement canceled.", false); };
         body.AddChild(_canvas);
         body.AddChild(BuildProperties());
         page.AddChild(body);
@@ -134,6 +149,15 @@ public partial class VenueEditor : Control
         panel.AddChild(_libraryTree);
         panel.AddChild(Button("Open Selected", OpenSelectedLibraryFile));
         panel.AddChild(Button("Save in Selected Folder", SaveInSelectedFolder));
+        panel.AddChild(Title("Imported Asset Library"));
+        var assetActions = new HBoxContainer();
+        assetActions.AddChild(Button("Import GLB", () => _importDialog?.PopupCenteredRatio(0.8f)));
+        assetActions.AddChild(Button("Place", BeginImportedPlacement));
+        panel.AddChild(assetActions);
+        _assetList = new ItemList { CustomMinimumSize = new Vector2(0, 145) };
+        _assetList.ItemSelected += SelectImportedAsset;
+        _assetList.ItemActivated += _ => BeginImportedPlacement();
+        panel.AddChild(_assetList);
         return panel;
     }
 
@@ -172,9 +196,16 @@ public partial class VenueEditor : Control
         _scaleZ = NumberField(panel, "Scale Z", 0.01, 1000, 0.05, OnObjectChanged);
         _footprintWidth = NumberField(panel, "Footprint Width", 0.01, 10000, 0.05, OnObjectChanged);
         _footprintLength = NumberField(panel, "Footprint Length", 0.01, 10000, 0.05, OnObjectChanged);
+        foreach (SpinBox transformControl in ObjectTransformControls()) ConfigureTransformTransaction(transformControl);
         _collisionEnabled = CheckField(panel, "Collision Enabled", OnObjectChanged);
         _visibleInViewer = CheckField(panel, "Visible in Viewer", OnSelectionPropertiesChanged);
         _lockObject = CheckField(panel, "Editor Lock", ToggleLock);
+        panel.AddChild(Button("Relink Asset", ShowRelink));
+        panel.AddChild(Button("Recalculate Footprint", RecalculateImportedFootprint));
+        _showCollision = CheckField(panel, "Show Collision", ToggleCollisionPreview);
+        panel.AddChild(Title("Imported Asset Preview"));
+        _assetPreview = new VenueImportedAssetPreview();
+        panel.AddChild(_assetPreview);
 
         panel.AddChild(Title("Cone / marking"));
         _pointX = NumberField(panel, "Point X", -10000, 10000, 0.05, OnSelectionGeometryChanged);
@@ -201,6 +232,10 @@ public partial class VenueEditor : Control
         _saveDialog.FileSelected += SaveVenue; AddChild(_saveDialog);
         _objectDialog = ResourceDialog("Choose Venue Object", "*.tscn ; Godot Scene");
         _objectDialog.FileSelected += AddObject; AddChild(_objectDialog);
+        _importDialog = ImportDialog("Import GLB/glTF Asset");
+        _importDialog.FileSelected += ImportAsset; AddChild(_importDialog);
+        _relinkDialog = ImportDialog("Relink Missing Imported Asset");
+        _relinkDialog.FileSelected += RelinkSelectedAsset; AddChild(_relinkDialog);
         _textureDialog = ResourceDialog("Choose Panorama Texture", "*.png,*.jpg,*.jpeg,*.webp,*.svg ; Texture2D");
         _textureDialog.FileSelected += SetPanoramaTexture; AddChild(_textureDialog);
         _unsavedDialog = new ConfirmationDialog { Title = "Unsaved changes", DialogText = "Discard unsaved Venue changes?", OkButtonText = "Discard" };
@@ -208,7 +243,7 @@ public partial class VenueEditor : Control
         _newFolderName = new LineEdit { PlaceholderText = "folder-name" };
         _newFolderDialog = new ConfirmationDialog { Title = "Create Venue Folder", DialogText = "Create a child folder in the selected folder:" };
         _newFolderDialog.AddChild(_newFolderName); _newFolderDialog.Confirmed += CreateFolder; AddChild(_newFolderDialog);
-        _deleteDialog = new ConfirmationDialog { Title = "Delete Venue Object", DialogText = "Delete the selected object instance? The .tscn asset remains untouched." };
+        _deleteDialog = new ConfirmationDialog { Title = "Delete Venue Object", DialogText = "Delete the selected object instance? Its shared asset remains untouched." };
         _deleteDialog.Confirmed += DeleteSelectedNow; AddChild(_deleteDialog);
     }
 
@@ -216,6 +251,7 @@ public partial class VenueEditor : Control
     {
         _document = document; _currentFilePath = path; _lockedObjectIds.Clear(); _transactionSnapshot = null;
         _history.Reset(VenueStore.Serialize(_document.Definition), saved);
+        _actionHistory.Clear(); _actionHistoryPosition = -1;
         _canvas!.SetDocument(document); _canvas.SetLockedObjects(_lockedObjectIds);
         SynchronizeAll();
     }
@@ -229,6 +265,7 @@ public partial class VenueEditor : Control
         _panoramaEnabled!.ButtonPressed = value.Panorama.Enabled; _panoramaPath!.Text = value.Panorama.TexturePath;
         _panoramaRotation!.Value = value.Panorama.RotationDeg; _panoramaEnergy!.Value = value.Panorama.EnergyMultiplier;
         _objectList!.Clear(); foreach (VenueObjectInstanceDto item in value.Objects) _objectList.AddItem($"{item.Name}  [{item.ObjectId}]");
+        RefreshImportedAssetList();
         _updatingUi = false;
         RefreshTree(); SynchronizeSelection(); RefreshDiagnostics(); UpdateState();
     }
@@ -252,6 +289,11 @@ public partial class VenueEditor : Control
             _collisionEnabled!.ButtonPressed = item.CollisionEnabled; _visibleInViewer!.ButtonPressed = item.VisibleInViewer;
             _lockObject!.ButtonPressed = _lockedObjectIds.Contains(item.ObjectId);
             int index = Array.IndexOf(_document.Definition.Objects, item); if (index >= 0) _objectList!.Select(index);
+            if (item.ObjectType == "imported" && item.AssetId is not null)
+            {
+                _selectedImportedAsset = _importedAssets?.Find(item.AssetId);
+                _assetPreview?.ShowAsset(_selectedImportedAsset, _showCollision?.ButtonPressed == true);
+            }
         }
         else if (cone is not null)
         {
@@ -271,6 +313,9 @@ public partial class VenueEditor : Control
         else { _markingMetricsLabel!.Text = "Segments: —   Length: —"; _segmentInfoLabel!.Text = "Segment: —"; }
         bool locked = item is not null && _lockedObjectIds.Contains(item.ObjectId);
         foreach (SpinBox control in ObjectTransformControls()) control.Editable = !locked;
+        bool imported = item?.ObjectType == "imported";
+        _footprintWidth!.Editable = !locked && !imported;
+        _footprintLength!.Editable = !locked && !imported;
         bool hasSegment = marking is not null && (uint)_canvas.SelectedSegmentIndex < (uint)marking.Path.Segments.Length;
         _duplicateButton!.Disabled = item is null;
         _convertButton!.Disabled = !hasSegment; _splitButton!.Disabled = !hasSegment; _deleteSegmentButton!.Disabled = !hasSegment;
@@ -295,9 +340,16 @@ public partial class VenueEditor : Control
         item.Position = new Point2Dto { X = (float)_positionX!.Value, Y = (float)_positionY!.Value };
         item.Elevation = (float)_elevation!.Value; item.RotationDeg = (float)_rotation!.Value;
         item.Scale.X = (float)_scaleX!.Value; item.Scale.Y = (float)_scaleY!.Value; item.Scale.Z = (float)_scaleZ!.Value;
-        item.Footprint.Width = (float)_footprintWidth!.Value; item.Footprint.Length = (float)_footprintLength!.Value;
+        if (item.ObjectType != "imported")
+        {
+            item.Footprint.Width = (float)_footprintWidth!.Value;
+            item.Footprint.Length = (float)_footprintLength!.Value;
+        }
         item.CollisionEnabled = _collisionEnabled!.ButtonPressed; item.VisibleInViewer = _visibleInViewer!.ButtonPressed;
-        Commit("Edit Venue object"); _canvas.QueueRedraw();
+        if (item.ObjectType == "imported")
+            _document.SetImportedCollisionMode(id, item.CollisionEnabled ? "generated" : "none");
+        if (_transactionSnapshot is null) Commit("Edit Venue object");
+        _canvas.QueueRedraw();
     }
 
     private void OnSelectionGeometryChanged()
@@ -313,7 +365,8 @@ public partial class VenueEditor : Control
             _canvas.RefreshMarking(id);
         }
         else return;
-        Commit("Edit item position"); _canvas.QueueRedraw();
+        if (_transactionSnapshot is null) Commit("Edit item position");
+        _canvas.QueueRedraw();
     }
 
     private void OnSelectionPropertiesChanged()
@@ -339,6 +392,7 @@ public partial class VenueEditor : Control
 
     private void BeginTransaction(string description)
     {
+        if (_transactionSnapshot is not null) return;
         _transactionSnapshot = VenueStore.Serialize(_document.Definition);
         _transactionDescription = description;
     }
@@ -352,13 +406,42 @@ public partial class VenueEditor : Control
 
     private void Commit(string description)
     {
-        try { _history.Commit(VenueStore.Serialize(_document.Definition), description); SetStatus(description, false); }
+        try
+        {
+            if (_history.Commit(VenueStore.Serialize(_document.Definition), description)) RecordAction(HistoryKind.Venue);
+            SetStatus(description, false);
+        }
         catch (Exception exception) { SetStatus(exception.Message, true); }
         RefreshDiagnostics(); UpdateState();
     }
 
-    private bool Undo() => RestoreHistory(_history.Undo(), "Undo");
-    private bool Redo() => RestoreHistory(_history.Redo(), "Redo");
+    private bool Undo()
+    {
+        if (_actionHistoryPosition < 0) return false;
+        HistoryKind kind = _actionHistory[_actionHistoryPosition--];
+        if (kind == HistoryKind.AssetLibrary)
+        {
+            RestoreVisibleAssets(_assetHistory.Undo());
+            SetStatus("Undo imported asset library entry (managed bytes retained behind a persistent undo marker).", false);
+            UpdateState();
+            return true;
+        }
+        return RestoreHistory(_history.Undo(), "Undo");
+    }
+
+    private bool Redo()
+    {
+        if (_actionHistoryPosition + 1 >= _actionHistory.Count) return false;
+        HistoryKind kind = _actionHistory[++_actionHistoryPosition];
+        if (kind == HistoryKind.AssetLibrary)
+        {
+            RestoreVisibleAssets(_assetHistory.Redo());
+            SetStatus("Redo imported asset library entry.", false);
+            UpdateState();
+            return true;
+        }
+        return RestoreHistory(_history.Redo(), "Redo");
+    }
     private bool RestoreHistory(string? snapshot, string action)
     {
         if (snapshot is null) return false;
@@ -414,6 +497,24 @@ public partial class VenueEditor : Control
             // candidate. A bad PackedScene becomes a placeholder warning, but a
             // malformed Venue root never replaces the current document.
             var warnings = loaded.Warnings.ToList();
+            var candidate = new VenueDocument(loaded.Definition);
+            bool sharedMetadataUpdated = false;
+            foreach (string assetId in loaded.Definition.Objects
+                         .Where(item => item.ObjectType == "imported" && item.AssetId is not null)
+                         .Select(item => item.AssetId!).Distinct(StringComparer.Ordinal))
+            {
+                VenueImportedAssetMetadata? metadata = _importedAssets?.Find(assetId);
+                if (metadata is null) continue;
+                sharedMetadataUpdated |= loaded.Definition.Objects.Any(item => item.AssetId == assetId &&
+                    (item.AssetPath != metadata.RuntimeScenePath ||
+                     item.Footprint.Width != metadata.Footprint.Width ||
+                     item.Footprint.Length != metadata.Footprint.Length ||
+                     item.Footprint.CenterX != metadata.Footprint.CenterX ||
+                     item.Footprint.CenterY != metadata.Footprint.CenterY));
+                candidate.ApplyImportedAssetMetadata(metadata);
+            }
+            if (sharedMetadataUpdated)
+                warnings.Add("Imported asset metadata was refreshed from the shared library; save this Venue to persist the refreshed footprint cache.");
             foreach (VenueObjectInstanceDto item in loaded.Definition.Objects)
                 if (!ResourceLoader.Exists(item.AssetPath, "PackedScene") || GD.Load<PackedScene>(item.AssetPath) is null)
                     warnings.Add($"Object '{item.ObjectId}' cannot be resolved as PackedScene: {item.AssetPath}");
@@ -421,7 +522,7 @@ public partial class VenueEditor : Control
                 (!ResourceLoader.Exists(loaded.Definition.Panorama.TexturePath, "Texture2D") ||
                  GD.Load<Texture2D>(loaded.Definition.Panorama.TexturePath) is null))
                 warnings.Add($"Panorama cannot be resolved as Texture2D: {loaded.Definition.Panorama.TexturePath}");
-            ReplaceDocument(new VenueDocument(loaded.Definition), file, true);
+            ReplaceDocument(candidate, file, saved: !sharedMetadataUpdated);
             foreach (string warning in warnings.Distinct(StringComparer.Ordinal)) GD.PushWarning(warning);
             SetStatus($"Loaded with {warnings.Distinct(StringComparer.Ordinal).Count()} warning(s).", warnings.Count > 0);
         }
@@ -448,6 +549,142 @@ public partial class VenueEditor : Control
         }
         catch (Exception exception) { SetStatus($"Add Object failed: {exception.Message}", true); }
     }
+
+    private void ImportAsset(string path)
+    {
+        try
+        {
+            VenueImportedAssetResult result = _importedAssets!.Import(Filesystem(path));
+            if (!result.ReusedExisting)
+            {
+                _visibleImportedAssetIds.Add(result.Asset.AssetId);
+                if (_assetHistory.Commit(SerializeVisibleAssets(), "Import Venue asset"))
+                    RecordAction(HistoryKind.AssetLibrary);
+            }
+            RefreshImportedAssetList(result.Asset.AssetId);
+            _selectedImportedAsset = result.Asset;
+            _assetPreview!.ShowAsset(result.Asset, _showCollision!.ButtonPressed);
+            SetStatus(result.ReusedExisting
+                ? $"Duplicate content detected; using existing asset '{result.Asset.AssetId}'."
+                : $"Imported '{result.Asset.DisplayName}' as '{result.Asset.AssetId}'.", false);
+        }
+        catch (Exception exception)
+        {
+            SetStatus($"Import failed: {exception.Message}", true);
+            GD.PushError(exception.ToString());
+            RefreshImportedAssetList();
+        }
+    }
+
+    private void SelectImportedAsset(long index)
+    {
+        if (_assetList is null || index < 0 || index >= _assetList.ItemCount) return;
+        string assetId = _assetList.GetItemMetadata((int)index).AsString();
+        _selectedImportedAsset = _importedAssets?.Find(assetId);
+        _assetPreview?.ShowAsset(_selectedImportedAsset, _showCollision?.ButtonPressed == true);
+    }
+
+    private void RefreshImportedAssetList(string? selectAssetId = null)
+    {
+        if (_assetList is null || _importedAssets is null) return;
+        IReadOnlyList<VenueImportedAssetMetadata> assets = _importedAssets.Enumerate()
+            .Where(item => _visibleImportedAssetIds.Contains(item.AssetId)).ToArray();
+        _assetList.Clear();
+        for (int index = 0; index < assets.Count; index++)
+        {
+            VenueImportedAssetMetadata asset = assets[index];
+            _assetList.AddItem(
+                $"{asset.DisplayName}\n{asset.Footprint.Width:0.##} × {asset.Footprint.Length:0.##} m  [{asset.AssetId}]");
+            _assetList.SetItemMetadata(index, asset.AssetId);
+            if (asset.AssetId == selectAssetId)
+            {
+                _assetList.Select(index);
+                _selectedImportedAsset = asset;
+            }
+        }
+    }
+
+    private void BeginImportedPlacement()
+    {
+        if (_selectedImportedAsset is null)
+        {
+            SetStatus("Select an imported asset before placement.", true);
+            return;
+        }
+        _pendingPlacementAsset = _selectedImportedAsset;
+        _canvas!.BeginImportedPlacement(_selectedImportedAsset.DisplayName, _selectedImportedAsset.Footprint);
+        SetStatus("Move the ghost and click to place; Esc cancels.", false);
+    }
+
+    private void ConfirmImportedPlacement(Point2Dto position)
+    {
+        VenueImportedAssetMetadata? asset = _pendingPlacementAsset;
+        _pendingPlacementAsset = null;
+        if (asset is null) return;
+        VenueObjectInstanceDto item = _document.AddObject(
+            asset.RuntimeScenePath,
+            asset.Footprint,
+            position,
+            objectType: "imported",
+            assetId: asset.AssetId,
+            collisionMode: asset.CollisionMode);
+        item.Name = asset.DisplayName;
+        _canvas!.SelectObject(item.ObjectId);
+        Commit("Place imported Venue object");
+        SynchronizeAll();
+    }
+
+    private void ShowRelink()
+    {
+        if (_canvas?.SelectionKind != VenueSelectionKind.Object || _canvas.SelectedId is not string id ||
+            _document.FindObject(id) is not VenueObjectInstanceDto { ObjectType: "imported" })
+        {
+            SetStatus("Select an imported Venue object to relink.", true);
+            return;
+        }
+        _relinkDialog?.PopupCenteredRatio(0.8f);
+    }
+
+    private void RelinkSelectedAsset(string path)
+    {
+        if (_canvas?.SelectedId is not string id || _document.FindObject(id) is not VenueObjectInstanceDto item ||
+            item.ObjectType != "imported") return;
+        try
+        {
+            VenueImportedAssetResult result = _importedAssets!.Import(Filesystem(path));
+            // The domain operation changes only the shared binding and cached geometry.
+            _document.RelinkImportedObject(id, result.Asset);
+            _visibleImportedAssetIds.Add(result.Asset.AssetId);
+            _selectedImportedAsset = result.Asset;
+            Commit("Relink imported Venue asset");
+            SynchronizeAll();
+            _canvas.SelectObject(id);
+            SetStatus($"Relinked object '{id}' to '{result.Asset.AssetId}' without changing its transform.", false);
+        }
+        catch (Exception exception) { SetStatus($"Relink failed: {exception.Message}", true); }
+    }
+
+    private void RecalculateImportedFootprint()
+    {
+        string? assetId = _selectedImportedAsset?.AssetId;
+        if (assetId is null && _canvas?.SelectedId is string objectId)
+            assetId = _document.FindObject(objectId)?.AssetId;
+        if (assetId is null) { SetStatus("Select an imported asset to recalculate.", true); return; }
+        try
+        {
+            VenueImportedAssetMetadata asset = _importedAssets!.Recalculate(assetId);
+            int updated = _document.ApplyImportedAssetMetadata(asset);
+            _selectedImportedAsset = asset;
+            Commit("Recalculate imported asset footprint");
+            SynchronizeAll();
+            _assetPreview!.ShowAsset(asset, _showCollision!.ButtonPressed);
+            SetStatus($"Recalculated '{assetId}' and updated {updated} instance(s) without changing transforms.", false);
+        }
+        catch (Exception exception) { SetStatus($"Recalculate failed: {exception.Message}", true); }
+    }
+
+    private void ToggleCollisionPreview() => _assetPreview?.SetCollisionVisible(_showCollision?.ButtonPressed == true);
+
     private void SetPanoramaTexture(string path)
     {
         try
@@ -610,7 +847,37 @@ public partial class VenueEditor : Control
     private void UpdateState()
     {
         _fileLabel!.Text = _currentFilePath ?? "Unsaved Venue"; _dirtyLabel!.Text = _history.IsDirty ? "● Unsaved" : "Saved";
-        _undoButton!.Disabled = !_history.CanUndo; _redoButton!.Disabled = !_history.CanRedo;
+        _undoButton!.Disabled = _actionHistoryPosition < 0;
+        _redoButton!.Disabled = _actionHistoryPosition + 1 >= _actionHistory.Count;
+    }
+
+    private void RecordAction(HistoryKind kind)
+    {
+        if (_actionHistoryPosition + 1 < _actionHistory.Count)
+            _actionHistory.RemoveRange(_actionHistoryPosition + 1, _actionHistory.Count - _actionHistoryPosition - 1);
+        _actionHistory.Add(kind);
+        _actionHistoryPosition = _actionHistory.Count - 1;
+    }
+
+    private string SerializeVisibleAssets() => string.Join('\n', _visibleImportedAssetIds.Order(StringComparer.Ordinal));
+
+    private void RestoreVisibleAssets(string? snapshot)
+    {
+        if (snapshot is null) return;
+        var desired = snapshot.Split('\n', StringSplitOptions.RemoveEmptyEntries).ToHashSet(StringComparer.Ordinal);
+        foreach (string removed in _visibleImportedAssetIds.Except(desired).ToArray())
+            _importedAssets?.SetUndoVisible(removed, visible: false);
+        foreach (string restored in desired.Except(_visibleImportedAssetIds).ToArray())
+            _importedAssets?.SetUndoVisible(restored, visible: true);
+        _visibleImportedAssetIds.Clear();
+        foreach (string id in desired)
+            _visibleImportedAssetIds.Add(id);
+        if (_selectedImportedAsset is not null && !_visibleImportedAssetIds.Contains(_selectedImportedAsset.AssetId))
+        {
+            _selectedImportedAsset = null;
+            _assetPreview?.ShowAsset(null, false);
+        }
+        RefreshImportedAssetList();
     }
     private void SetStatus(string text, bool error) { _statusLabel!.Text = text; _statusLabel.Modulate = error ? Colors.OrangeRed : Colors.White; }
     private bool IsEditingText() => GetViewport().GuiGetFocusOwner() is LineEdit or TextEdit or SpinBox;
@@ -641,6 +908,27 @@ public partial class VenueEditor : Control
     };
     private IEnumerable<SpinBox> ObjectTransformControls() => [_positionX!, _positionY!, _elevation!, _rotation!, _scaleX!, _scaleY!, _scaleZ!, _footprintWidth!, _footprintLength!];
 
+    private void ConfigureTransformTransaction(SpinBox control)
+    {
+        control.GuiInput += @event =>
+        {
+            if (_updatingUi || _canvas?.SelectionKind != VenueSelectionKind.Object) return;
+            if (@event is InputEventMouseButton { ButtonIndex: MouseButton.Left } mouse)
+            {
+                if (mouse.Pressed) BeginTransaction("Edit Venue object transform");
+                else EndTransaction();
+            }
+        };
+        LineEdit editor = control.GetLineEdit();
+        editor.FocusEntered += () =>
+        {
+            if (!_updatingUi && _canvas?.SelectionKind == VenueSelectionKind.Object)
+                BeginTransaction("Edit Venue object transform");
+        };
+        editor.FocusExited += EndTransaction;
+        editor.TextSubmitted += _ => EndTransaction();
+    }
+
     private static Button Button(string text, Action action) { var value = new Button { Text = text }; value.Pressed += action; return value; }
     private static Label Title(string text) => new() { Text = text, ThemeTypeVariation = "HeaderSmall" };
     private static Control Labeled(string label, Control field) { var row = new HBoxContainer(); row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(125, 0) }); field.SizeFlagsHorizontal = SizeFlags.ExpandFill; row.AddChild(field); return row; }
@@ -666,6 +954,15 @@ public partial class VenueEditor : Control
     {
         Title = title, Access = FileDialog.AccessEnum.Resources, FileMode = FileDialog.FileModeEnum.OpenFile,
         UseNativeDialog = false, Size = new Vector2I(900, 600), Filters = [filter],
+    };
+    private static FileDialog ImportDialog(string title) => new()
+    {
+        Title = title,
+        Access = FileDialog.AccessEnum.Filesystem,
+        FileMode = FileDialog.FileModeEnum.OpenFile,
+        UseNativeDialog = false,
+        Size = new Vector2I(900, 600),
+        Filters = ["*.glb,*.gltf ; glTF Scene"],
     };
     private static string Filesystem(string path) => path.StartsWith("res://", StringComparison.Ordinal) ? ProjectSettings.GlobalizePath(path) : path;
     private static string CanonicalResource(string path)

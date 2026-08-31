@@ -269,12 +269,21 @@ public static class TrackCompiler
                 Id = $"venue--object--{item.ObjectId}",
                 Name = item.Name,
                 AssetPath = item.AssetPath,
+                ObjectType = item.ObjectType,
+                AssetId = item.AssetId,
                 Position = Copy(item.Position),
                 Elevation = item.Elevation,
                 RotationDeg = item.RotationDeg,
                 Scale = new Point3Dto { X = item.Scale.X, Y = item.Scale.Y, Z = item.Scale.Z },
-                Footprint = new AreaDto { Width = item.Footprint.Width, Length = item.Footprint.Length },
+                Footprint = new AreaDto
+                {
+                    Width = item.Footprint.Width,
+                    Length = item.Footprint.Length,
+                    CenterX = item.Footprint.CenterX,
+                    CenterY = item.Footprint.CenterY,
+                },
                 CollisionEnabled = item.CollisionEnabled,
+                CollisionMode = item.CollisionMode,
                 VisibleInViewer = item.VisibleInViewer,
             });
         }

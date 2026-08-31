@@ -353,6 +353,12 @@ func _create_venue_objects(objects: Array) -> void:
 	for item in objects:
 		if not item["visibleInViewer"]:
 			continue
+		# Imported GLB runtime is intentionally desktop-only in this iteration.
+		# The exported wrapper path remains diagnostic data but is never loaded here.
+		if item.get("objectType", "") == "imported":
+			push_warning("Venue object '%s' uses unsupported imported asset '%s'; skipped." % [
+				item["id"], item["assetPath"]])
+			continue
 		var scene := _load_packed_scene(item["assetPath"])
 		if scene == null:
 			push_error("Venue object '%s' asset '%s' is missing; skipped." % [item["id"], item["assetPath"]])

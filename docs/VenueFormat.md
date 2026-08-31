@@ -874,40 +874,75 @@ Venue Definition v2 допускает imported Venue Objects.
 
 Пример:
 
+```json
 {
-  "id": "object-01",
-  "type": "imported",
-  "asset": "assets/venue/imported/bench-01/source.glb",
-  "transform": {
-    "position": {
-      "x": 10.0,
-      "y": 0.0,
-      "z": 5.0
-    },
-    "rotation": {
-      "x": 0.0,
-      "y": 45.0,
-      "z": 0.0
-    },
-    "scale": {
-      "x": 1.0,
-      "y": 1.0,
-      "z": 1.0
-    }
+  "objectId": "venue-object-001",
+  "name": "Bench",
+  "objectType": "imported",
+  "assetId": "venue-object-0123456789abcdef0123456789abcdef",
+  "assetPath": "res://Assets/Venue/Imported/venue-object-0123456789abcdef0123456789abcdef/scene.tscn",
+  "position": { "x": 10.0, "y": 5.0 },
+  "elevation": 0.0,
+  "rotationDeg": 45.0,
+  "scale": { "x": 1.0, "y": 1.0, "z": 1.0 },
+  "footprint": {
+    "width": 1.2,
+    "length": 0.5,
+    "centerX": 0.15,
+    "centerY": -0.05
   },
-  "collision": {
-    "mode": "generated"
-  }
+  "collisionEnabled": true,
+  "collisionMode": "generated",
+  "visibleInViewer": true
 }
+```
 
-`asset` всегда является project-relative path.
+`objectType`, `assetId` и `collisionMode` являются расширением formatVersion 2.
+Для built-in объектов они отсутствуют, поэтому существующий контракт остаётся
+совместимым и version bump не требуется.
+
+Managed asset хранится в:
+
+```text
+res://Assets/Venue/Imported/<assetId>/
+  source.glb или source.gltf
+  scene.tscn
+  metadata.json
+```
+
+Undo операции `ImportAsset` создаёт persistent `.undo-hidden` marker рядом с
+managed bytes: asset исчезает из library между запусками, но shared data не
+удаляется небезопасно. Redo или повторный импорт того же content снимает marker
+и восстанавливает тот же stable `assetId`.
+
+`assetPath` ссылается на generated `scene.tscn`, чтобы desktop Viewer продолжал
+использовать единый `PackedScene` runtime pipeline. Source GLB/glTF и metadata
+не дублируются для каждого Venue instance.
+
+Для `.gltf` managed directory также содержит все relative external buffer/image
+dependencies, перечисленные в JSON. Absolute URI, URI со scheme и выход через
+`..` отклоняются. Content hash включает source JSON и bytes этих dependencies,
+поэтому изменение внешнего buffer не считается тем же asset.
 
 Абсолютные filesystem paths запрещены.
 
 Imported asset geometry не сериализуется в Venue Definition.
 
-Footprint является свойством asset metadata и не дублирует mesh geometry.
+Footprint вычисляется из aggregate visual bounds и сохраняет смещение центра
+относительно asset origin через `centerX`/`centerY`. Те же значения кэшируются
+в asset metadata; mesh geometry не сериализуется.
+
+Для imported object footprint read-only в обычном property editor и меняется
+только через import, `Relink Asset` или `Recalculate Footprint`. Recalculate
+обновляет все instances этого asset в открытом Venue. При открытии другого Venue
+его cached footprint сверяется с общей metadata; обновлённый документ помечается
+dirty, чтобы author мог явно сохранить новый cache без изменения transforms.
 
 Venue instance хранит только ссылку на asset и собственный transform/collision configuration.
 
-Если существующая Venue object schema использует другие названия transform fields, применяется фактический schema contract проекта.
+`collisionMode` поддерживает `generated` и `none`. Для imported object он обязан
+соответствовать `collisionEnabled`. Generated collision хранится внутри wrapper
+scene и использует существующую Viewer collision policy. Первая итерация создаёт
+один `StaticBody3D` на asset и `ConcavePolygonShape3D` для каждого непустого
+`MeshInstance3D`; это точно сохраняет nested transform, но предназначено только
+для статической Venue geometry и может быть тяжелее упрощённой authoring collision.

@@ -14,12 +14,14 @@ public static class VenueGeometry
     {
         float halfWidth = item.Footprint.Width * item.Scale.X * 0.5f;
         float halfLength = item.Footprint.Length * item.Scale.Z * 0.5f;
+        float centerX = item.Footprint.CenterX * item.Scale.X;
+        float centerY = item.Footprint.CenterY * item.Scale.Z;
         Point2Dto[] local =
         [
-            new() { X = -halfWidth, Y = -halfLength },
-            new() { X = halfWidth, Y = -halfLength },
-            new() { X = halfWidth, Y = halfLength },
-            new() { X = -halfWidth, Y = halfLength },
+            new() { X = centerX - halfWidth, Y = centerY - halfLength },
+            new() { X = centerX + halfWidth, Y = centerY - halfLength },
+            new() { X = centerX + halfWidth, Y = centerY + halfLength },
+            new() { X = centerX - halfWidth, Y = centerY + halfLength },
         ];
         float radians = item.RotationDeg * MathF.PI / 180.0f;
         float cosine = MathF.Cos(radians);

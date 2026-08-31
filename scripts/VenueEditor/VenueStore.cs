@@ -134,10 +134,25 @@ public static class VenueStore
             if (string.IsNullOrWhiteSpace(item.Name)) throw Error(source, $"objects[{index}].name is empty");
             ValidateResourcePath(item.AssetPath, $"objects[{index}].assetPath");
             if (!item.AssetPath.EndsWith(".tscn", StringComparison.OrdinalIgnoreCase)) throw Error(source, $"objects[{index}].assetPath must reference .tscn");
+            bool imported = string.Equals(item.ObjectType, "imported", StringComparison.Ordinal);
+            if (item.ObjectType is not null && !imported)
+                throw Error(source, $"objects[{index}].objectType is unsupported");
+            if (imported && !VenueImportedAssetLibrary.IsValidAssetId(item.AssetId))
+                throw Error(source, $"objects[{index}].assetId is invalid");
+            if (imported && item.AssetPath != $"{VenueImportedAssetLibrary.ResourceRoot}/{item.AssetId}/scene.tscn")
+                throw Error(source, $"objects[{index}].assetPath must reference its managed imported wrapper");
+            if (!imported && (item.AssetId is not null || item.CollisionMode is not null))
+                throw Error(source, $"objects[{index}] has imported-only metadata without objectType imported");
+            if (imported && item.CollisionMode is not ("generated" or "none"))
+                throw Error(source, $"objects[{index}].collisionMode must be generated or none");
+            if (imported && item.CollisionEnabled != (item.CollisionMode == "generated"))
+                throw Error(source, $"objects[{index}] collisionEnabled and collisionMode disagree");
             ValidatePoint(item.Position, source, $"objects[{index}].position");
             if (!float.IsFinite(item.Elevation) || !float.IsFinite(item.RotationDeg)) throw Error(source, $"objects[{index}] transform contains a non-finite value");
             if (item.Scale is null || !Positive(item.Scale.X) || !Positive(item.Scale.Y) || !Positive(item.Scale.Z)) throw Error(source, $"objects[{index}].scale components must be positive");
-            if (item.Footprint is null || !Positive(item.Footprint.Width) || !Positive(item.Footprint.Length)) throw Error(source, $"objects[{index}].footprint dimensions must be positive");
+            if (item.Footprint is null || !Positive(item.Footprint.Width) || !Positive(item.Footprint.Length) ||
+                !float.IsFinite(item.Footprint.CenterX) || !float.IsFinite(item.Footprint.CenterY))
+                throw Error(source, $"objects[{index}].footprint dimensions/center must be finite and dimensions positive");
         }
 
         ids.Clear();

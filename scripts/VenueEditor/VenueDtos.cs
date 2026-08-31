@@ -57,12 +57,24 @@ public sealed class VenueObjectInstanceDto
     [JsonPropertyName("objectId")] public string ObjectId { get; set; } = string.Empty;
     [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
     [JsonPropertyName("assetPath")] public string AssetPath { get; set; } = string.Empty;
+    /// <summary>Optional v2 discriminator; omitted for legacy built-in scene objects.</summary>
+    [JsonPropertyName("objectType")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ObjectType { get; set; }
+    /// <summary>Stable managed-library identity for an imported asset.</summary>
+    [JsonPropertyName("assetId")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? AssetId { get; set; }
     [JsonPropertyName("position")] public Point2Dto Position { get; set; } = new();
     [JsonPropertyName("elevation")] public float Elevation { get; set; }
     [JsonPropertyName("rotationDeg")] public float RotationDeg { get; set; }
     [JsonPropertyName("scale")] public Scale3Dto Scale { get; set; } = new();
     [JsonPropertyName("footprint")] public FootprintDto Footprint { get; set; } = new();
     [JsonPropertyName("collisionEnabled")] public bool CollisionEnabled { get; set; } = true;
+    /// <summary>Imported collision policy; built-in objects continue to use collisionEnabled alone.</summary>
+    [JsonPropertyName("collisionMode")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? CollisionMode { get; set; }
     [JsonPropertyName("visibleInViewer")] public bool VisibleInViewer { get; set; } = true;
 }
 
@@ -79,4 +91,12 @@ public sealed class FootprintDto
 {
     [JsonPropertyName("width")] public float Width { get; set; } = 1.0f;
     [JsonPropertyName("length")] public float Length { get; set; } = 1.0f;
+    /// <summary>Asset-local X offset from its origin to the visual bounds center.</summary>
+    [JsonPropertyName("centerX")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public float CenterX { get; set; }
+    /// <summary>Asset-local Z offset, expressed as Venue-domain Y.</summary>
+    [JsonPropertyName("centerY")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public float CenterY { get; set; }
 }

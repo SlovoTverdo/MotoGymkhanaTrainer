@@ -92,7 +92,13 @@ public static class VenueAssetFootprint
                 "its footprint cannot be determined automatically.");
         }
 
-        return new FootprintDto { Width = width, Length = length };
+        return new FootprintDto
+        {
+            Width = width,
+            Length = length,
+            CenterX = (minimumX + maximumX) * 0.5f,
+            CenterY = (minimumZ + maximumZ) * 0.5f,
+        };
     }
 
     private static IEnumerable<Node> EnumerateSelfAndDescendants(Node root)

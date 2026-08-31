@@ -87,6 +87,14 @@ public sealed class VenueObjectSnapshotDto
     [JsonPropertyName("assetPath")]
     public string AssetPath { get; init; } = string.Empty;
 
+    [JsonPropertyName("objectType")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ObjectType { get; init; }
+
+    [JsonPropertyName("assetId")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? AssetId { get; init; }
+
     [JsonPropertyName("position")]
     public Point2Dto Position { get; init; } = new();
 
@@ -104,6 +112,10 @@ public sealed class VenueObjectSnapshotDto
 
     [JsonPropertyName("collisionEnabled")]
     public bool CollisionEnabled { get; init; } = true;
+
+    [JsonPropertyName("collisionMode")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? CollisionMode { get; init; }
 
     [JsonPropertyName("visibleInViewer")]
     public bool VisibleInViewer { get; init; } = true;
@@ -134,6 +146,14 @@ public sealed class AreaDto
 
     [JsonPropertyName("length")]
     public float Length { get; init; }
+
+    [JsonPropertyName("centerX")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public float CenterX { get; init; }
+
+    [JsonPropertyName("centerY")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public float CenterY { get; init; }
 }
 
 /// <summary>Informational metadata about a resolved exercise instance.</summary>

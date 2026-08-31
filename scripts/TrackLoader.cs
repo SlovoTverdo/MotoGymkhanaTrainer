@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using MotoGymkhanaTrainer;
+using MotoGymkhanaTrainer.VenueEditor;
 
 namespace MotoGymkhanaTrainer.Tracks;
 
@@ -166,8 +167,17 @@ public static class TrackLoader
             ValidatePoint(item.Position, sourceName, $"{prefix}.position");
             if (!float.IsFinite(item.Elevation) || !float.IsFinite(item.RotationDeg) ||
                 item.Scale is null || !Positive(item.Scale.X) || !Positive(item.Scale.Y) || !Positive(item.Scale.Z) ||
-                item.Footprint is null || !Positive(item.Footprint.Width) || !Positive(item.Footprint.Length))
+                item.Footprint is null || !Positive(item.Footprint.Width) || !Positive(item.Footprint.Length) ||
+                !float.IsFinite(item.Footprint.CenterX) || !float.IsFinite(item.Footprint.CenterY))
                 throw ContractError(sourceName, $"{prefix} transform/scale/footprint is invalid");
+            bool imported = string.Equals(item.ObjectType, "imported", StringComparison.Ordinal);
+            if (item.ObjectType is not null && !imported ||
+                imported && (!VenueImportedAssetLibrary.IsValidAssetId(item.AssetId) || item.CollisionMode is not ("generated" or "none")) ||
+                imported && item.CollisionEnabled != (item.CollisionMode == "generated") ||
+                !imported && (item.AssetId is not null || item.CollisionMode is not null))
+                throw ContractError(sourceName, $"{prefix} imported asset metadata is invalid");
+            if (imported && item.AssetPath != $"res://Assets/Venue/Imported/{item.AssetId}/scene.tscn")
+                throw ContractError(sourceName, $"{prefix}.assetPath is not its managed imported wrapper");
         }
 
         if (track.Elements is null)

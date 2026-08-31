@@ -195,6 +195,22 @@ PanoramaSkyMaterial
 }
 ```
 
+Imported object дополнительно сохраняет optional metadata без изменения
+formatVersion 5:
+
+```json
+{
+  "objectType": "imported",
+  "assetId": "venue-object-0123456789abcdef0123456789abcdef",
+  "assetPath": "res://Assets/Venue/Imported/venue-object-0123456789abcdef0123456789abcdef/scene.tscn",
+  "collisionMode": "generated"
+}
+```
+
+Desktop Viewer загружает generated wrapper как обычный `PackedScene`. Web Viewer
+не реализует GLB runtime в этой итерации и явно пропускает imported object с
+diagnostic warning.
+
 ---
 
 # 9. Venue object coordinates
@@ -228,6 +244,10 @@ Viewer не должен использовать array index как identity.
 # 11. Footprint
 
 Footprint является diagnostic metadata.
+
+Optional `centerX`/`centerY` сохраняют asset-local offset визуального bounds
+относительно origin. Они применяются Track/Venue editor preview вместе с scale,
+rotation и position.
 
 Viewer не обязан использовать его для collision.
 

@@ -1016,9 +1016,10 @@ try
         oneInstanceCompilation.Snapshot.Markings[1].Style == "dotted",
         "hidden state and dashed/dotted marking styles survive compilation");
 
-    string testAssetFolder = Path.Combine(temporaryTrackTestRoot, "Assets");
+    const string richImportedAssetId = "venue-object-0123456789abcdef0123456789abcdef";
+    string testAssetFolder = Path.Combine(temporaryTrackTestRoot, "Assets", "Venue", "Imported", richImportedAssetId);
     Directory.CreateDirectory(testAssetFolder);
-    File.WriteAllText(Path.Combine(testAssetFolder, "shed.tscn"), "[gd_scene format=3]");
+    File.WriteAllText(Path.Combine(testAssetFolder, "scene.tscn"), "[gd_scene format=3]");
     VenueDefinitionDto richDefinition = VenueDocument.CreateNew("rich-ground", "Rich Ground").Definition;
     richDefinition.Area.Width = 40;
     richDefinition.Area.Length = 50;
@@ -1028,13 +1029,16 @@ try
         {
             ObjectId = "shed",
             Name = "Shed",
-            AssetPath = "res://Assets/shed.tscn",
+            AssetPath = $"res://Assets/Venue/Imported/{richImportedAssetId}/scene.tscn",
             Position = new Point2Dto { X = 3, Y = -8 },
             Elevation = 1.5f,
             RotationDeg = 20,
             Scale = new Scale3Dto { X = 2, Y = 3, Z = 4 },
             Footprint = new FootprintDto { Width = 6, Length = 8 },
             CollisionEnabled = false,
+            ObjectType = "imported",
+            AssetId = richImportedAssetId,
+            CollisionMode = "none",
             VisibleInViewer = true,
         },
     ];
@@ -1069,6 +1073,12 @@ try
         "Venue object elevation is preserved without Track transform");
     AssertEqual(3.0f, richCompilation.Snapshot.VenueObjects[0].Scale.Y,
         "Venue object Y scale is preserved separately from its 2D footprint");
+    AssertTrue(richCompilation.Snapshot.VenueObjects[0].ObjectType == "imported",
+        "Track v5 preserves the optional imported Venue object discriminator");
+    AssertTrue(richCompilation.Snapshot.VenueObjects[0].AssetId == "venue-object-0123456789abcdef0123456789abcdef",
+        "Track v5 preserves stable imported asset identity");
+    AssertTrue(richCompilation.Snapshot.VenueObjects[0].CollisionMode == "none",
+        "Track v5 preserves imported collision mode without changing its version");
     AssertEqual("venue--cone--venue-cone", richCompilation.Snapshot.Cones[0].Id,
         "Venue cones precede transformed Exercise cones in the common array");
     AssertEqual("venue--marking--venue-line", richCompilation.Snapshot.Markings[0].Id,
@@ -1081,7 +1091,7 @@ try
     AssertTrue(richCompilation.Warnings.Any(item => item.Message.Contains("intersect Venue object 'shed'")),
         "Exercise bounds intersecting a transformed Venue footprint produces a non-blocking warning");
 
-    richDefinition.Objects[0].AssetPath = "res://Assets/missing.tscn";
+    richDefinition.Objects[0].AssetPath = $"res://Assets/Venue/Imported/{richImportedAssetId}/scene.tscn";
     ResolvedVenue missingVisibleVenue = new()
     {
         VenuePath = richVenue.VenuePath,
@@ -1095,7 +1105,7 @@ try
     missingVisibleDocument.AddInstance("polyline.json", compileFirst);
     TrackCompilationResult missingVisibleCompilation = TrackCompiler.Compile(missingVisibleDocument);
     AssertTrue(!missingVisibleCompilation.CanExport &&
-        missingVisibleCompilation.Errors.Any(item => item.Message.Contains("shed") && item.Message.Contains("missing.tscn")),
+        missingVisibleCompilation.Errors.Any(item => item.Message.Contains("shed") && item.Message.Contains("scene.tscn")),
         "visible unresolved Venue object blocks export with object and asset context");
     richDefinition.Objects[0].VisibleInViewer = false;
     var hiddenMissingDocument = NewTrack("hidden-missing", "Hidden Missing", missingVisibleVenue);
@@ -1518,6 +1528,34 @@ try
         "Venue asset footprint combines transformed visual AABBs on local X");
     AssertEqual(4.0f, measuredFootprint.Length,
         "Venue asset footprint combines transformed visual AABBs on local Z");
+    AssertEqual(2.0f, measuredFootprint.CenterX,
+        "Venue asset footprint preserves visual center offset from the asset origin");
+    AssertEqual(0.0f, measuredFootprint.CenterY,
+        "Venue asset footprint preserves the local Z center as domain Y offset");
+    FootprintDto rotatedChildFootprint = VenueAssetFootprint.Calculate(
+    [
+        new VenueAssetVisualBounds(
+            new Aabb(Vector3.Zero, new Vector3(2, 1, 1)),
+            new Transform3D(new Basis(Vector3.Up, MathF.PI * 0.5f), Vector3.Zero)),
+    ], "rotated-child");
+    AssertTrue(MathF.Abs(rotatedChildFootprint.Width - 1) < 0.0001f &&
+        MathF.Abs(rotatedChildFootprint.Length - 2) < 0.0001f,
+        "Venue asset footprint includes a rotated child mesh transform");
+    FootprintDto scaledNestedFootprint = VenueAssetFootprint.Calculate(
+    [
+        new VenueAssetVisualBounds(
+            new Aabb(Vector3.Zero, Vector3.One),
+            new Transform3D(new Basis(new Vector3(2, 0, 0), new Vector3(0, 1, 0),
+                new Vector3(0, 0, 3)), new Vector3(-4, 0, 6))),
+    ], "scaled-nested-child");
+    AssertEqual(2.0f, scaledNestedFootprint.Width,
+        "Venue asset footprint includes nested child X scale");
+    AssertEqual(3.0f, scaledNestedFootprint.Length,
+        "Venue asset footprint includes nested child Z scale");
+    AssertEqual(-3.0f, scaledNestedFootprint.CenterX,
+        "Venue asset footprint retains an origin outside scaled geometry");
+    AssertEqual(7.5f, scaledNestedFootprint.CenterY,
+        "Venue asset footprint retains translated nested geometry offset");
     VenueObjectInstanceDto barrier = venue.AddObject(
         "res://Assets/barrier.tscn", measuredFootprint);
     AssertEqual(6.0f, barrier.Footprint.Width,
@@ -1531,10 +1569,82 @@ try
     Point2Dto[] footprint = VenueGeometry.TransformFootprint(barrier);
     AssertTrue(footprint.All(point => float.IsFinite(point.X) && float.IsFinite(point.Y)),
         "Venue footprint applies finite scale/rotation/translation geometry");
+    barrier.Position = new Point2Dto { X = 10, Y = 20 };
+    barrier.RotationDeg = 0;
+    barrier.Scale = new Scale3Dto();
+    barrier.Footprint = new FootprintDto { Width = 2, Length = 4, CenterX = 5, CenterY = -3 };
+    Point2Dto[] offsetFootprint = VenueGeometry.TransformFootprint(barrier);
+    AssertEqual(15.0f, offsetFootprint.Average(point => point.X),
+        "Venue footprint applies asset-local origin offset on X");
+    AssertEqual(17.0f, offsetFootprint.Average(point => point.Y),
+        "Venue footprint applies asset-local origin offset on Z/domain Y");
     VenueObjectInstanceDto barrierCopy = venue.DuplicateObject(barrier.ObjectId);
     AssertTrue(barrierCopy.ObjectId != barrier.ObjectId, "duplicated Venue object receives a unique id");
-    AssertEqual(4.0f, barrierCopy.Position.X, "duplicated Venue object receives the +1 m X offset");
-    AssertEqual(-1.0f, barrierCopy.Position.Y, "duplicated Venue object receives the +1 m Y offset");
+    AssertEqual(11.0f, barrierCopy.Position.X, "duplicated Venue object receives the +1 m X offset");
+    AssertEqual(21.0f, barrierCopy.Position.Y, "duplicated Venue object receives the +1 m Y offset");
+    AssertEqual(5.0f, barrierCopy.Footprint.CenterX, "duplicate preserves imported footprint center X");
+    AssertEqual(-3.0f, barrierCopy.Footprint.CenterY, "duplicate preserves imported footprint center Y");
+
+    VenueDocument importedVenue = VenueDocument.CreateNew("imported", "Imported");
+    VenueObjectInstanceDto imported = importedVenue.AddObject(
+        "res://Assets/Venue/Imported/venue-object-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/scene.tscn",
+        new FootprintDto { Width = 3, Length = 2, CenterX = 0.75f, CenterY = -0.25f },
+        new Point2Dto { X = 4, Y = 5 }, "imported",
+        "venue-object-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "generated");
+    string importedJson = VenueStore.Serialize(importedVenue.Definition);
+    AssertTrue(importedJson.Contains("\"objectType\": \"imported\"") &&
+        importedJson.Contains("\"assetId\": \"venue-object-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"") &&
+        importedJson.Contains("\"collisionMode\": \"generated\""),
+        "Venue v2 serializes imported identity and collision policy without embedding geometry");
+    VenueDefinitionDto importedReload = VenueStore.LoadFromJson(importedJson, "imported.json", temporaryVenueRoot).Definition;
+    AssertEqual(2, importedReload.FormatVersion, "imported Venue object does not require a Venue version bump");
+    AssertEqual(0.75f, importedReload.Objects[0].Footprint.CenterX,
+        "imported footprint origin offset survives save/reload");
+    VenueObjectInstanceDto importedCopy = importedVenue.DuplicateObject(imported.ObjectId);
+    AssertTrue(imported.AssetId == importedCopy.AssetId, "duplicate shares the same managed imported asset");
+    AssertEqual(imported.AssetPath, importedCopy.AssetPath, "duplicate does not copy the managed GLB");
+    AssertEqual(imported.Position.X, importedCopy.Position.X,
+        "imported duplicate preserves the exact X transform");
+    AssertEqual(imported.Position.Y, importedCopy.Position.Y,
+        "imported duplicate preserves the exact Y transform");
+    AssertEqual(imported.RotationDeg, importedCopy.RotationDeg,
+        "imported duplicate preserves rotation");
+    var refreshedAsset = new VenueImportedAssetMetadata
+    {
+        AssetId = imported.AssetId!,
+        RuntimeScenePath = imported.AssetPath,
+        CollisionMode = "generated",
+        Footprint = new FootprintDto { Width = 7, Length = 8, CenterX = 2, CenterY = -1 },
+    };
+    Point2Dto importedPositionBeforeRefresh = new() { X = imported.Position.X, Y = imported.Position.Y };
+    int refreshedCount = importedVenue.ApplyImportedAssetMetadata(refreshedAsset);
+    AssertEqual(2, refreshedCount, "recalculate footprint updates every instance sharing one imported asset");
+    AssertEqual(7.0f, imported.Footprint.Width, "recalculate footprint refreshes cached instance geometry");
+    AssertEqual(importedPositionBeforeRefresh.X, imported.Position.X,
+        "recalculate footprint preserves imported instance transform");
+    var relinkAsset = new VenueImportedAssetMetadata
+    {
+        AssetId = "venue-object-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        RuntimeScenePath = "res://Assets/Venue/Imported/venue-object-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/scene.tscn",
+        CollisionMode = "generated",
+        Footprint = new FootprintDto { Width = 9, Length = 4, CenterX = -2, CenterY = 3 },
+    };
+    importedVenue.RelinkImportedObject(imported.ObjectId, relinkAsset);
+    AssertEqual(4.0f, imported.Position.X, "relink preserves imported object X transform");
+    AssertEqual(5.0f, imported.Position.Y, "relink preserves imported object Y transform");
+    AssertTrue(imported.AssetId == relinkAsset.AssetId && imported.AssetPath == relinkAsset.RuntimeScenePath,
+        "relink replaces only the shared managed asset identity");
+    importedVenue.SetImportedCollisionMode(imported.ObjectId, "none");
+    AssertTrue(!imported.CollisionEnabled && imported.CollisionMode == "none",
+        "collision mode none disables imported object collision consistently");
+    imported.CollisionMode = "generated";
+    AssertThrows<InvalidDataException>(() => VenueStore.Serialize(importedVenue.Definition),
+        "imported collision mode and compatibility flag cannot silently disagree");
+    imported.CollisionMode = "none";
+    imported.AssetId = "venue-object-not-a-guid";
+    AssertThrows<InvalidDataException>(() => VenueStore.Serialize(importedVenue.Definition),
+        "imported Venue asset ID must use the canonical stable lower-hex policy");
+    imported.AssetId = relinkAsset.AssetId;
 
     ConeDto venueCone = venue.AddCone(new Point2Dto { X = 1, Y = 2 });
     venue.SetConeColor(venueCone.Id, "none");

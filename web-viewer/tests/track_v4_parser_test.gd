@@ -35,6 +35,15 @@ func _initialize() -> void:
 	unsafe_asset["venueObjects"][0]["assetPath"] = "res://venues/../escape.tscn"
 	_expect(not _validate(unsafe_asset), "unsafe res:// path must fail")
 
+	var imported_asset := base.duplicate(true)
+	imported_asset["venueObjects"][0]["objectType"] = "imported"
+	imported_asset["venueObjects"][0]["assetId"] = "venue-object-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	imported_asset["venueObjects"][0]["collisionMode"] = "generated"
+	imported_asset["venueObjects"][0]["assetPath"] = \
+		"res://Assets/Venue/Imported/venue-object-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/scene.tscn"
+	_expect(_validate(imported_asset),
+		"Track v5 parser must retain imported object diagnostics without requiring Web GLB runtime")
+
 	var duplicate_id := base.duplicate(true)
 	duplicate_id["cones"][1]["id"] = duplicate_id["cones"][0]["id"]
 	_expect(not _validate(duplicate_id), "duplicate runtime ID must fail")
